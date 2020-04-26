@@ -11,6 +11,7 @@ loader-build:
 
 loader-run:
 	docker run -it --rm \
+		--name datasource-loader \
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
 
@@ -31,6 +32,7 @@ server-build:
 
 server-run:
 	docker run -it --rm \
+		--name datasource-server \
 		-p 80:80 \
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
@@ -43,3 +45,4 @@ server-shell:
 		-p 80:80 \
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
+

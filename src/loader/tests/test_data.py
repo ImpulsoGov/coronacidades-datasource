@@ -1,5 +1,5 @@
 import pytest
 
-def always_true():
+def test_always_true():
 
     assert True

@@ -72,4 +72,6 @@ def main():
 
 if __name__ == "__main__":
 
-    pytest.main(['-x', 'tests'])
+    exc = pytest.main(['tests', '--resultlog=test.txt'])
+
+    print('oi')

@@ -1,14 +1,39 @@
-IMAGE_TAG=impulsogov/simulacovid
+VERSION=1.0
 
-# Docker
+LOADER_IMAGE_TAG=impulsogov/simulacovid:$(VERSION)-loader
+SERVER_IMAGE_TAG=impulsogov/simulacovid:$(VERSION)-server
+
+# Loader
+loader-build:
+	docker build \
+		-f loader.dockerfile \
+		-t $(LOADER_IMAGE_TAG) .
+
+loader-run:
+	docker run -it --rm \
+		-v "datasource:/output" \
+		$(LOADER_IMAGE_TAG)
+
+loader-build-run: loader-build loader-run
+
+loader-shell:
+	docker run --rm -it \
+		--entrypoint "/bin/bash" \
+		-v "datasource:/output" \
+		$(LOADER_IMAGE_TAG)
+
+
+# Server
 server-build:
-	docker build -t $(IMAGE_TAG) .
+	docker build \
+		-f server.dockerfile \
+		-t $(SERVER_IMAGE_TAG) .
 
 server-run:
 	docker run -it --rm \
 		-p 80:80 \
-		-v "datasource:/uploads" \
-		$(IMAGE_TAG)
+		-v "datasource:/output" \
+		$(SERVER_IMAGE_TAG)
 
 server-build-run: server-build server-run
 
@@ -16,5 +41,5 @@ server-shell:
 	docker run --rm -it \
 		--entrypoint "/bin/bash" \
 		-p 80:80 \
-		-v "datasource:/uploads" \
-		$(IMAGE_TAG)
+		-v "datasource:/output" \
+		$(SERVER_IMAGE_TAG)

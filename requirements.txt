@@ -2,4 +2,3 @@ pandas
 pyyaml
 pytest
 requests
-loguru

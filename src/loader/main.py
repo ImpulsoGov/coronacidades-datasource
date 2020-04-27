@@ -69,7 +69,7 @@ def _read_data(config):
     return df
 
 
-def _write_data(data):
+def _write_data(data, output_path):
 
     data["data_last_refreshed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     data.to_csv(output_path, index=False)
@@ -105,7 +105,7 @@ def main():
 
     if _test_data(data):
         print("Writing Data")
-        _write_data(data)
+        _write_data(data, output_path)
 
 
 if __name__ == "__main__":

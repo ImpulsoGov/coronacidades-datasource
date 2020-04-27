@@ -1,5 +1,6 @@
 .git/
 src/venv/
+loader_venv/
 output/
 
 # Byte-compiled / optimized / DLL files

@@ -5,6 +5,7 @@ import os
 import yaml
 import pytest
 import json
+from datetime import datetime
 
 import get_cases, get_embaixadores, get_health
 from utils import get_last
@@ -70,6 +71,8 @@ def main():
         Loader=yaml.FullLoader)
 
     data = _read_data(config)
+
+    data['data_last_refreshed'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     data.to_csv(output_path, index=False)
 

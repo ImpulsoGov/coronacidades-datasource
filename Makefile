@@ -23,6 +23,10 @@ loader-shell:
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
 
+loader-create-env:
+	virtualenv loader_venv
+	source loader_venv/bin/activate; \
+			pip3 install --upgrade -r requirements.txt; 
 
 # Server
 server-build:

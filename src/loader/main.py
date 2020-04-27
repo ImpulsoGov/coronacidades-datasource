@@ -5,6 +5,7 @@ import os
 import yaml
 from datetime import datetime
 
+from logger import log
 import get_cases, get_embaixadores, get_health
 from utils import get_last
 
@@ -77,7 +78,7 @@ def _write_data(data):
 def _test_data(data):
 
     tests = {
-        "len(data) > 0": len(data) > 0,
+        "len(data) > 0": len(data) == 0,
         "isinstance(data, pd.DataFrame)": isinstance(data, pd.DataFrame),
     }
 
@@ -85,6 +86,7 @@ def _test_data(data):
 
         for k, v in tests.items():
             if not v:
+                log({"origin": "Raw Data", "error_type": "Data Integrity", "error": k})
                 print("Error in: ", k)
 
         return False
@@ -102,6 +104,7 @@ def main():
     data = _read_data(config)
 
     if _test_data(data):
+        print("Writing Data")
         _write_data(data)
 
 

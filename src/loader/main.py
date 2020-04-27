@@ -78,7 +78,7 @@ def _write_data(data):
 def _test_data(data):
 
     tests = {
-        "len(data) > 0": len(data) == 0,
+        "len(data) > 0": len(data) > 0,
         "isinstance(data, pd.DataFrame)": isinstance(data, pd.DataFrame),
     }
 

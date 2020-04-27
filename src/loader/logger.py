@@ -1,5 +1,6 @@
 import json
 import requests
+import os
 
 # Set the webhook_url to the one provided by Slack when you create the webhook at https://my.slack.com/services/new/incoming-webhook/
 def post_slack(error_args):

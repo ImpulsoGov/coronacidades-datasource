@@ -4,6 +4,7 @@ from copy import deepcopy
 import os
 import yaml
 from datetime import datetime
+import numpy as np
 
 from logger import log
 import get_cases, get_embaixadores, get_health
@@ -66,7 +67,17 @@ def _read_data(config):
     # merge cities
     df = df.merge(cases, on="city_id", how="left")
 
-    return df
+    # get notification for cities without cases
+    state_notification = df[['state_notification_rate', 'state_id']].dropna().drop_duplicates().set_index('state_id')
+    df['notification_rate'] = np.where(df['notification_rate'].isnull(),
+                                       state_notification.loc[df['state_id']].values[0],
+                                       df['notification_rate'])
+
+    df['state_notification_rate'] = np.where(df['state_notification_rate'].isnull(),
+                                       state_notification.loc[df['state_id']].values[0],
+                                       df['state_notification_rate'])
+
+    return df.fillna(0)
 
 
 def _write_data(data, output_path):
@@ -78,8 +89,9 @@ def _write_data(data, output_path):
 def _test_data(data):
 
     tests = {
-        "len(data) > 5500": len(data) > 5500,
+        "len(data) > 5570": len(data) > 5570,
         "isinstance(data, pd.DataFrame)": isinstance(data, pd.DataFrame),
+        "notification_rate == NaN": len(data[data['notification_rate'].isnull()]) > 0
     }
 
     if not all(tests.values()):

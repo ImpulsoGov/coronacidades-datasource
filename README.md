@@ -7,7 +7,9 @@ Run this to load the files
 
 In a different tab, run the Flask server
 
-```make server-build-run```
+```
+make server-build-run
+```
 
 You should see something at `localhost:80/<endpoint>`, like
 `http://localhost:80/v1/raw/csv`

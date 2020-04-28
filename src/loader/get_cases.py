@@ -24,6 +24,10 @@ def _get_notification_rate(group, config):
         
     daily_adjust = group['deaths'] / config['br']['seir_parameters']['fatality_ratio']
     notification_rate = np.mean(group['confirmed_cases'] / daily_adjust)
+
+    # nao tem subnotificacao de casos => taxa = 100%
+    if notification_rate > 1:
+        notification_rate = 1
     
     return notification_rate
 
@@ -51,7 +55,7 @@ def _adjust_subnotification_cases(df, cases_params, config):
                                        df['state_notification_rate'],
                                        df['city_notification_rate'])
     
-    return df[['city_id', 'notification_rate']].drop_duplicates()
+    return df[['city_id', 'state_notification_rate', 'notification_rate']].drop_duplicates()
 
 def now(country, config):
 

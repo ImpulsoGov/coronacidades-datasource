@@ -18,6 +18,10 @@ def _get_active_cases(df, window_period, cases_params):
 
 def _get_notification_rate(group, config):
     
+    # 1a morte reportada nos últimos 7 dias ou ainda não reportada: -1
+    if np.any(group['deaths'] == 0):
+        return -1
+        
     daily_adjust = group['deaths'] / config['br']['seir_parameters']['fatality_ratio']
     notification_rate = np.mean(group['confirmed_cases'] / daily_adjust)
     
@@ -41,19 +45,19 @@ def _adjust_subnotification_cases(df, cases_params, config):
     
     df = df.merge(city_notif_rate, on='city_id').merge(state_notif_rate, on='state')
     
-    # Escolha taxa de notificação para a cidade: caso sem mortes, usa taxa UF (UF sem mortes => 1)
-    df['notification_rate'] = np.where(abs(df['city_notification_rate']) != np.inf, 
-                                       df['city_notification_rate'],
-                                       np.where(abs(df['state_notification_rate']) != np.inf, 1, 
-                                                df['state_notification_rate']))
-
+    # Escolha taxa de notificação para a cidade: caso sem mortes (-1), usa taxa UF
+    df['notification_rate'] = df['city_notification_rate']
+    df['notification_rate'] = np.where(df['notification_rate'] == -1, 
+                                       df['state_notification_rate'],
+                                       df['city_notification_rate'])
+    
     return df[['city_id', 'notification_rate']].drop_duplicates()
 
 def now(country, config):
 
     if country == 'br':
         df = pd.read_csv(config[country]['cases']['url'])
-        df = df.query('place_type == "city"').dropna(subset=['city_ibge_code'])
+        df = df.query('place_type == "city"').dropna(subset=['city_ibge_code']).fillna(0)
 
         cases_params = config['br']['cases']
         df = df.rename(columns=cases_params['rename'])
@@ -68,11 +72,7 @@ def now(country, config):
         # Ajusta subnotificação de casos
         df = df.merge(_adjust_subnotification_cases(df, cases_params, config), on='city_id')
 
-        df['active_cases'] = df['infectious_period_cases'] / df['notification_rate']
-
-        # # Calcula recuperados
-        # df['recovered'] = df['confirmed_cases'] - df['active_cases'] - df['deaths']
-        # df['recovered'] = np.where(df['recovered'] < 0, df['confirmed_cases'] - df['active_cases'], df['recovered'])
+        df['active_cases'] = round(df['infectious_period_cases'] / df['notification_rate'], 0)
 
         df = df[df['is_last'] == True].drop(cases_params['drop'], 1)
         df['city_id'] = df['city_id'].astype(int)

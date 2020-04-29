@@ -19,7 +19,6 @@ def post_slack(error_args, status):
         }
 
     if status == 'okay':
-        return
         slack_data = {
             "text": "Sim! Tudo sob controle :D"
         }

@@ -103,7 +103,7 @@ def _test_data(data):
 
         return False
     else:
-        log(dict(), status='okay')
+        # log(dict(), status='okay')
         return True
 
 

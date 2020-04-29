@@ -3,6 +3,8 @@ VERSION=1.0
 LOADER_IMAGE_TAG=impulsogov/simulacovid:$(VERSION)-loader
 SERVER_IMAGE_TAG=impulsogov/simulacovid:$(VERSION)-server
 
+build-and-run-all: loader-build-run server-build-run
+
 # Loader
 loader-build:
 	docker build \

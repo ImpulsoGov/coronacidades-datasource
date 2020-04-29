@@ -17,7 +17,7 @@ loader-run:
 
 loader-build-run: loader-build loader-run
 
-loader-shell:
+loader-shell: loader-build
 	docker run --rm -it \
 		--entrypoint "/bin/bash" \
 		-v "datasource:/output" \

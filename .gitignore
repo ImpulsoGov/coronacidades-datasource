@@ -142,3 +142,4 @@ cython_debug/
 
 loader_venv/
 .vscode/
+src/loader/secrets.yaml

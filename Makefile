@@ -10,7 +10,8 @@ loader-build:
 		-t $(LOADER_IMAGE_TAG) .
 
 loader-run:
-	docker run -it --rm \
+	docker rm -f datasource-loader 2>/dev/null || true
+	docker run -d --restart=unless-stopped \
 		--name datasource-loader \
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
@@ -35,9 +36,10 @@ server-build:
 		-t $(SERVER_IMAGE_TAG) .
 
 server-run:
-	docker run -it --rm \
+	docker rm -f datasource-server 2>/dev/null || true
+	docker run -d --restart=unless-stopped \
 		--name datasource-server \
-		-p 80:80 \
+		-p 7000:80 \
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 

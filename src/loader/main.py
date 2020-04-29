@@ -89,7 +89,7 @@ def _write_data(data, output_path):
 def _test_data(data):
 
     tests = {
-        "len(data) > 5570": len(data) <= 5570,
+        "len(data) != 5570": len(data) == 5570,
         "data is not pd.DataFrame": isinstance(data, pd.DataFrame),
         "notification_rate == NaN": len(data[data['notification_rate'].isnull()==True].values) == 0
     }

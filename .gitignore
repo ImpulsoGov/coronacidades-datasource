@@ -1,6 +1,9 @@
 output/
 notebooks/
 
+# Store files
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -142,3 +145,4 @@ cython_debug/
 
 loader_venv/
 .vscode/
+src/loader/secrets.yaml

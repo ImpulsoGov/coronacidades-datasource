@@ -1,16 +1,27 @@
 import json
 import requests
 import os
+from utils import secrets
 
 # Set the webhook_url to the one provided by Slack when you create the webhook at https://my.slack.com/services/new/incoming-webhook/
-def post_slack(error_args):
+def post_slack(error_args, status):
 
-    webhook_url = os.getenv("SLACK_WEBHOOK")
-    slack_data = {
-        "text": "*Não!*\n\n*Origem:* {origin}\n*Tipo de erro:* {error_type}\n*Erro:* ```{error}```".format(
-            **error_args
-        )
-    }
+    webhook_url = secrets("SLACK_WEBHOOK")
+
+    print(webhook_url)
+    print(error_args)
+
+    if status == "fail":
+        slack_data = {
+            "text": "*Não!*\n\n*Origem:* {origin}\n*Tipo de erro:* {error_type}\n*Erro:* ```{error}```".format(
+                **error_args
+            )
+        }
+
+    if status == 'okay':
+        slack_data = {
+            "text": "Sim! Tudo sob controle :D"
+        }
 
     response = requests.post(
         webhook_url,
@@ -24,6 +35,6 @@ def post_slack(error_args):
         )
 
 
-def log(error_args):
+def log(error_args, status):
 
-    post_slack(error_args)
+    post_slack(error_args, status)

@@ -89,20 +89,21 @@ def _write_data(data, output_path):
 def _test_data(data):
 
     tests = {
-        "len(data) > 5570": len(data) > 5570,
-        "isinstance(data, pd.DataFrame)": isinstance(data, pd.DataFrame),
-        "notification_rate == NaN": len(data[data['notification_rate'].isnull()]) > 0
+        "len(data) != 5570": len(data) == 5570,
+        "data is not pd.DataFrame": isinstance(data, pd.DataFrame),
+        "notification_rate == NaN": len(data[data['notification_rate'].isnull()==True].values) == 0
     }
 
     if not all(tests.values()):
 
         for k, v in tests.items():
             if not v:
-                log({"origin": "Raw Data", "error_type": "Data Integrity", "error": k})
+                log({"origin": "Raw Data", "error_type": "Data Integrity", "error": k}, status='fail')
                 print("Error in: ", k)
 
         return False
     else:
+        # log(dict(), status='okay')
         return True
 
 

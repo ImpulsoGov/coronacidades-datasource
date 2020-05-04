@@ -26,3 +26,10 @@ Remember to rebuild the docker everytime you change the code.
  make loader-shell
  make server-shell
  ```
+# Analysis
+
+
+Start env
+```
+make loader-create-env-analysis
+```

@@ -2,6 +2,7 @@
 src/venv/
 loader_venv/
 output/
+.loader-anaylsis/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

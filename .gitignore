@@ -1,4 +1,6 @@
 output/
+notebooks/*.csv
+notebooks/draft*
 
 # Store files
 .DS_Store

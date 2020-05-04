@@ -79,9 +79,7 @@ def download_from_drive(url):
 
 def secrets(variable, path="secrets.yaml"):
 
-    local = yaml.load(open(path, "r"), Loader=yaml.FullLoader)
-
     if local.get(variable):
-        return local[variable]
+        return yaml.load(open(path, "r"), Loader=yaml.FullLoader)[variable]
     else:
         return os.getenv(variable)

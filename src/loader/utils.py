@@ -4,6 +4,7 @@ import tempfile
 import pandas as pd
 import yaml
 import os
+import requests
 
 
 def _remove_accents(text):
@@ -85,3 +86,9 @@ def secrets(variable, path="secrets.yaml"):
         return local[variable]
     else:
         return os.getenv(variable)
+
+
+def get_config(url=os.getenv("CONFIG_URL")):
+
+    return yaml.load(requests.get(url).text, Loader=yaml.FullLoader)
+

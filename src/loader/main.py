@@ -8,7 +8,7 @@ import numpy as np
 
 from logger import log
 import get_cases, get_embaixadores, get_health
-from utils import get_last
+from utils import get_last, get_config
 
 
 def _get_supplies(cities, updates, country, config):
@@ -68,14 +68,23 @@ def _read_data(config):
     df = df.merge(cases, on="city_id", how="left")
 
     # get notification for cities without cases
-    state_notification = df[['state_notification_rate', 'state_id']].dropna().drop_duplicates().set_index('state_id')
-    df['notification_rate'] = np.where(df['notification_rate'].isnull(),
-                                       state_notification.loc[df['state_id']].values[0],
-                                       df['notification_rate'])
+    state_notification = (
+        df[["state_notification_rate", "state_id"]]
+        .dropna()
+        .drop_duplicates()
+        .set_index("state_id")
+    )
+    df["notification_rate"] = np.where(
+        df["notification_rate"].isnull(),
+        state_notification.loc[df["state_id"]].values[0],
+        df["notification_rate"],
+    )
 
-    df['state_notification_rate'] = np.where(df['state_notification_rate'].isnull(),
-                                       state_notification.loc[df['state_id']].values[0],
-                                       df['state_notification_rate'])
+    df["state_notification_rate"] = np.where(
+        df["state_notification_rate"].isnull(),
+        state_notification.loc[df["state_id"]].values[0],
+        df["state_notification_rate"],
+    )
 
     return df.fillna(0)
 
@@ -91,14 +100,20 @@ def _test_data(data):
     tests = {
         "len(data) != 5570": len(data) == 5570,
         "data is not pd.DataFrame": isinstance(data, pd.DataFrame),
-        "notification_rate == NaN": len(data[data['notification_rate'].isnull()==True].values) == 0
+        "notification_rate == NaN": len(
+            data[data["notification_rate"].isnull() == True].values
+        )
+        == 0,
     }
 
     if not all(tests.values()):
 
         for k, v in tests.items():
             if not v:
-                log({"origin": "Raw Data", "error_type": "Data Integrity", "error": k}, status='fail')
+                log(
+                    {"origin": "Raw Data", "error_type": "Data Integrity", "error": k},
+                    status="fail",
+                )
                 print("Error in: ", k)
 
         return False
@@ -111,8 +126,7 @@ def main():
 
     output_path = "/".join([os.getenv("OUTPUT_DIR"), os.getenv("RAW_NAME")]) + ".csv"
 
-    config_url = os.getenv("CONFIG_URL")
-    config = yaml.load(requests.get(config_url).text, Loader=yaml.FullLoader)
+    config = get_config()
 
     data = _read_data(config)
 

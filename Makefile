@@ -26,10 +26,11 @@ loader-shell: loader-build
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
 
-loader-create-env:
-	virtualenv loader_venv
-	source loader_venv/bin/activate; \
-			pip3 install --upgrade -r requirements.txt; 
+loader-create-env-analysis:
+	virtualenv .loader-anaylsis
+	source .loader-anaylsis/bin/activate; \
+			pip3 install --upgrade -r requirements-analysis.txt; \
+			python -m ipykernel install --user --name=loader-anaylsis
 
 # Server
 server-build:

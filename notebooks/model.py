@@ -20,130 +20,33 @@ from scipy.interpolate import interp1d
 from pygam import GammaGAM, PoissonGAM, s, l
 from sklearn.utils import resample
 
-# urls
-CITY_DATA_URL = 'https://raw.githubusercontent.com/wcota/covid19br/master/cases-brazil-cities-time.csv'
-STATE_DATA_URL = 'https://raw.githubusercontent.com/wcota/covid19br/master/cases-brazil-cities-time.csv'
+# Organizing params
+from src.loader.utils import get_config
+config = get_config("https://raw.githubusercontent.com/ImpulsoGov/simulacovid/master/src/configs/config.yaml")
 
-# We create an array for every possible value of Rt
-R_T_MAX = 12
-r_t_range = np.linspace(0, R_T_MAX, R_T_MAX*100+1)
-
-# best sigma for Brazil (prior hyperparameters)
-#OPTIMAL_SIGMA = 0.35 # through Kevin's Optimization
-OPTIMAL_SIGMA = 0.01
-
-# Gamma is 1/serial interval
-# https://wwwnc.cdc.gov/eid/article/26/7/20-0282_article
-# https://www.nejm.org/doi/full/10.1056/NEJMoa2001316
-GAMMA = 1/7
+PARAMS_SOURCES = {
+    'LOFT': {'r_t_range': np.linspace(0, 12, 12*100+1),
+             'optimal_sigma': 0.01, # best sigma for Brazil (prior hyperparameters)
+             'serial_interval': 7, # https://wwwnc.cdc.gov/eid/article/26/7/20-0282_article
+             'window_size': 7,
+             'gaussian_kernel_std': 2,
+             'gaussian_min_periods': 7,
+             'gamma_alpha': 4,
+     },
+    'ACT_NOW': {'r_t_range': np.linspace(0, 10, 501),
+             'optimal_sigma': 0.25, # keeping calculated for Brasil
+             'serial_interval': config['br']['seir_parameters']['mild_duration']*0.5 + config['br']['seir_parameters']['incubation_period'],
+             'window_size': 5,
+             'gaussian_kernel_std': 5,
+             'gaussian_min_periods': 5,
+             'gamma_alpha': 2.5,
+     },
+}
 
 # recovery rate (1 / recovery time)
-RECOVERY_RATE = 1 / 14
+# RECOVERY_RATE = 1 / 14
 
-def load_data():
-
-    """
-    Loads state and city data from wcota repository
-
-    Returns
-    ----------
-    city_df: city data
-    state_df: state data (Brazil)
-
-    """
-
-    city_df = (
-                pd.read_csv(CITY_DATA_URL, parse_dates=['date'])
-                .rename(columns={'totalCases':'confirmed_total',
-                                 'newCases': 'confirmed_new',
-                                 'deaths': 'deaths_total',
-                                 'newDeaths': 'deaths_new'})
-                .drop(['ibgeID','country','state'], axis=1)
-                .assign(city = lambda x: x['city'].replace('TOTAL', 'Brazil'))
-                .groupby(['city','date']).sum()
-            )
-
-    state_df = (
-                pd.read_csv(STATE_DATA_URL, parse_dates=['date'])
-                .rename(columns={'totalCases':'confirmed_total',
-                                 'newCases': 'confirmed_new',
-                                 'deaths': 'deaths_total',
-                                 'newDeaths': 'deaths_new'})
-                .drop(['ibgeID','country','city',
-                       'deaths_per_100k_inhabitants',
-                       'totalCases_per_100k_inhabitants',
-                       'deaths_by_totalCases'], axis=1)
-                .assign(state = lambda x: x['state'].replace('TOTAL', 'Brazil'))
-                .groupby(['state','date']).sum()
-                )
-
-    return city_df, state_df
-
-def tidy_raw_time_series_data(df_raw, index_str):
-  
-  # setting index for time series
-  df = (
-         df_raw
-         .set_index(['Province/State','Country/Region','Lat','Long'])
-        )
-
-  # creating multi index for slicing
-  # also converting dates to datetime
-  df.columns = pd.MultiIndex.from_product([[index_str], pd.to_datetime(df.columns)])
-  df = df.sort_index(axis=1).stack()
-  
-  return df
-
-def load_johns_hopkins_data():
-  
-  # downloading data for confirmed, deaths and recoveries
-  confirmed_raw=pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv')
-  deaths_raw=pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
-  
-  # tidying the data
-  confirmed = tidy_raw_time_series_data(confirmed_raw, 'confirmed')
-  deaths = tidy_raw_time_series_data(deaths_raw, 'deaths')
-  
-  # let us concat these dfs and then we're ready
-  df = (
-        pd.concat([confirmed, deaths], axis=1)
-        .reset_index()
-        .rename(columns={'level_4':'date', 
-                         'Province/State':'province',
-                         'Country/Region':'country',
-                         'confirmed':'confirmed_total',
-                         'deaths':'deaths_total'})
-        .drop(['Lat', 'Long', 'province'], axis=1)
-        .query('confirmed_total != 0')
-        .groupby(['country','date']).sum()
-       )
-  
-  # calculating new cases
-  df['confirmed_new'] = df['confirmed_total'].groupby('country').diff()
-  df['deaths_new'] = df['deaths_total'].groupby('country').diff()
-  
-  return df
-
-def load_data_us():
-    url = 'https://covidtracking.com/api/v1/states/daily.csv'
-    state_df = pd.read_csv(url,
-                        usecols=['date', 'state', 'positive'],
-                        parse_dates=['date'],
-                        index_col=['state', 'date'],
-                        squeeze=True).sort_index()
-
-    state_df = (state_df
-                .to_frame()
-                .rename(columns={'positive':'confirmed_total'})
-                .loc[lambda x: x['confirmed_total'] > 0])
-
-    state_df['confirmed_new'] = state_df['confirmed_total'].groupby(level='state').diff()
-    state_df = state_df.dropna().clip(lower=0)
-
-    return state_df
-
-
-def smooth_new_cases(new_cases):
+def smooth_new_cases(new_cases, PARAMS):
     
     """
     Function to apply gaussian smoothing to cases
@@ -163,10 +66,15 @@ def smooth_new_cases(new_cases):
     https://github.com/k-sys/covid-19/blob/master/Realtime%20R0.ipynb
     """
 
-    smoothed_cases = new_cases.rolling(7,
-        win_type='gaussian',
-        min_periods=1,
-        center=True).mean(std=2).round()
+#     smoothed_cases = new_cases.rolling(7,
+#         win_type='gaussian',
+#         min_periods=1,
+#         center=True).mean(std=2).round()
+
+    smoothed_cases = new_cases.rolling(PARAMS['window_size'],
+                                    win_type='gaussian',
+                                    min_periods=1,
+                                    center=True).mean(std=PARAMS['gaussian_kernel_std']).round()
     
     zeros = smoothed_cases.index[smoothed_cases.eq(0)]
     if len(zeros) == 0:
@@ -180,7 +88,7 @@ def smooth_new_cases(new_cases):
     return original, smoothed_cases
 
 
-def calculate_posteriors(sr, sigma=0.15):
+def calculate_posteriors(sr, PARAMS):
 
     """
     Function to calculate posteriors of Rt over time
@@ -205,31 +113,31 @@ def calculate_posteriors(sr, sigma=0.15):
     """
 
     # (1) Calculate Lambda
-    lam = sr[:-1].values * np.exp(GAMMA * (r_t_range[:, None] - 1))
+    lam = sr[:-1].values * np.exp((PARAMS['r_t_range'][:, None] - 1) / PARAMS['serial_interval'])
 
     
     # (2) Calculate each day's likelihood
     likelihoods = pd.DataFrame(
         data = sps.poisson.pmf(sr[1:].values, lam),
-        index = r_t_range,
+        index = PARAMS['r_t_range'],
         columns = sr.index[1:])
     
     # (3) Create the Gaussian Matrix
-    process_matrix = sps.norm(loc=r_t_range,
-                              scale=sigma
-                             ).pdf(r_t_range[:, None]) 
+    process_matrix = sps.norm(loc=PARAMS['r_t_range'],
+                              scale=PARAMS['optimal_sigma']
+                             ).pdf(PARAMS['r_t_range'][:, None]) 
 
     # (3a) Normalize all rows to sum to 1
     process_matrix /= process_matrix.sum(axis=0)
     
     # (4) Calculate the initial prior
-    prior0 = sps.gamma(a=4).pdf(r_t_range)
+    prior0 = sps.gamma(a=PARAMS['gamma_alpha']).pdf(PARAMS['r_t_range'])
     prior0 /= prior0.sum()
 
     # Create a DataFrame that will hold our posteriors for each day
     # Insert our prior as the first posterior.
     posteriors = pd.DataFrame(
-        index=r_t_range,
+        index=PARAMS['r_t_range'],
         columns=sr.index,
         data={sr.index[0]: prior0}
     )
@@ -255,6 +163,8 @@ def calculate_posteriors(sr, sigma=0.15):
         
         # Add to the running sum of log likelihoods
         log_likelihood += np.log(denominator)
+        
+    # start_idx = -len(posteriors.columns) ??
     
     return posteriors, log_likelihood
 
@@ -306,6 +216,25 @@ def highest_density_interval(pmf, p=.9):
 
     return interval
 
+def run_full_model(cases, source='LOFT'):
+    
+    PARAMS = PARAMS_SOURCES[source]
+
+    # initializing result dict
+    result = {''}
+
+    # smoothing series
+    new, smoothed = smooth_new_cases(cases, PARAMS)
+
+    # calculating posteriors
+    posteriors, log_likelihood = calculate_posteriors(smoothed, PARAMS)
+
+    # calculating HDI
+    result = highest_density_interval(posteriors, p=.9)
+
+    return result
+
+# ============ // PLOTTING // =============
 
 def plot_rt(result, ax, state_name):
     
@@ -454,101 +383,85 @@ def plot_standings(mr, figsize=None, title='Most Recent $R_t$ by State'):
     fig.set_facecolor('w')
     return fig, ax
 
-def run_full_model(cases, sigma=OPTIMAL_SIGMA):
 
-    # initializing result dict
-    result = {''}
-
-    # smoothing series
-    new, smoothed = smooth_new_cases(cases)
-
-    # calculating posteriors
-    posteriors, log_likelihood = calculate_posteriors(smoothed, sigma=sigma)
-
-    # calculating HDI
-    result = highest_density_interval(posteriors, p=.9)
-
-    return result
-
-
-def estimate_gam(series, n_splines=25, algo=PoissonGAM, n_bootstrap=100):
+# def estimate_gam(series, n_splines=25, algo=PoissonGAM, n_bootstrap=100):
     
-    X = np.arange(series.shape[0])
-    y = series.values
+#     X = np.arange(series.shape[0])
+#     y = series.values
 
-    # running GAM in bootstrap
-    bootstrap = []
-    for _ in range(n_bootstrap):
+#     # running GAM in bootstrap
+#     bootstrap = []
+#     for _ in range(n_bootstrap):
 
-        weights = dirichlet([1] * series.shape[0]).rvs(1)
+#         weights = dirichlet([1] * series.shape[0]).rvs(1)
 
-        gam = algo(s(0, n_splines) + l(0))
-        gam.fit(X, y, weights=weights[0])
+#         gam = algo(s(0, n_splines) + l(0))
+#         gam.fit(X, y, weights=weights[0])
 
-        bootstrap.append(gam)
+#         bootstrap.append(gam)
     
-    preds = pd.DataFrame([m.predict(X) for m in bootstrap]).T
+#     preds = pd.DataFrame([m.predict(X) for m in bootstrap]).T
 
-    return preds
+#     return preds
 
-def fit_gam(series, n_splines=25, algo=PoissonGAM, n_bootstrap=100):
+# def fit_gam(series, n_splines=25, algo=PoissonGAM, n_bootstrap=100):
     
-    X = np.arange(series.shape[0])
-    y = series.values
+#     X = np.arange(series.shape[0])
+#     y = series.values
 
-    # running GAM in bootstrap
-    bootstrap = []
-    for _ in range(n_bootstrap):
+#     # running GAM in bootstrap
+#     bootstrap = []
+#     for _ in range(n_bootstrap):
 
-        weights = dirichlet([1] * series.shape[0]).rvs(1)
+#         weights = dirichlet([1] * series.shape[0]).rvs(1)
 
-        gam = algo(s(0, n_splines) + l(0))
-        gam.fit(X, y, weights=weights[0])
+#         gam = algo(s(0, n_splines) + l(0))
+#         gam.fit(X, y, weights=weights[0])
 
-        bootstrap.append(gam)
+#         bootstrap.append(gam)
 
-    return bootstrap
+#     return bootstrap
 
-def run_gam_effective_r_from_counts(state_data, n_splines=25, algo=PoissonGAM, n_bootstrap=100):
+# def run_gam_effective_r_from_counts(state_data, n_splines=25, algo=PoissonGAM, n_bootstrap=100):
 
-    estimate_total = estimate_gam(state_data['confirmed_total'], n_splines, algo, n_bootstrap)
-    estimate_new = estimate_gam(state_data['confirmed_new'], n_splines, algo, n_bootstrap)
+#     estimate_total = estimate_gam(state_data['confirmed_total'], n_splines, algo, n_bootstrap)
+#     estimate_new = estimate_gam(state_data['confirmed_new'], n_splines, algo, n_bootstrap)
 
-    Rt_samples = estimate_new / estimate_total.shift(1) * (1/RECOVERY_RATE)
-    estimate_rt = pd.DataFrame(index = state_data.index)
-    estimate_rt['ML'] = Rt_samples.mean(axis=1).values
-    estimate_rt['Low_90'] = Rt_samples.quantile(0.05, axis=1).values
-    estimate_rt['High_90'] = Rt_samples.quantile(0.95, axis=1).values
+#     Rt_samples = estimate_new / estimate_total.shift(1) * (1/RECOVERY_RATE)
+#     estimate_rt = pd.DataFrame(index = state_data.index)
+#     estimate_rt['ML'] = Rt_samples.mean(axis=1).values
+#     estimate_rt['Low_90'] = Rt_samples.quantile(0.05, axis=1).values
+#     estimate_rt['High_90'] = Rt_samples.quantile(0.95, axis=1).values
 
-    return estimate_rt.dropna()
+#     return estimate_rt.dropna()
 
-def run_gam_effective_r_from_empirical(state_data, n_splines=25, algo=GammaGAM, n_bootstrap=100):
+# def run_gam_effective_r_from_empirical(state_data, n_splines=25, algo=GammaGAM, n_bootstrap=100):
 
-    # for numerical stability
-    epsilon = 1
+#     # for numerical stability
+#     epsilon = 1
 
-    R_series = (state_data['confirmed_new'] / state_data['confirmed_total'].shift(1)).dropna() * 1/RECOVERY_RATE
+#     R_series = (state_data['confirmed_new'] / state_data['confirmed_total'].shift(1)).dropna() * 1/RECOVERY_RATE
 
-    X = np.arange(R_series.shape[0])
-    y = R_series.values + epsilon
+#     X = np.arange(R_series.shape[0])
+#     y = R_series.values + epsilon
 
-    # running GAM in bootstrap
-    bootstrap = []
-    for _ in range(n_bootstrap):
+#     # running GAM in bootstrap
+#     bootstrap = []
+#     for _ in range(n_bootstrap):
 
-        weights = dirichlet([1] * R_series.shape[0]).rvs(1)
+#         weights = dirichlet([1] * R_series.shape[0]).rvs(1)
 
-        gam = algo(s(0, n_splines) + l(0))
-        gam.fit(X, y, weights=weights[0])
+#         gam = algo(s(0, n_splines) + l(0))
+#         gam.fit(X, y, weights=weights[0])
 
-        bootstrap.append(gam)
+#         bootstrap.append(gam)
 
-    preds = pd.DataFrame([m.predict(X) - epsilon for m in bootstrap]).T
+#     preds = pd.DataFrame([m.predict(X) - epsilon for m in bootstrap]).T
 
-    estimate_rt = pd.DataFrame(index = R_series.index)
-    estimate_rt['ML'] = preds.mean(axis=1).values
-    estimate_rt['Low_90'] = preds.quantile(0.05, axis=1).values
-    estimate_rt['High_90'] = preds.quantile(0.95, axis=1).values
+#     estimate_rt = pd.DataFrame(index = R_series.index)
+#     estimate_rt['ML'] = preds.mean(axis=1).values
+#     estimate_rt['Low_90'] = preds.quantile(0.05, axis=1).values
+#     estimate_rt['High_90'] = preds.quantile(0.95, axis=1).values
 
-    return estimate_rt.dropna()
+#     return estimate_rt.dropna()
 

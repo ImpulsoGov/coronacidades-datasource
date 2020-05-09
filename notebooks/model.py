@@ -27,7 +27,7 @@ config = get_config("https://raw.githubusercontent.com/ImpulsoGov/simulacovid/ma
 PARAMS_SOURCES = {
     'LOFT': {'r_t_range': np.linspace(0, 12, 12*100+1),
              'optimal_sigma': 0.01, # best sigma for Brazil (prior hyperparameters)
-             'serial_interval': 7, # https://wwwnc.cdc.gov/eid/article/26/7/20-0282_article
+             'serial_interval': config['br']['seir_parameters']['mild_duration']*0.5 + config['br']['seir_parameters']['incubation_period'], # https://wwwnc.cdc.gov/eid/article/26/7/20-0282_article
              'window_size': 7,
              'gaussian_kernel_std': 2,
              'gaussian_min_periods': 7,
@@ -212,7 +212,9 @@ def highest_density_interval(pmf, p=.9):
     high = pmf.index[highs[best]]
     most_likely = pmf.idxmax(axis=0)
 
-    interval = pd.Series([most_likely, low, high], index=['ML',f'Low_{p*100:.0f}', f'High_{p*100:.0f}'])
+    interval = pd.Series([most_likely, low, high], index=['Rt_most_likely',
+                                                          f'Rt_low_{p*100:.0f}',
+                                                          f'Rt_high_{p*100:.0f}'])
 
     return interval
 
@@ -268,8 +270,8 @@ def plot_rt(result, ax, state_name):
     ])
     color_mapped = lambda y: np.clip(y, .5, 1.5)-.5
     
-    index = result['ML'].index.get_level_values('date')
-    values = result['ML'].values
+    index = result['Rt_most_likely'].index.get_level_values('date')
+    values = result['Rt_most_likely'].values
     
     # Plot dots and line
     ax.plot(index, values, c='k', zorder=1, alpha=.25)
@@ -282,12 +284,12 @@ def plot_rt(result, ax, state_name):
     
     # Aesthetically, extrapolate credible interval by 1 day either side
     lowfn = interp1d(date2num(index),
-                     result['Low_90'].values,
+                     result['Rt_low_90'].values,
                      bounds_error=False,
                      fill_value='extrapolate')
     
     highfn = interp1d(date2num(index),
-                      result['High_90'].values,
+                      result['Rt_high_90'].values,
                       bounds_error=False,
                       fill_value='extrapolate')
     

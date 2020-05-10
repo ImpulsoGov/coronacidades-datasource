@@ -10,6 +10,9 @@ from logger import log
 import get_cases, get_embaixadores, get_health
 from utils import get_last
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def _get_supplies(cities, updates, country, config):
 
@@ -40,7 +43,7 @@ def _get_supplies(cities, updates, country, config):
 
 def _read_data(config):
 
-    cases = get_cases.now("br", config)
+    # get health & population data 
     updates = get_embaixadores.now("br", config)
     cities = get_health.now("br", config)
 
@@ -64,7 +67,8 @@ def _read_data(config):
         ]
     ].merge(supplies, on="city_id")
 
-    # merge cities
+    # merge cases
+    cases = get_cases.now("br", config)
     df = df.merge(cases, on="city_id", how="left")
 
     # get notification for cities without cases
@@ -89,9 +93,9 @@ def _write_data(data, output_path):
 def _test_data(data):
 
     tests = {
-        "len(data) != 5570": len(data) == 5570,
+        "len(data) != 5570": len(data['city_id'].unique()) == 5570,
         "data is not pd.DataFrame": isinstance(data, pd.DataFrame),
-        "notification_rate == NaN": len(data[data['notification_rate'].isnull()==True].values) == 0
+        "notification_rate == NaN": len(data[(data['notification_rate'].isnull()==True) & (data['is_last']==True)].values) == 0
     }
 
     if not all(tests.values()):

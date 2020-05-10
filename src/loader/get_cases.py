@@ -78,7 +78,7 @@ def now(country, config):
 
         df['active_cases'] = round(df['infectious_period_cases'] / df['notification_rate'], 0)
 
-        df = df[df['is_last'] == True].drop(cases_params['drop'], 1)
+        # df = df[df['is_last'] == True].drop(cases_params['drop'], 1)
         df['city_id'] = df['city_id'].astype(int)
 
     return df

@@ -66,11 +66,6 @@ def smooth_new_cases(new_cases, PARAMS):
     https://github.com/k-sys/covid-19/blob/master/Realtime%20R0.ipynb
     """
 
-#     smoothed_cases = new_cases.rolling(7,
-#         win_type='gaussian',
-#         min_periods=1,
-#         center=True).mean(std=2).round()
-
     smoothed_cases = new_cases.rolling(PARAMS['window_size'],
                                     win_type='gaussian',
                                     min_periods=1,
@@ -82,6 +77,7 @@ def smooth_new_cases(new_cases, PARAMS):
     else:
         last_zero = zeros.max()
         idx_start = smoothed_cases.index.get_loc(last_zero) + 1
+    
     smoothed_cases = smoothed_cases.iloc[idx_start:]
     original = new_cases.loc[smoothed_cases.index]
     
@@ -169,7 +165,7 @@ def calculate_posteriors(sr, PARAMS):
     return posteriors, log_likelihood
 
 
-def highest_density_interval(pmf, p=.9):
+def highest_density_interval(pmf, p=.95):
 
     """
     Function to calculate highest density interval 
@@ -232,7 +228,7 @@ def run_full_model(cases, source='LOFT'):
     posteriors, log_likelihood = calculate_posteriors(smoothed, PARAMS)
 
     # calculating HDI
-    result = highest_density_interval(posteriors, p=.9)
+    result = highest_density_interval(posteriors, p=.95)
 
     return result
 
@@ -270,7 +266,7 @@ def plot_rt(result, ax, state_name):
     ])
     color_mapped = lambda y: np.clip(y, .5, 1.5)-.5
     
-    index = result['Rt_most_likely'].index.get_level_values('date')
+    index = result['Rt_most_likely'].index.get_level_values('last_updated')
     values = result['Rt_most_likely'].values
     
     # Plot dots and line
@@ -284,12 +280,12 @@ def plot_rt(result, ax, state_name):
     
     # Aesthetically, extrapolate credible interval by 1 day either side
     lowfn = interp1d(date2num(index),
-                     result['Rt_low_90'].values,
+                     result['Rt_low_95'].values,
                      bounds_error=False,
                      fill_value='extrapolate')
     
     highfn = interp1d(date2num(index),
-                      result['Rt_high_90'].values,
+                      result['Rt_high_95'].values,
                       bounds_error=False,
                       fill_value='extrapolate')
     
@@ -321,7 +317,7 @@ def plot_rt(result, ax, state_name):
     ax.grid(which='major', axis='y', c='k', alpha=.1, zorder=-2)
     ax.margins(0)
     ax.set_ylim(0.0, 5.0)
-    ax.set_xlim(pd.Timestamp('2020-03-01'), result.index.get_level_values('date')[-1]+pd.Timedelta(days=1)) 
+    ax.set_xlim(pd.Timestamp('2020-03-01'), result.index.get_level_values('last_updated')[-1]+pd.Timedelta(days=1)) 
 
 
 def plot_standings(mr, figsize=None, title='Most Recent $R_t$ by State'):
@@ -347,7 +343,7 @@ def plot_standings(mr, figsize=None, title='Most Recent $R_t$ by State'):
     fig, ax = plt.subplots(figsize=figsize, dpi=150)
 
     ax.set_title(title)
-    err = mr[['Low_90', 'High_90']].sub(mr['ML'], axis=0).abs()
+    err = mr[['Low_95', 'High_95']].sub(mr['ML'], axis=0).abs()
     bars = ax.bar(mr.index,
                   mr['ML'],
                   width=.825,

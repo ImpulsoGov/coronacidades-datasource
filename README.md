@@ -16,7 +16,7 @@ make server-build-run
 ```
 
 You should see something at `localhost:80/<endpoint>`, like
-`http://localhost:80/v1/raw/csv`
+`http://localhost:7000/v1/raw/csv`
 
  # Debug it
 

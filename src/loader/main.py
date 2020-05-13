@@ -13,9 +13,6 @@ from utils import get_last, get_config
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
-
 
 def _get_supplies(cities, updates, country, config):
 
@@ -76,22 +73,12 @@ def _read_data(config, last=True):
     df = df.merge(cases, on="city_id", how="left")
 
     # get notification for cities without cases
-    state_notification = (
-        df[["state_notification_rate", "state_id"]]
-        .dropna()
-        .drop_duplicates()
-        .set_index("state_id")
-    )
+    df['state_notification_rate'] = df['state_notification_rate'].fillna(-1)
+        
     df["notification_rate"] = np.where(
         df["notification_rate"].isnull(),
-        state_notification.loc[df["state_id"]].values[0],
-        df["notification_rate"],
-    )
-
-    df["state_notification_rate"] = np.where(
-        df["state_notification_rate"].isnull(),
-        state_notification.loc[df["state_id"]].values[0],
         df["state_notification_rate"],
+        df["notification_rate"]
     )
 
     return df.fillna(0)

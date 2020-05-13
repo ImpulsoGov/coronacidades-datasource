@@ -72,9 +72,7 @@ def _read_data(config, last=True):
     cases = get_cases.now("br", config, last=False)
     df = df.merge(cases, on="city_id", how="left")
 
-    # get notification for cities without cases
-    df['state_notification_rate'] = df['state_notification_rate'].fillna(-1)
-        
+    # get notification for cities without cases        
     df["notification_rate"] = np.where(
         df["notification_rate"].isnull(),
         df["state_notification_rate"],

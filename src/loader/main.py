@@ -109,11 +109,6 @@ def _test_data(data):
         "len(data) != 5570": len(data['city_id'].unique()) == 5570,
         "data is not pd.DataFrame": isinstance(data, pd.DataFrame),
         "notification_rate == NaN": len(data[(data['notification_rate'].isnull()==True) & (data['is_last']==True)].values) == 0
-<<<<<<< HEAD
-        )
-        == 0,
-=======
->>>>>>> heatmap-deaths
     }
 
     if not all(tests.values()):

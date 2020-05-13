@@ -81,7 +81,7 @@ def _read_data(config, last=True):
         df["notification_rate"]
     )
 
-    return df.fillna(0)
+    return df
 
 
 def _write_data(data, output_path):

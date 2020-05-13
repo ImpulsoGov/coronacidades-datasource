@@ -107,7 +107,7 @@ def plot_rt(t, title):
        ))
 
     fig.layout.yaxis.rangemode = 'tozero'
-    # fig.layout.yaxis.range = [0,5]
+    fig.layout.yaxis.range = [0,50]
 
     fig.update_layout(template='plotly_white', 
                       title=title)

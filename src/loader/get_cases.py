@@ -43,6 +43,10 @@ def _adjust_subnotification_cases(df, config):
     df["notification_rate"] = np.where(df["notification_rate"] > 1, 
                                         1, 
                                         df["notification_rate"])
+
+    df["state_notification_rate"] = np.where(df["state_notification_rate"] > 1, 
+                                            1, 
+                                            df["state_notification_rate"])
     
     return df[["city_id", "state_notification_rate", "notification_rate", "last_updated"]].drop_duplicates()
 

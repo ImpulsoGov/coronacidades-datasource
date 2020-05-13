@@ -1,3 +1,4 @@
 build:
   docker:
-    web: Dockerfile
+    server: server.dockerfile
+    loader: loader.dockerfile

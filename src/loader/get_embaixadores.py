@@ -3,31 +3,34 @@ from utils import treat_text, download_from_drive
 
 
 def now(country, config):
-    
-    updates = download_from_drive(config[country]['drive_paths']['embaixadores'])
-    
+
+    updates = download_from_drive(config[country]["drive_paths"]["embaixadores"])
+
     # change column names
     updates.columns = [
-        'timestamp',
-        'email',
-        'city_norm',
-        'state_id',
-        'name',
-        'last_updated',
-        'number_ventilators',
-        'number_beds',
-        'n_casos',
-        'n_mortes',
-        'number_icu_beds'
+        "timestamp",
+        "email",
+        "city_norm",
+        "state_id",
+        "name",
+        "last_updated",
+        "number_ventilators",
+        "number_beds",
+        "n_casos",
+        "n_mortes",
+        "number_icu_beds",
+        "number_available_ventilators",
+        "number_tota_icu_beds",
+        "source",
     ]
-    
+
     # treat text
-    c = ['city_norm']
+    c = ["city_norm"]
     updates[c] = updates[c].apply(treat_text)
 
     # treat timestamp
-    updates['last_updated'] = updates['timestamp'].apply(pd.to_datetime)
-    
+    updates["last_updated"] = updates["timestamp"].apply(pd.to_datetime)
+
     return updates
 
 

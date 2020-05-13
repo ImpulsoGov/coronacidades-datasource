@@ -3,6 +3,7 @@ src/venv/
 loader_venv/
 .loader-anaylsis
 output/
+.loader-anaylsis/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,9 +1,18 @@
+# Analysis
 output/
 notebooks/*.csv
 notebooks/draft*
 
+# Venvs
+loader_venv/
+.loader-anaylsis/
+
 # Store files
 .DS_Store
+.vscode/
+
+# Credentials
+src/loader/secrets.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -143,8 +152,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
-loader_venv/
-.vscode/
-src/loader/secrets.yaml
-.loader-anaylsis

@@ -80,15 +80,11 @@ def download_from_drive(url):
 
 def secrets(variable, path="secrets.yaml"):
 
-    local = yaml.load(open(path, "r"), Loader=yaml.FullLoader)
-
-    if local.get(variable):
-        return local[variable]
-    else:
+    if os.getenv(variable):
         return os.getenv(variable)
-
+    else:
+        return yaml.load(open(path, "r"), Loader=yaml.FullLoader)[variable]
 
 def get_config(url=os.getenv("CONFIG_URL")):
 
     return yaml.load(requests.get(url).text, Loader=yaml.FullLoader)
-

@@ -13,6 +13,9 @@ from utils import get_last, get_config
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def _get_supplies(cities, updates, country, config):
 
@@ -106,8 +109,11 @@ def _test_data(data):
         "len(data) != 5570": len(data['city_id'].unique()) == 5570,
         "data is not pd.DataFrame": isinstance(data, pd.DataFrame),
         "notification_rate == NaN": len(data[(data['notification_rate'].isnull()==True) & (data['is_last']==True)].values) == 0
+<<<<<<< HEAD
         )
         == 0,
+=======
+>>>>>>> heatmap-deaths
     }
 
     if not all(tests.values()):

@@ -63,6 +63,24 @@ def _get_active_cases(df, window_period, cases_params):
 
     return df
 
+def _correct_cumulative_cases(df):
+
+    # Corrije acumulado para o valor máximo até a data
+    df['confirmed_cases'] = df.groupby('city_id')\
+                              .cummax()['confirmed_cases']
+
+    # Recalcula casos diários
+    df['daily_cases'] = df.groupby('city_id')['confirmed_cases']\
+                          .diff(1)
+
+    # Ajusta 1a dia para o acumulado
+    df['daily_cases'] = np.where(
+                            df['daily_cases'].isnull() == True, 
+                            df['confirmed_cases'], 
+                            df['daily_cases']
+                        )
+    return df
+
 def now(country, config, last=True):
 
     if country == "br":
@@ -72,28 +90,33 @@ def now(country, config, last=True):
         cases_params = config["br"]["cases"]
         df = df.rename(columns=cases_params["rename"])
         df["last_updated"] = pd.to_datetime(df["last_updated"])
+        
+        # Corrije dados acumulados
+        df = _correct_cumulative_cases(df)
 
+        # Calcula casos ativos estimados
+        
+        # 1. Calcula casos ativos = novos casos no período de progressão
         infectious_period = config["br"]["seir_parameters"]["severe_duration"] + \
-                            config["br"]["seir_parameters"]["critical_duration"]
+                    config["br"]["seir_parameters"]["critical_duration"]
 
-        # Calcula casos ativos
         df = _get_active_cases(df, infectious_period, cases_params).rename(
             columns=cases_params["rename"]
         )
 
-        # Ajusta subnotificação de casos
         df = df.merge(
             _adjust_subnotification_cases(df, config), 
             on=["city_id", "last_updated"]
         )
-
-        df["active_cases"] = round(
-            df["infectious_period_cases"] / df["notification_rate"], 
-            0
-        )
+        # 2. Ajusta pela taxa de subnotificacao: quando não tem morte ainda na UF, não ajustamos
+        df["active_cases"] = np.where(
+                                df["notification_rate"].isnull(),
+                                round(df["infectious_period_cases"], 0),
+                                round(df["infectious_period_cases"] / df["notification_rate"], 0)
+                            )
 
         if last:
-            df = df[df["is_last"] == True].drop(cases_params["drop"], 1)
+            df = df[df["is_last"] == last].drop(cases_params["drop"], 1)
         
         df["city_id"] = df["city_id"].astype(int)
 

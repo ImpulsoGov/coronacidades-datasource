@@ -79,6 +79,8 @@ def _read_data(config, last=True):
         df["notification_rate"]
     )
 
+    df["last_updated"] = pd.to_datetime(df["last_updated"])
+
     return df
 
 

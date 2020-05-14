@@ -6,97 +6,28 @@ import yaml
 from datetime import datetime
 import numpy as np
 
+import importlib
+
 from logger import log
-import get_cases, get_embaixadores, get_health
 from utils import get_last, get_config
 
 import ssl
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def _get_supplies(cities, updates, country, config):
+def _write_data(data, endpoint):
 
-    final_cols = config[country]["columns"]["final"]
-
-    final = []
-    for h in config[country]["columns"]["health"]:
-        u = updates.rename(columns={"name": "author"})[final_cols + [h]].dropna(
-            subset=[h]
-        )
-        u = get_last(u)
-        cities["author"] = config[country]["health"]["source"]
-        c = cities.rename(columns={"last_updated_" + h: "last_updated"})[
-            final_cols + [h]
-        ]
-        c[h] = c[h] * config[country]["health"]["initial_proportion"]
-        f = get_last(pd.concat([c, u]))
-        f.columns = (
-            ["city_id"] + [i + "_" + h for i in final_cols if i != "city_id"] + [h]
-        )
-        final.append(deepcopy(f))
-
-    supplies = pd.concat(final, 1)
-    supplies = supplies.loc[:, ~supplies.columns.duplicated()]
-
-    return supplies
-
-
-def _read_data(config, last=True):
-
-    # get health & population data 
-    updates = get_embaixadores.now("br", config)
-    cities = get_health.now("br", config)
-
-    # add ambassadors updates
-    updates = cities[["state_id", "city_norm", "city_id"]].merge(
-        updates, on=["state_id", "city_norm"], how="right"
+    output_path = (
+        "/".join([os.getenv("OUTPUT_DIR"), endpoint["endpoint"].replace("/", "-")])
+        + ".csv"
     )
-
-    supplies = _get_supplies(cities, updates, "br", config)
-
-    # merge cities & supplies
-    df = cities[
-        [
-            "country_iso",
-            "country_name",
-            "state_id",
-            "state_name",
-            "city_id",
-            "city_name",
-            "population",
-            "health_system_region",
-        ]
-    ].merge(supplies, on="city_id")
-
-    # merge cases
-    cases = get_cases.now("br", config, last=False)
-    df = df.merge(cases, on="city_id", how="left")
-
-    # get notification for cities without cases        
-    df["notification_rate"] = np.where(
-        df["notification_rate"].isnull(),
-        df["state_notification_rate"],
-        df["notification_rate"]
-    )
-
-    df["last_updated"] = pd.to_datetime(df["last_updated"])
-
-    return df
-
-
-def _write_data(data, output_path):
 
     data["data_last_refreshed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     data.to_csv(output_path, index=False)
 
 
-def _test_data(data):
-
-    tests = {
-        "len(data) != 5570": len(data['city_id'].unique()) == 5570,
-        "data is not pd.DataFrame": isinstance(data, pd.DataFrame),
-        "notification_rate == NaN": len(data[(data['notification_rate'].isnull()==True) & (data['is_last']==True)].values) == 0
-    }
+def _test_data(data, tests):
 
     if not all(tests.values()):
 
@@ -114,17 +45,15 @@ def _test_data(data):
         return True
 
 
-def main():
+def main(endpoint):
 
-    output_path = "/".join([os.getenv("OUTPUT_DIR"), os.getenv("RAW_NAME")]) + ".csv"
+    runner = importlib.import_module("endpoints.{python_file}".format(endpoint))
 
-    config = get_config()
+    data = runner.now(get_config())
 
-    data = _read_data(config)
+    if _test_data(data, runner.TESTS):
 
-    if _test_data(data):
-        print("Writing Data")
-        _write_data(data, output_path)
+        _write_data(data, endpoint)
 
 
 if __name__ == "__main__":

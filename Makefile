@@ -48,7 +48,7 @@ server-run:
 
 server-build-run: server-build server-run
 
-server-shell:
+server-shell: server-build
 	docker run --rm -it \
 		--entrypoint "/bin/bash" \
 		-p 80:80 \

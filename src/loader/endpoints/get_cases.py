@@ -85,7 +85,7 @@ def _correct_cumulative_cases(df):
                         )
     return df
 
-def now(country, config, last=True):
+def now(config, country="br", last=False):
 
     if country == "br":
         df = pd.read_csv(config[country]["cases"]["url"])
@@ -125,6 +125,25 @@ def now(country, config, last=True):
         df["city_id"] = df["city_id"].astype(int)
 
     return df
+
+TESTS = {
+    "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
+    "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "max(confirmed_cases) != max(date)": lambda df: df.groupby('city_id', sort=True)\
+                                            .max()['confirmed_cases'] != df[
+                                                                            df['is_last'] == True
+                                                                        ].set_index('city_id', sort=True)['confirmed_cases'],           
+    "max(deaths) != max(date)": lambda df: df.groupby('city_id', sort=True)\
+                                    .max()['deaths'] != df[
+                                                        df['is_last'] == True
+                                                    ].set_index('city_id', sort=True)['deaths'],
+    "notification_rate == NaN": lambda df: len(
+        df[
+            (df["notification_rate"].isnull() == True) & (df["is_last"] == True)
+        ].values
+    )
+    == 0,
+}
 
 
 if __name__ == "__main__":

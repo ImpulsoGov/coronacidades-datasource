@@ -1,33 +1,44 @@
 from flask import Flask
+
 app = Flask(__name__)
 
-import os
 import json
 import pandas as pd
-
-def _get_raw_data():
-
-    output_path= '/'.join([os.getenv('OUTPUT_DIR'),
-                           os.getenv('RAW_NAME')]) + '.csv'
-
-    return pd.read_csv(output_path)
+import os
+import yaml
 
 
-@app.route("/v1/raw/json")
-def get_raw_json():
-    
-    data = _get_raw_data()
-
-    return data.to_json(orient='records')
+def get_endpoints(url=os.getenv("ENDPOINTS_URL")):
+    return yaml.load(requests.get(url).text, Loader=yaml.FullLoader)
 
 
-@app.route("/v1/raw/csv")
-def get_raw_csv():
+def _load_data(entry):
 
-    data = _get_raw_data()
+    path = "/".join([os.getenv("OUTPUT_DIR"), entry.replace("/", "-")]) + ".csv"
+
+    data = pd.read_csv(path)
 
     return data.to_csv(index=False)
 
+
+@app.route("/<path:entry>")
+def index(entry):
+
+    if entry is None:
+        return "This is an API"  # for example
+    else:
+
+        try:
+            return _load_data(entry)
+        except FileNotFoundError:
+            return (
+                "This endpoint does not exist\n"
+                "Please try one of the following:\n "
+                "\n".join([e["endpoint"] for e in get_endpoints()])
+            )
+
+
 if __name__ == "__main__":
+
     # Only for debugging while developing
-    app.run(host='0.0.0.0', debug=True, port=7000)
+    app.run(host="0.0.0.0", debug=True, port=80)

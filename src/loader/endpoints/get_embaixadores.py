@@ -1,9 +1,9 @@
 import pandas as pd
 from utils import treat_text, download_from_drive
 
+def now(config, country="br"):
 
-def now(country, config):
-
+    # print(config[country]["drive_paths"]["embaixadores"])
     updates = download_from_drive(config[country]["drive_paths"]["embaixadores"])
 
     # change column names
@@ -33,6 +33,9 @@ def now(country, config):
 
     return updates
 
+TESTS = {
+    "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+}
 
 if __name__ == "__main__":
 

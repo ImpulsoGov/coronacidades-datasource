@@ -1,0 +1,15 @@
+- endpoint: br/cities/embaixadores
+  python_file: get_embaixadores
+  update_frequency_minutes: 15
+
+- endpoint: br/cities/cnes
+  python_file: get_health
+  update_frequency_minutes: 15
+
+- endpoint: br/cities/simulacovid/main
+  python_file: get_simulacovid_main
+  update_frequency_minutes: 15
+
+- endpoint: br/cities/cases/full
+  python_file: get_cases
+  update_frequency_minutes: 15

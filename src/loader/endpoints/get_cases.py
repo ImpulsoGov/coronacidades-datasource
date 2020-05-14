@@ -85,7 +85,7 @@ def _correct_cumulative_cases(df):
                         )
     return df
 
-def now(config, country="br", last=True):
+def now(config, country="br", last=False):
 
     if country == "br":
         df = pd.read_csv(config[country]["cases"]["url"])

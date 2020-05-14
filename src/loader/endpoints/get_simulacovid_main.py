@@ -62,7 +62,7 @@ def now(config, last=True):
     ].merge(supplies, on="city_id")
 
     # merge cases
-    cases = get_cases.now(config, "br", last=True)
+    cases = get_cases.now(config, "br", last)
     df = df.merge(cases, on="city_id", how="left")
 
     # get notification for cities without cases

@@ -19,6 +19,8 @@ def handler(endpoint):
 
 def start():
 
+    endpoints = yaml.load(open("endpoints.yaml", "r"))
+
     while True:
 
         for endpoint in endpoints:

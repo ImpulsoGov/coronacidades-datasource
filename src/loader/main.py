@@ -58,4 +58,6 @@ def main(endpoint):
 
 if __name__ == "__main__":
 
-    main()
+    endpoints = yaml.load(open("endpoints.yaml", "r"))
+
+    main(endpoints[0])

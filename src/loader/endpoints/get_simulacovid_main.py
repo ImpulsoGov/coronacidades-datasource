@@ -1,3 +1,12 @@
+from endpoints import get_embaixadores
+from endpoints import get_cases
+from endpoints import get_health
+import pandas as pd
+import numpy as np
+from copy import deepcopy
+
+from utils import get_last
+
 def _get_supplies(cities, updates, country, config):
 
     final_cols = config[country]["columns"]["final"]
@@ -25,23 +34,11 @@ def _get_supplies(cities, updates, country, config):
     return supplies
 
 
-TESTS = {
-    "len(data) != 5570": len(data["city_id"].unique()) == 5570,
-    "data is not pd.DataFrame": isinstance(data, pd.DataFrame),
-    "notification_rate == NaN": len(
-        data[
-            (data["notification_rate"].isnull() == True) & (data["is_last"] == True)
-        ].values
-    )
-    == 0,
-}
-
-
 def now(config, last=True):
 
     # get health & population data
-    updates = get_embaixadores.now("br", config)
-    cities = get_health.now("br", config)
+    updates = get_embaixadores.now(config, "br")
+    cities = get_health.now(config, "br")
 
     # add ambassadors updates
     updates = cities[["state_id", "city_norm", "city_id"]].merge(
@@ -65,7 +62,7 @@ def now(config, last=True):
     ].merge(supplies, on="city_id")
 
     # merge cases
-    cases = get_cases.now("br", config, last=False)
+    cases = get_cases.now(config, "br", last=True)
     df = df.merge(cases, on="city_id", how="left")
 
     # get notification for cities without cases
@@ -78,3 +75,9 @@ def now(config, last=True):
     df["last_updated"] = pd.to_datetime(df["last_updated"])
 
     return df
+
+TESTS = {
+    "len(data) != 5570": lambda df: len(df) == 5570,
+    "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "notification_rate == NaN": lambda df: len(df["notification_rate"].isnull() == True) == 0,
+}

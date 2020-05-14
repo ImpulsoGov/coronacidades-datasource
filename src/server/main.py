@@ -1,33 +1,45 @@
 from flask import Flask
 app = Flask(__name__)
 
-import os
 import json
 import pandas as pd
+from utils import get_endpoints
+import os
 
-def _get_raw_data():
+# O que funciona:
 
-    output_path= '/'.join([os.getenv('OUTPUT_DIR'),
-                           os.getenv('RAW_NAME')]) + '.csv'
+# @app.route("/br/cities/embaixadores")
+# def get_data(): 
+#     data = _load_data("br/cities/embaixadores")
+#     return data.to_csv(index=False)
 
-    return pd.read_csv(output_path)
+# O que não funciona: -- TypeError: 'str' object is not callable
+entrypoints = get_endpoints()
 
+def _load_data(entry):
 
-@app.route("/v1/raw/json")
-def get_raw_json():
-    
-    data = _get_raw_data()
+    path = '/'.join([os.getenv('OUTPUT_DIR'), entry.replace("/", "-")]) + '.csv'
 
-    return data.to_json(orient='records')
-
-
-@app.route("/v1/raw/csv")
-def get_raw_csv():
-
-    data = _get_raw_data()
+    data = pd.read_csv(path)
 
     return data.to_csv(index=False)
 
+def entrypoint(entry):
+    return _load_data(entry)
+
+entrypoints = get_endpoints()
+
+for entry in entrypoints:
+    app.add_url_rule(
+        "/" + entry["endpoint"],
+        "entrypoint({})".format(entry["endpoint"]),
+        entrypoint(entry["endpoint"])
+    )
+
+# Para checar as opções na API
+print(app.url_map)
+
 if __name__ == "__main__":
+
     # Only for debugging while developing
-    app.run(host='0.0.0.0', debug=True, port=7000)
+    app.run(host='0.0.0.0', debug=True, port=80)

@@ -4,6 +4,7 @@ import tempfile
 import pandas as pd
 import yaml
 import os
+import requests
 
 
 def _remove_accents(text):
@@ -72,7 +73,7 @@ def download_from_drive(url):
 
     temp_path = tempfile.gettempdir() + "/temp.csv"
 
-    response = subprocess.run(["curl", "-o", temp_path, url + "/export?format=csv&id"])
+    response = subprocess.run(["curl", "-k", "-o", temp_path, url + "/export?format=csv&id"])
 
     return pd.read_csv(temp_path)
 
@@ -83,3 +84,7 @@ def secrets(variable, path="secrets.yaml"):
         return os.getenv(variable)
     else:
         return yaml.load(open(path, "r"), Loader=yaml.FullLoader)[variable]
+
+def get_config(url=os.getenv("CONFIG_URL")):
+
+    return yaml.load(requests.get(url).text, Loader=yaml.FullLoader)

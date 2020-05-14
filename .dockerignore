@@ -1,6 +1,7 @@
 .git/
 src/venv/
 loader_venv/
+.loader-anaylsis
 output/
 .loader-anaylsis/
 

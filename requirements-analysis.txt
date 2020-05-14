@@ -1,0 +1,11 @@
+pandas
+pyyaml
+pytest
+requests
+jupyter
+plotly
+cufflinks
+matplotlib
+scipy
+pygam
+sklearn

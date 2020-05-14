@@ -8,7 +8,10 @@ import numpy as np
 
 from logger import log
 import get_cases, get_embaixadores, get_health
-from utils import get_last
+from utils import get_last, get_config
+
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def _get_supplies(cities, updates, country, config):
@@ -38,19 +41,20 @@ def _get_supplies(cities, updates, country, config):
     return supplies
 
 
-def _read_data(config):
+def _read_data(config, last=True):
 
-    cases = get_cases.now("br", config)
+    # get health & population data 
     updates = get_embaixadores.now("br", config)
     cities = get_health.now("br", config)
 
+    # add ambassadors updates
     updates = cities[["state_id", "city_norm", "city_id"]].merge(
         updates, on=["state_id", "city_norm"], how="right"
     )
 
     supplies = _get_supplies(cities, updates, "br", config)
 
-    # merge cities
+    # merge cities & supplies
     df = cities[
         [
             "country_iso",
@@ -64,20 +68,20 @@ def _read_data(config):
         ]
     ].merge(supplies, on="city_id")
 
-    # merge cities
+    # merge cases
+    cases = get_cases.now("br", config, last=False)
     df = df.merge(cases, on="city_id", how="left")
 
-    # get notification for cities without cases
-    state_notification = df[['state_notification_rate', 'state_id']].dropna().drop_duplicates().set_index('state_id')
-    df['notification_rate'] = np.where(df['notification_rate'].isnull(),
-                                       state_notification.loc[df['state_id']].values[0],
-                                       df['notification_rate'])
+    # get notification for cities without cases        
+    df["notification_rate"] = np.where(
+        df["notification_rate"].isnull(),
+        df["state_notification_rate"],
+        df["notification_rate"]
+    )
 
-    df['state_notification_rate'] = np.where(df['state_notification_rate'].isnull(),
-                                       state_notification.loc[df['state_id']].values[0],
-                                       df['state_notification_rate'])
+    df["last_updated"] = pd.to_datetime(df["last_updated"])
 
-    return df.fillna(0)
+    return df
 
 
 def _write_data(data, output_path):
@@ -89,16 +93,19 @@ def _write_data(data, output_path):
 def _test_data(data):
 
     tests = {
-        "len(data) != 5570": len(data) == 5570,
+        "len(data) != 5570": len(data['city_id'].unique()) == 5570,
         "data is not pd.DataFrame": isinstance(data, pd.DataFrame),
-        "notification_rate == NaN": len(data[data['notification_rate'].isnull()==True].values) == 0
+        "notification_rate == NaN": len(data[(data['notification_rate'].isnull()==True) & (data['is_last']==True)].values) == 0
     }
 
     if not all(tests.values()):
 
         for k, v in tests.items():
             if not v:
-                log({"origin": "Raw Data", "error_type": "Data Integrity", "error": k}, status='fail')
+                log(
+                    {"origin": "Raw Data", "error_type": "Data Integrity", "error": k},
+                    status="fail",
+                )
                 print("Error in: ", k)
 
         return False
@@ -111,8 +118,7 @@ def main():
 
     output_path = "/".join([os.getenv("OUTPUT_DIR"), os.getenv("RAW_NAME")]) + ".csv"
 
-    config_url = os.getenv("CONFIG_URL")
-    config = yaml.load(requests.get(config_url).text, Loader=yaml.FullLoader)
+    config = get_config()
 
     data = _read_data(config)
 

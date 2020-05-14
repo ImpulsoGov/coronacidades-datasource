@@ -5,9 +5,7 @@ import os
 import yaml
 from datetime import datetime
 import numpy as np
-
 import importlib
-
 from logger import log
 from utils import get_last, get_config
 
@@ -32,9 +30,12 @@ def _test_data(data, tests):
     if not all(tests.values()):
 
         for k, v in tests.items():
-            if not v:
+            if not v(data):
                 log(
-                    {"origin": "Raw Data", "error_type": "Data Integrity", "error": k},
+                    {
+                        "origin": "Raw Data", 
+                        "error_type": "Data Integrity",
+                        "error": k},
                     status="fail",
                 )
                 print("Error in: ", k)
@@ -47,7 +48,7 @@ def _test_data(data, tests):
 
 def main(endpoint):
 
-    runner = importlib.import_module("endpoints.{python_file}".format(endpoint))
+    runner = importlib.import_module("endpoints.{}".format(endpoint['python_file']))
 
     data = runner.now(get_config())
 
@@ -58,6 +59,13 @@ def main(endpoint):
 
 if __name__ == "__main__":
 
-    endpoints = yaml.load(open("endpoints.yaml", "r"))
+    print("\n==> STARTING: Getting endpoints configuration from endpoints.yaml...")
+    config_endpoints = yaml.load(open("endpoints.yaml", "r"), Loader=yaml.FullLoader)
 
-    main(endpoints[0])
+    for endpoint in config_endpoints:
+
+        print("\n==> LOADING: {}\n".format(endpoint['endpoint']))
+        main(endpoint)
+        print("\n\n==> NEXT!")
+    
+    print("=> DONE!")

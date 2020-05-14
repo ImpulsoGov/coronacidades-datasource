@@ -5,6 +5,7 @@ app = Flask(__name__)
 import json
 import pandas as pd
 import os
+import yaml
 
 
 def get_endpoints(url=os.getenv("ENDPOINTS_URL")):

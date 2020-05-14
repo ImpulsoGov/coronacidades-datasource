@@ -1,5 +1,4 @@
 import pandas as pd
-
 from utils import download_from_drive, treat_text
 
 
@@ -10,7 +9,7 @@ def _read_cities_data(country, config):
     return {name: download_from_drive(url) for name, url in paths.items()}
 
 
-def now(country, config):
+def now(config, country="br"):
     
     cities = _read_cities_data(country, config)
     cities = pd.merge(
@@ -24,6 +23,10 @@ def now(country, config):
     cities[time_cols] = cities[time_cols].apply(pd.to_datetime)
     
     return cities
+
+TESTS = {
+    "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+}
 
 
 if __name__ == "__main__":

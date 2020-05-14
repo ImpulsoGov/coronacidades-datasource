@@ -1,45 +1,43 @@
 from flask import Flask
+
 app = Flask(__name__)
 
 import json
 import pandas as pd
-from utils import get_endpoints
 import os
 
-# O que funciona:
 
-# @app.route("/br/cities/embaixadores")
-# def get_data(): 
-#     data = _load_data("br/cities/embaixadores")
-#     return data.to_csv(index=False)
+def get_endpoints(url=os.getenv("ENDPOINTS_URL")):
+    return yaml.load(requests.get(url).text, Loader=yaml.FullLoader)
 
-# O que não funciona: -- TypeError: 'str' object is not callable
-entrypoints = get_endpoints()
 
 def _load_data(entry):
 
-    path = '/'.join([os.getenv('OUTPUT_DIR'), entry.replace("/", "-")]) + '.csv'
+    path = "/".join([os.getenv("OUTPUT_DIR"), entry.replace("/", "-")]) + ".csv"
 
     data = pd.read_csv(path)
 
     return data.to_csv(index=False)
 
-def entrypoint(entry):
-    return _load_data(entry)
 
-entrypoints = get_endpoints()
+@app.route("/<path:entry>")
+def index(entry):
 
-for entry in entrypoints:
-    app.add_url_rule(
-        "/" + entry["endpoint"],
-        "entrypoint({})".format(entry["endpoint"]),
-        entrypoint(entry["endpoint"])
-    )
+    if entry is None:
+        return "This is an API"  # for example
+    else:
 
-# Para checar as opções na API
-print(app.url_map)
+        try:
+            return _load_data(entry)
+        except FileNotFoundError:
+            return (
+                "This endpoint does not exist\n"
+                "Please try one of the following:\n "
+                "\n".join([e["endpoint"] for e in get_endpoints()])
+            )
+
 
 if __name__ == "__main__":
 
     # Only for debugging while developing
-    app.run(host='0.0.0.0', debug=True, port=80)
+    app.run(host="0.0.0.0", debug=True, port=80)

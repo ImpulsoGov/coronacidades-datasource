@@ -1,5 +1,6 @@
 import os
 from time import sleep
+import yaml
 
 from main import main
 from logger import log

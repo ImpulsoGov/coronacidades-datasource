@@ -1,11 +1,17 @@
 # SimulaCovid API
----
 
-This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org:7000/v1/raw/csv
+This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org:80/
+
+## Current data
+
+- `br/cities/cases/full`: full history data from Brasil.IO with notification rate and estimated active cases;
+- `br/cities/cnes`: beds and ventilators data from Data SUS/CNES;
+- `br/cities/simulacovid/main`: data filtered to serve SimulaCovid app;
+- `br/cities/embaixadores`: beds and ventilators data updated by SimulaCovid's ambassadors;
+
 
 
 ## Building your local API
----
 
 ⚠️ *You need a file in `src/loader/secret.yaml` with
 very secretive variables.*
@@ -40,12 +46,23 @@ make server-build-run
 > ```
 
 
-You should see something at `localhost:7000/<endpoint>`, like `http://localhost:7000/v1/raw/csv` 
+You should see something at `localhost:800/<endpoint>`, like `http://localhost:800/br/cities/cases/full` 
 
 > Check the column `date_last_refreshed` if you made any changes! ;)
 
+## Adding new data entrypoints
+
+1️⃣ Add the endpoint configuration parameters to `endpoints.yaml`
+
+```yaml
+- endpoint: 'br/cities/cases/full' # endpoint route following [country]/[unit]/[content]
+  python_file: get_cases         # .py that generates data in loader/endpoints/
+  update_frequency_minutes: 15  # how often it should be updated in minutes
+```
+
+2️⃣ Write a .py file in loader/endpoints/ that generates the endpoint data. **This file must be structured as [get_{template}.py](/src/loader/endpoints/get_{template}.py)**
+
 ## Analysis
----
 
 To make some drafts on `notebooks` folder, start the venv
 ```

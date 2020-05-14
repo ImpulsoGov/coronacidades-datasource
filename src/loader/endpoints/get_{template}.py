@@ -13,6 +13,6 @@ def now(config):
 # Output dataframe tests to check data integrity. This is also going to be called
 # by main.py
 TESTS = {
-    "test1": None,
-    "test2": None,
+    "test1": lambda x : None,
+    "test2": lambda x : None,
 }

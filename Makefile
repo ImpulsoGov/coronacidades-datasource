@@ -42,7 +42,7 @@ server-run:
 	docker rm -f datasource-server 2>/dev/null || true
 	docker run -d --restart=unless-stopped \
 		--name datasource-server \
-		-p 7000:80 \
+		-p 80:80 \
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 

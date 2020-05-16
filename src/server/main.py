@@ -7,11 +7,6 @@ import pandas as pd
 import os
 import yaml
 
-
-def get_endpoints(url=os.getenv("ENDPOINTS_URL")):
-    return yaml.load(requests.get(url).text, Loader=yaml.FullLoader)
-
-
 def _load_data(entry):
 
     path = "/".join([os.getenv("OUTPUT_DIR"), entry.replace("/", "-")]) + ".csv"
@@ -34,11 +29,11 @@ def index(entry):
             return (
                 "This endpoint does not exist\n"
                 "Please try one of the following:\n "
-                "\n".join([e["endpoint"] for e in get_endpoints()])
+                "\n".join(os.listdir(os.getenv("OUTPUT_DIR")))
             )
 
 
 if __name__ == "__main__":
 
     # Only for debugging while developing
-    app.run(host="0.0.0.0", debug=True, port=80)
+    app.run(host="0.0.0.0", debug=True, port=7000)

@@ -1,5 +1,9 @@
 # SimulaCovid API
 
+<p align="center">
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+</p>
+
 This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org:80/
 
 ## Current data

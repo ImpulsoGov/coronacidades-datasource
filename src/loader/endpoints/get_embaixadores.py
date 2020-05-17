@@ -1,6 +1,7 @@
 import pandas as pd
 from utils import treat_text, download_from_drive
 
+
 def now(config, country="br"):
 
     # print(config[country]["drive_paths"]["embaixadores"])
@@ -32,6 +33,7 @@ def now(config, country="br"):
     updates["last_updated"] = updates["timestamp"].apply(pd.to_datetime)
 
     return updates
+
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),

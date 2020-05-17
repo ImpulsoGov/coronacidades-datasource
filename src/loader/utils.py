@@ -83,7 +83,7 @@ def download_from_drive(url):
 def secrets(variable, path="secrets.yaml"):
 
     if (isinstance(variable, str)) and (os.getenv(variable)):
-            return os.getenv(variable)
+        return os.getenv(variable)
     else:
         if not isinstance(variable, list):
             variable = list(variable)

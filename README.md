@@ -1,10 +1,12 @@
 # SimulaCovid API
 
-<p align="center">
-<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+<p align="left">
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://github.com/ImpulsoGov/simulacovid-datasource/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/ImpulsoGov/simulacovid-datasource"></a> <a href=""><img alt="Contributors" src="https://img.shields.io/github/last-commit/ImpulsoGov/simulacovid-datasource/master?label=last%20updated%20%28master%29"></a>
 </p>
 
-This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org:80/
+
+
+This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org:7000/
 
 ## Current data
 
@@ -50,7 +52,7 @@ make server-build-run
 > ```
 
 
-You should see something at `localhost:800/<endpoint>`, like `http://localhost:800/br/cities/cases/full` 
+You should see something at `localhost:7000/<endpoint>`, like `http://localhost:7000/br/cities/cases/full` 
 
 > Check the column `date_last_refreshed` if you made any changes! ;)
 

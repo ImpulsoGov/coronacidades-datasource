@@ -88,3 +88,18 @@ def secrets(variable, path="secrets.yaml"):
 def get_config(url=os.getenv("CONFIG_URL")):
 
     return yaml.load(requests.get(url).text, Loader=yaml.FullLoader)
+
+def get_cases_series(df, place_type, min_days):
+
+    df = df[~df['state_notification_rate'].isnull()][[place_type, 
+                                   'last_updated', 
+                                   'active_cases']]\
+            .groupby([place_type, 
+                      'last_updated'])['active_cases']\
+            .sum()\
+            .round(0)
+
+    # more than 14 days
+    v = df.reset_index()[place_type].value_counts()
+
+    return df[df.index.isin(v[v > min_days].index, level=0)]

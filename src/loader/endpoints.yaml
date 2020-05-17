@@ -22,3 +22,13 @@
   python_file: get_cities_rt
   update_frequency_minutes: 360
 
+- endpoint: secret
+  secret_path: [inloco, states]
+  python_file: get_inloco_states
+  update_frequency_minutes: 360
+
+- endpoint: secret
+  secret_path: [inloco, cities]
+  python_file: get_inloco_cities
+  update_frequency_minutes: 360
+

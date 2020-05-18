@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, render_template
+
 
 app = Flask(__name__)
 
@@ -6,6 +7,7 @@ import json
 import pandas as pd
 import os
 import yaml
+
 
 def _load_data(entry):
 
@@ -25,12 +27,14 @@ def index(entry):
 
         try:
             return _load_data(entry)
+
         except FileNotFoundError:
-            return (
-                "This endpoint does not exist\n"
-                "Please try one of the following:\n "
-                "\n".join(os.listdir(os.getenv("OUTPUT_DIR")))
-            )
+            endpoints = [
+                d.split(".")[0].replace("-", "/")
+                for d in os.listdir(os.getenv("OUTPUT_DIR"))
+                if "inloco" not in d
+            ]
+            return render_template("not-found.html", endpoints=endpoints)
 
 
 if __name__ == "__main__":

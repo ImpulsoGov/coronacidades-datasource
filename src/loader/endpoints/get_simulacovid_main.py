@@ -7,6 +7,7 @@ from copy import deepcopy
 
 from utils import get_last
 
+
 def _get_supplies(cities, updates, country, config):
 
     final_cols = config[country]["columns"]["final"]
@@ -76,8 +77,10 @@ def now(config, last=True):
 
     return df
 
+
 TESTS = {
     "len(data) != 5570": lambda df: len(df) == 5570,
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "notification_rate == NaN": lambda df: len(df["notification_rate"].isnull() == True) == 0,
+    "notification_rate == NaN": lambda df: len(df["notification_rate"].isnull() == True)
+    == 0,
 }

@@ -18,10 +18,8 @@ def post_slack(error_args, status):
             )
         }
 
-    if status == 'okay':
-        slack_data = {
-            "text": "Sim! Tudo sob controle :D"
-        }
+    if status == "okay":
+        slack_data = {"text": "Sim! Tudo sob controle :D"}
 
     response = requests.post(
         webhook_url,

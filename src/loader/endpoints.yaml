@@ -32,3 +32,7 @@
   python_file: get_inloco_cities
   update_frequency_minutes: 360
 
+- endpoint: world/owid/heatmap
+  python_file: get_owid_heatmap
+  update_frequency_minutes: 360
+

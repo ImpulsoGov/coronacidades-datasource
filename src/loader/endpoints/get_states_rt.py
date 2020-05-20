@@ -6,16 +6,6 @@ import numpy as np
 
 def now(config, last=False):
 
-    config["br"]["rt_parameters"] = {
-        "r_t_range_max": 12,
-        "optimal_sigma": 0.01,  # best sigma for Brazil (prior hyperparameters)
-        "window_size": 7,
-        "gaussian_kernel_std": 2,
-        "gaussian_min_periods": 7,
-        "gamma_alpha": 4,
-        "min_days": 14,
-    }
-
     # Import cases
     df = get_cases.now(config, "br", last)
     df["last_updated"] = pd.to_datetime(df["last_updated"])

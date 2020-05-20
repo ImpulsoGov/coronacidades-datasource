@@ -1,0 +1,23 @@
+coluna,descricao,
+city,Nome do município,
+city_id,Código IBGE,
+date,Dia da atualização dos dados,
+epidemiological_week,número da semana epidemiológica,*github brasil.io
+estimated_population_2019,População estimada pelo IBGE em 2019,
+is_last," campo pré-computado que diz se esse registro é o mais novo para esse local, pode ser True ou False",*github brasil.io
+is_repeated,,
+confirmed_cases,Numero de casos confirmados,
+last_available_confirmed_per_100k_inhabitants,Número de casos confirmados por 100.000 habitantes mais recente.,*github brasil.io
+last_available_date,Dia da atualização dos dados,
+last_available_death_rate,Taxa de mortalidade mais recente,
+deaths,Numero de Mortes,
+order_for_place,número que identifica a ordem do registro para este local. O registro referente ao primeiro boletim em que esse local aparecer será contabilizado como 1 e os demais boletins incrementarão esse valor,*github brasil.io
+place_type,Tipo de dado: Estado ou cidade,
+state,Estado a que o municipio pertence,
+daily_cases,,
+new_deaths,Novas Mortes registradas (No dia),
+infectious_period_cases,,
+state_notification_rate,Taxa de notificação estadual,
+notification_rate,Taxa de notificação municipal,
+active_cases,,
+data_last_refreshed,Dia em que o dado foi consultado,

@@ -1,0 +1,7 @@
+coluna,descricao
+city_id,Código IBGE
+last_updated,Dia da atualização dos dados
+Rt_most_likely,Rt Calculado
+Rt_low_95,Intervalo de confiança inferior
+Rt_high_95,Intervalo de confiança superior
+data_last_refreshed,Dia em que o dado foi consultado

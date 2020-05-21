@@ -18,6 +18,13 @@ def allow_local(func):
 
             endpoint = [l for l in get_endpoints() if module in l.values()][0]
 
-            return pd.read_csv(build_file_path(endpoint))
+            try:
+                return pd.read_csv(build_file_path(endpoint))
+
+            except FileNotFoundError:
+
+                kwargs.pop("force")
+
+                return func(*args, **kwargs)
 
     return wrapper

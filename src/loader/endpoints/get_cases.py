@@ -99,7 +99,7 @@ def _correct_cumulative_cases(df):
 
 
 @allow_local
-def now(config, country="br", last=False):
+def now(config, country="br"):
 
     if country == "br":
         df = pd.read_csv(config[country]["cases"]["url"])
@@ -135,9 +135,6 @@ def now(config, country="br", last=False):
             round(df["infectious_period_cases"], 0),
             round(df["infectious_period_cases"] / df["notification_rate"], 0),
         )
-
-        if last:
-            df = df[df["is_last"] == last].drop(cases_params["drop"], 1)
 
         df["city_id"] = df["city_id"].astype(int)
 

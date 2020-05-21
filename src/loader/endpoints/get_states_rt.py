@@ -7,10 +7,10 @@ from endpoints.helpers import allow_local
 
 
 @allow_local
-def now(config, last=False):
+def now(config):
 
     # Import cases
-    df = get_cases.now(config, "br", last)
+    df = get_cases.now(config, "br")
     df["last_updated"] = pd.to_datetime(df["last_updated"])
 
     # Filter more than 14 days

@@ -37,7 +37,7 @@ def _get_supplies(cities, updates, country, config):
 
 
 @allow_local
-def now(config, last=True):
+def now(config):
 
     # get health & population data
     updates = get_embaixadores.now(config, "br")
@@ -65,7 +65,9 @@ def now(config, last=True):
     ].merge(supplies, on="city_id")
 
     # merge cases
-    cases = get_cases.now(config, "br", last)
+    cases = get_cases.now(config, "br")
+    cases = cases[cases["is_last"] == True].drop(config["br"]["cases"]["drop"], 1)
+
     df = df.merge(cases, on="city_id", how="left")
 
     # get notification for cities without cases

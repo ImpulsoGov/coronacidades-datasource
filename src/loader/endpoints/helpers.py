@@ -23,7 +23,7 @@ def allow_local(func):
 
             except FileNotFoundError:
 
-                kwargs.pop("force")
+                kwargs.pop("force", None)
 
                 return func(*args, **kwargs)
 

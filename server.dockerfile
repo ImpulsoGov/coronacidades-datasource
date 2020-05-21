@@ -9,3 +9,4 @@ ADD ./requirements.txt /app/
 RUN pip install -r /app/requirements.txt
 
 COPY ./src/server /app
+ENTRYPOINT python3 main.py

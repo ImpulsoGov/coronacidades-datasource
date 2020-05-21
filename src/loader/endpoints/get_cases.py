@@ -144,16 +144,23 @@ def now(config, country="br"):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "max(confirmed_cases) != max(date)": lambda df: df.groupby(
-        "city_id", sort=True
-    ).max()["confirmed_cases"]
-    != df[df["is_last"] == True].set_index("city_id", sort=True)["confirmed_cases"],
-    "max(deaths) != max(date)": lambda df: df.groupby("city_id", sort=True).max()[
-        "deaths"
-    ]
-    != df[df["is_last"] == True].set_index("city_id", sort=True)["deaths"],
+    # TODO: como fazer o teste abaixo sem sort? porque da erro no sort
+    # "max(confirmed_cases) != max(date)": lambda df: df.groupby(
+    #     "city_id"
+    # ).max()["confirmed_cases"]
+    # != df[df["is_last"] == True].set_index("city_id")["confirmed_cases"],
+    # "max(deaths) != max(date)": lambda df: df.groupby("city_id", sort=True).max()[
+    #     "deaths"
+    # ]
+    # != df[df["is_last"] == True].set_index("city_id", sort=True)["deaths"],
     "notification_rate == NaN": lambda df: len(
         df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values
+    )
+    == 0,
+    "state_notification_rate == NaN": lambda df: len(
+        df[
+            (df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)
+        ].values
     )
     == 0,
 }

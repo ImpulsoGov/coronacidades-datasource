@@ -24,15 +24,17 @@ def _write_data(data, endpoint):
 
 def _test_data(data, tests):
 
-    if not all(tests.values()):
+    results = [v(data) for k, v in tests.items()]
+
+    if not all(results):
 
         for k, v in tests.items():
             if not v(data):
-                log(
-                    {"origin": "Raw Data", "error_type": "Data Integrity", "error": k},
-                    status="fail",
-                )
-                print("Error in: ", k)
+                    log(
+                        {"origin": "Raw Data", "error_type": "Data Integrity", "error": k},
+                        status="fail",
+                    )
+                print("Error in: {} ==> ABORTING THIS JOB".format(k))
 
         return False
     else:

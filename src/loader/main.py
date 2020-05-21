@@ -7,7 +7,7 @@ from datetime import datetime
 import numpy as np
 import importlib
 from logger import log
-from utils import get_last, get_config, secrets
+from utils import get_last, get_config, secrets, build_file_path, get_endpoints
 
 import ssl
 
@@ -16,17 +16,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def _write_data(data, endpoint):
 
-    if endpoint["endpoint"] == "secret":
-
-        s = secrets(endpoint["secret_path"])
-
-        route = s["key"]
-
-    else:
-
-        route = endpoint["endpoint"].replace("/", "-")
-
-    output_path = "/".join([os.getenv("OUTPUT_DIR"), route]) + ".csv"
+    output_path = build_file_path(endpoint)
 
     data["data_last_refreshed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     data.to_csv(output_path, index=False)
@@ -54,7 +44,7 @@ def main(endpoint):
 
     runner = importlib.import_module("endpoints.{}".format(endpoint["python_file"]))
 
-    data = runner.now(get_config())
+    data = runner.now(get_config(), force=True)
 
     if _test_data(data, runner.TESTS):
 
@@ -64,9 +54,11 @@ def main(endpoint):
 if __name__ == "__main__":
 
     print("\n==> STARTING: Getting endpoints configuration from endpoints.yaml...")
-    config_endpoints = yaml.load(open("endpoints.yaml", "r"), Loader=yaml.FullLoader)
 
-    for endpoint in config_endpoints:
+    for endpoint in get_endpoints():
+
+        if endpoint.get("skip"):
+            continue
 
         print("\n==> LOADING: {}\n".format(endpoint["python_file"]))
         main(endpoint)

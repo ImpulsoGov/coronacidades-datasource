@@ -3,6 +3,7 @@ import numpy as np
 import datetime as dt
 
 from endpoints import get_cities_rt, get_cases, get_inloco_cities, get_simulacovid_main
+from endpoints.helpers import allow_local
 
 
 def _get_rt_indicators(df, config):
@@ -158,6 +159,7 @@ def _get_indicators_inloco(df, config):
     return df.merge(results, how="left")
 
 
+@allow_local
 def now(config):
 
     config["rt_indicators"] = {
@@ -175,7 +177,7 @@ def now(config):
         },
     }
 
-    df = get_simulacovid_main.now()[
+    df = get_simulacovid_main.now(config)[
         [
             "city_id",
             "city_name",

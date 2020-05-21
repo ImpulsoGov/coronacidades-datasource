@@ -1,11 +1,13 @@
 import pandas as pd
 from utils import get_country_isocode_name
+from endpoints.helpers import allow_local
 
 
 def _get_rolling_amount(grp, time, data_col="last_updated", col_to_roll="deaths"):
     return grp.rolling(time, min_periods=1, on=data_col)[col_to_roll].mean()
 
 
+@allow_local
 def now(config=None):
 
     df = (

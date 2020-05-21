@@ -10,6 +10,8 @@ from tqdm import tqdm
 from utils import get_cases_series
 from endpoints import get_cases
 
+from endpoints.helpers import allow_local
+
 
 def smooth_new_cases(new_cases, params):
 
@@ -228,6 +230,7 @@ def parallel_run(df, config, place_type="city_id"):
     return pd.concat([l[0] for l in results]).reset_index()
 
 
+@allow_local
 def now(config, last=False):
 
     # Import cases

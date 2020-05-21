@@ -1,5 +1,6 @@
 import pandas as pd
 from utils import download_from_drive, treat_text
+from endpoints.helpers import allow_local
 
 
 def _read_cities_data(country, config):
@@ -9,6 +10,7 @@ def _read_cities_data(country, config):
     return {name: download_from_drive(url) for name, url in paths.items()}
 
 
+@allow_local
 def now(config, country="br"):
 
     cities = _read_cities_data(country, config)

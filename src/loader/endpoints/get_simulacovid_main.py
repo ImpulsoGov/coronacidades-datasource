@@ -6,6 +6,7 @@ import numpy as np
 from copy import deepcopy
 
 from utils import get_last
+from endpoints.helpers import allow_local
 
 
 def _get_supplies(cities, updates, country, config):
@@ -35,6 +36,7 @@ def _get_supplies(cities, updates, country, config):
     return supplies
 
 
+@allow_local
 def now(config, last=True):
 
     # get health & population data

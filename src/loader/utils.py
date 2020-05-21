@@ -8,6 +8,19 @@ import requests
 import numpy as np
 
 
+def build_file_path(endpoint):
+
+    if endpoint["endpoint"] == "secret":
+
+        route = secrets(endpoint["secret_path"])["route"]
+    else:
+        route = endpoint["endpoint"]
+
+    fn = route.replace("/", "-")
+
+    return "/".join([os.getenv("OUTPUT_DIR"), fn]) + ".csv"
+
+
 def _remove_accents(text):
     return (
         unicodedata.normalize("NFKD", text)
@@ -100,6 +113,11 @@ def secrets(variable, path="secrets.yaml"):
 def get_config(url=os.getenv("CONFIG_URL")):
 
     return yaml.load(requests.get(url).text, Loader=yaml.FullLoader)
+
+
+def get_endpoints():
+
+    return yaml.load(open("endpoints.yaml", "r"), Loader=yaml.FullLoader)
 
 
 def get_cases_series(df, place_type, min_days):

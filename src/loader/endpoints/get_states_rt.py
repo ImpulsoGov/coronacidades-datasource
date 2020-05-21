@@ -3,7 +3,10 @@ from endpoints import get_cases, get_cities_rt
 import pandas as pd
 import numpy as np
 
+from endpoints.helpers import allow_local
 
+
+@allow_local
 def now(config, last=False):
 
     # Import cases

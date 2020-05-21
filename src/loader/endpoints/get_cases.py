@@ -2,6 +2,8 @@ import pandas as pd
 import datetime
 import numpy as np
 
+from endpoints.helpers import allow_local
+
 
 def _get_notification_ratio(df, config, place_col):
     """
@@ -96,6 +98,7 @@ def _correct_cumulative_cases(df):
     return df
 
 
+@allow_local
 def now(config, country="br", last=False):
 
     if country == "br":

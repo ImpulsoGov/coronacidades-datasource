@@ -30,10 +30,10 @@ def _test_data(data, tests):
 
         for k, v in tests.items():
             if not v(data):
-                    log(
-                        {"origin": "Raw Data", "error_type": "Data Integrity", "error": k},
-                        status="fail",
-                    )
+                log(
+                    {"origin": "Raw Data", "error_type": "Data Integrity", "error": k},
+                    status="fail",
+                )
                 print("Error in: {} ==> ABORTING THIS JOB".format(k))
 
         return False

@@ -87,4 +87,7 @@ TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "notification_rate == NaN": lambda df: len(df["notification_rate"].isnull() == True)
     == 0,
+    "subnotification rank for all cities with notification": lambda df: all(
+        df[~df["subnotification_rank"].isnull()]["subnotification_place_type"] == "city"
+    ),
 }

@@ -23,6 +23,11 @@
   update_frequency_minutes: 10
   skip: True
 
+- endpoint: world/owid/heatmap
+  python_file: get_owid_heatmap
+  update_frequency_minutes: 360
+  skip: False
+
 - endpoint: br/cities/rt
   python_file: get_cities_rt
   update_frequency_minutes: 360
@@ -43,10 +48,5 @@
 - endpoint: br/cities/farolcovid/main
   python_file: get_cities_farolcovid_main
   update_frequency_minutes: 10
-  skip: False
-
-- endpoint: world/owid/heatmap
-  python_file: get_owid_heatmap
-  update_frequency_minutes: 360
   skip: False
 

@@ -218,15 +218,13 @@ def _get_indicators_rt(df, config):
                 == (rt["last_updated"].max() - dt.timedelta(v["delay"]))
             ].set_index("city_id")[v["column"]]
 
-        # Comparação: é feita com o valor esperado (most_likely) calculado acima
+        # Classificação: é feita com o valor esperado (most_likely) calculado acima
         if k == "rt_classification":
             df[k] = np.where(
                 df[k].isnull(),
                 "",
                 np.where(
-                    df[k] > 1.2,
-                    "subindo",
-                    np.where(df[k] > 1, "estabilizando", "descendo"),
+                    df[k] > 1.2, "ruim", np.where(df[k] > 1, "instatisfatório", "bom"),
                 ),
             )
 

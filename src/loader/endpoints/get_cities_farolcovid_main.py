@@ -306,8 +306,6 @@ def now(config):
     df = _get_indicators_inloco(df, config).replace("", np.nan)
     df = _get_indicators_capacity(df, config).replace("", np.nan)
 
-    print(len(df))
-
     # Classificação geral: Nível de alerta
     df["overall_alert"] = np.where(
         (df["rt_classification"] == "bom")
@@ -331,8 +329,6 @@ def now(config):
             ),
         ),
     )
-
-    print(df.reset_index().columns)
 
     return df.replace("", np.nan).reset_index()
 

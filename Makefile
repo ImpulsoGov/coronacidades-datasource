@@ -30,6 +30,12 @@ loader-shell: loader-build
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
 
+loader-run-shell:
+	docker run --rm -it \
+		--entrypoint "/bin/bash" \
+		-v "datasource:/output" \
+		$(LOADER_IMAGE_TAG)
+
 loader-create-env-analysis:
 	virtualenv .loader-anaylsis
 	source .loader-anaylsis/bin/activate; \

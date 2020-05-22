@@ -88,7 +88,7 @@ def download_from_drive(url):
     temp_path = tempfile.gettempdir() + "/temp.csv"
 
     response = subprocess.run(
-        ["curl", "-k", "-o", temp_path, url + "/export?format=csv&id"]
+        ["curl", "-sk", "-o", temp_path, url + "/export?format=csv&id"]
     )
 
     return pd.read_csv(temp_path)

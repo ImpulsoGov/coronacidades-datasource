@@ -74,3 +74,27 @@ To make some drafts on `notebooks` folder, start the venv
 ```
 make loader-create-env-analysis
 ```
+
+## Good Practices
+
+### Logging
+
+Do not use `print` to log stuff. You can use the logger in `logger.py`. 
+It is faily simple to do it.
+
+```python
+from logger import logger
+
+logger.debug('Your message {variable}', variable=3)
+```
+
+You have several logging levels: debug, info, warning and error. To change the level 
+you can just call `logger.<level>`, i.e., `logger.info()`.
+
+- Usually, `debug` is used to minor behaviours and it is useful to debug code :).
+
+- The `info` level is being used to keep track of the overall expected behaviour.
+
+- If you use `logger.error`, the message will also be posted to our slack channel **#simulacovid-logs**
+
+Read more at [loguru](https://github.com/Delgan/loguru).

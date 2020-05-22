@@ -1,24 +1,21 @@
 import yaml
 from main import main
-from logger import log
 import time
 from timeloop import Timeloop
 from datetime import timedelta
 
+from logger import logger
 
+
+@logger.catch
 def handler(endpoint):
 
     try:
-        print("\n===> STARTING: {}\n\n".format(endpoint["python_file"]))
         main(endpoint)
-        print("\n===> UPDATED NOW: {}\n\n".format(endpoint["python_file"]))
 
     except Exception as e:
-        # log({"origin": "Datasource Scheduler",
-        #     "error_type": "Generic",
-        #     "error": e},
-        #     status="fail")
-        print(e)
+
+        logger.error("SCHEDULER ENDPOINT FAILED: {}", endpoint["python_file"])
 
 
 if __name__ == "__main__":

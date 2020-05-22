@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import yaml
 from scipy.integrate import odeint
-from tqdm import tqdm
 import sys
 
 from endpoints.aux.seir import entrypoint

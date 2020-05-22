@@ -96,3 +96,5 @@ you can just call `logger.<level>`, i.e., `logger.info()`.
 - The `info` level is being used to keep track of the overall expected behaviour.
 
 - If you use `logger.error`, the message will also be posted to our slack channel **#simulacovid-logs**
+
+Read more at [loguru](https://github.com/Delgan/loguru).

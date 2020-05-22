@@ -5,14 +5,18 @@ SERVER_IMAGE_TAG=impulsogov/simulacovid:$(VERSION)-server
 
 build-and-run-all: loader-build-run server-build-run
 
+
+
 # Loader
-loader-build:
+loader-remove:
+	docker rm -f datasource-loader 2>/dev/null || true
+
+loader-build: loader-remove
 	docker build \
 		-f loader.dockerfile \
 		-t $(LOADER_IMAGE_TAG) .
 
-loader-run:
-	docker rm -f datasource-loader 2>/dev/null || true
+loader-run: loader-remove
 	docker run -d --restart=unless-stopped \
 		--name datasource-loader \
 		-v "datasource:/output" \
@@ -33,13 +37,15 @@ loader-create-env-analysis:
 			python -m ipykernel install --user --name=loader-anaylsis
 
 # Server
-server-build:
+server-remove:
+	docker rm -f datasource-server 2>/dev/null || true
+
+server-build: server-remove
 	docker build \
 		-f server.dockerfile \
 		-t $(SERVER_IMAGE_TAG) .
 
-server-run:
-	docker rm -f datasource-server 2>/dev/null || true
+server-run: server-remove
 	docker run -d --restart=unless-stopped \
 		--name datasource-server \
 		-p 7000:7000 \

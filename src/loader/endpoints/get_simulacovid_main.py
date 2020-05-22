@@ -6,6 +6,7 @@ import numpy as np
 from copy import deepcopy
 
 from utils import get_last
+from endpoints.helpers import allow_local
 
 
 def _get_supplies(cities, updates, country, config):
@@ -35,7 +36,16 @@ def _get_supplies(cities, updates, country, config):
     return supplies
 
 
-def now(config, last=True):
+def _fix_state_notification(row, states_rate):
+
+    if np.isnan(row["state_notification_rate"]):
+        return states_rate.loc[row["state_id"]].values[0]
+    else:
+        return row["state_notification_rate"]
+
+
+@allow_local
+def now(config):
 
     # get health & population data
     updates = get_embaixadores.now(config, "br")
@@ -63,10 +73,20 @@ def now(config, last=True):
     ].merge(supplies, on="city_id")
 
     # merge cases
-    cases = get_cases.now(config, "br", last)
+    cases = get_cases.now(config, "br")
+    cases = cases[cases["is_last"] == True].drop(config["br"]["cases"]["drop"], 1)
+
     df = df.merge(cases, on="city_id", how="left")
 
+    states_rate = (
+        df[["state_id", "state_notification_rate"]].dropna().groupby("state_id").mean()
+    )
+
     # get notification for cities without cases
+    df["state_notification_rate"] = df.apply(
+        lambda row: _fix_state_notification(row, states_rate), axis=1
+    )
+
     df["notification_rate"] = np.where(
         df["notification_rate"].isnull(),
         df["state_notification_rate"],
@@ -81,6 +101,8 @@ def now(config, last=True):
 TESTS = {
     "len(data) != 5570": lambda df: len(df) == 5570,
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "notification_rate == NaN": lambda df: len(df["notification_rate"].isnull() == True)
+    "notification_rate == NaN": lambda df: len(
+        df[df["notification_rate"].isnull() == True]
+    )
     == 0,
 }

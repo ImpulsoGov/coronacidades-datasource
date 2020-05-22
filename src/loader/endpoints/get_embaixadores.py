@@ -1,7 +1,9 @@
 import pandas as pd
 from utils import treat_text, download_from_drive
+from endpoints.helpers import allow_local
 
 
+@allow_local
 def now(config, country="br"):
 
     # print(config[country]["drive_paths"]["embaixadores"])

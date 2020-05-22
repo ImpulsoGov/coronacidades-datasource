@@ -8,25 +8,25 @@
   update_frequency_minutes: 10
   skip: False
 
-- endpoint: br/cities/simulacovid/main
-  python_file: get_simulacovid_main
+- endpoint: br/cities/cases/full
+  python_file: get_cases
   update_frequency_minutes: 10
   skip: False
 
-- endpoint: br/cities/cases/full
-  python_file: get_cases
+- endpoint: br/cities/simulacovid/main
+  python_file: get_simulacovid_main
   update_frequency_minutes: 10
   skip: False
 
 - endpoint: br/states/rt
   python_file: get_states_rt
   update_frequency_minutes: 10
-  skip: False
+  skip: True
 
 - endpoint: br/cities/rt
   python_file: get_cities_rt
   update_frequency_minutes: 360
-  skip: True
+  skip: False
 
 - endpoint: secret
   secret_path: [inloco, states]
@@ -40,13 +40,13 @@
   update_frequency_minutes: 360
   skip: False
 
-- endpoint: world/owid/heatmap
-  python_file: get_owid_heatmap
-  update_frequency_minutes: 360
-  skip: False
-
 - endpoint: br/cities/farolcovid/main
   python_file: get_cities_farolcovid_main
   update_frequency_minutes: 10
+  skip: False
+
+- endpoint: world/owid/heatmap
+  python_file: get_owid_heatmap
+  update_frequency_minutes: 360
   skip: False
 

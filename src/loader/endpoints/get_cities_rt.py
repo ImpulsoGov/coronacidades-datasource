@@ -6,9 +6,9 @@ import pandas as pd
 import datetime as dt
 from scipy import stats as sps
 from joblib import Parallel, delayed
-from tqdm import tqdm
 from utils import get_cases_series
 from endpoints import get_cases
+from loguru import logger
 
 from endpoints.helpers import allow_local
 
@@ -205,7 +205,7 @@ def parallel_run(df, config, place_type="city_id"):
     errors = dict()
     results = list()
 
-    for place in tqdm(df.reset_index()[place_type].unique()):
+    for place in df.reset_index()[place_type].unique():
 
         chunk = df[df.index.isin([place], level=0)]
 
@@ -220,12 +220,8 @@ def parallel_run(df, config, place_type="city_id"):
         except Exception as e:
             errors[place] = e
 
-    print(
-        "\nTotal places evaluated:",
-        len(results),
-        "\nPlaces that could not be evaluated:",
-        len(errors),
-    )
+    logger.debug("Total places evaluated: {}", len(results))
+    logger.debug("Places that could not be evaluated: {}", len(errors))
 
     return pd.concat([l[0] for l in results]).reset_index()
 

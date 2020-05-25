@@ -57,7 +57,10 @@ def _prepare_simulation(row, config):  # ok
     params = _calculate_recovered(row, params)
     dday_beds, _ = run_simulation(params, config)
 
-    return dday_beds["best"], dday_beds["worst"]
+    if row["subnotification_place_type"] == "state":
+        return np.nan, np.nan
+    else:
+        return dday_beds["best"], dday_beds["worst"]
 
 
 def get_indicators_capacity(df, config, rules, classify):  # ok

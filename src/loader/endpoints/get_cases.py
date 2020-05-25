@@ -87,6 +87,7 @@ def _correct_cumulative_cases(df):
 
     # Corrije acumulado para o valor máximo até a data
     df["confirmed_cases"] = df.groupby("city_id").cummax()["confirmed_cases"]
+    df["deaths"] = df.groupby("city_id").cummax()["deaths"]
 
     # Recalcula casos diários
     df["daily_cases"] = df.groupby("city_id")["confirmed_cases"].diff(1)

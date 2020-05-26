@@ -13,6 +13,7 @@ loader_venv/
 
 # Credentials
 src/loader/secrets.yaml
+src/loader/token.pickle
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -152,4 +153,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-src/loader/token.pickle

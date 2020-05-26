@@ -50,3 +50,7 @@
   update_frequency_minutes: 360
   skip: False
 
+- endpoint: br/states/farolcovid/main
+  python_file: get_states_farolcovid_main
+  update_frequency_minutes: 360
+  skip: False

@@ -1,11 +1,13 @@
 import pandas as pd
 from utils import secrets
 from endpoints.helpers import allow_local
+import endpoints.GoogleDocsLib as gd
 
 
 @allow_local
 def now(config):
-    return pd.read_csv(secrets(["inloco", "states", "url"]))
+    file_id = secrets(["inloco", "states", "id"])
+    return gd.downloadGoogleFileDF(file_id, "token.pickle")
 
 
 TESTS = {

@@ -1,7 +1,7 @@
 import pandas as pd
-from utils import secrets
+from utils import secrets, get_googledrive_df
+from logger import logger
 from endpoints.helpers import allow_local
-import endpoints.GoogleDocsLib as gd
 import endpoints.corrections as cr
 import os
 
@@ -40,12 +40,9 @@ def insert_city_id(in_df):
 
 @allow_local
 def now(config):
-    file_id = secrets(["inloco", "cities", "id"])
-    correct_inloco_cities = gd.downloadGoogleFileDF(file_id, "token.pickle")
-    clean_inloco = cr.correct_inloco_cities(
-        correct_inloco_cities, cities_table, states_table
-    )
-    return insert_city_id(clean_inloco)
+
+    return get_googledrive_df(secrets(["inloco", "cities", "id"]), 
+            "token.pickle")
 
 
 TESTS = {

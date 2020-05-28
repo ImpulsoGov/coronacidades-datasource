@@ -1,11 +1,15 @@
 import pandas as pd
-from utils import secrets
+from utils import secrets, get_googledrive_df
+from logger import logger
 from endpoints.helpers import allow_local
-
+import os
 
 @allow_local
 def now(config):
-    return pd.read_csv(secrets(["inloco", "cities", "url"]))
+
+    return get_googledrive_df(
+            secrets(["inloco", "cities", "id"]), 
+            "token.pickle")
 
 
 TESTS = {

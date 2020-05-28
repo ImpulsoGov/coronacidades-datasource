@@ -14,7 +14,6 @@ from utils import (
     secrets,
     build_file_path,
     get_endpoints,
-    secrets,
 )
 
 from notifiers import get_notifier

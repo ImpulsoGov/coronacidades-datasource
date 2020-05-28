@@ -12,6 +12,7 @@ loader_venv/
 .vscode/
 
 # Credentials
+src/loader/secrets
 src/loader/secrets.yaml
 src/loader/token.pickle
 

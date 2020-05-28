@@ -19,7 +19,7 @@ This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can
 
 ## Building your local API
 
-⚠️ *You need a file in `src/loader/secrets.yaml` and another in `src/loader/token.pickle` with very secretive variables.*
+⚠️ *You need a file in `src/loader/secrets/secrets.yaml` and another in `src/loader/secrets/token.pickle` with very secretive variables.*
 
 
 1️⃣ Run the code to load the files

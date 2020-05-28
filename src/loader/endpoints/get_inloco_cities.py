@@ -8,8 +8,7 @@ import os
 def now(config):
 
     return get_googledrive_df(
-            secrets(["inloco", "cities", "id"]), 
-            "token.pickle")
+            secrets(["inloco", "cities", "id"]))
 
 
 TESTS = {

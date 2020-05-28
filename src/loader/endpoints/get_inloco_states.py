@@ -7,8 +7,7 @@ from endpoints.helpers import allow_local
 def now(config):
 
     return get_googledrive_df(
-            secrets(["inloco", "states", "id"]),
-            "token.pickle")
+            secrets(["inloco", "states", "id"]))
 
 
 TESTS = {

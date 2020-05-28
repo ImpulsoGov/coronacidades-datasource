@@ -100,7 +100,7 @@ def download_from_drive(url):
     return pd.read_csv(temp_path)
 
 
-def secrets(variable, path="secrets.yaml"):
+def secrets(variable, path="secrets/secrets.yaml"):
 
     if (isinstance(variable, str)) and (os.getenv(variable)):
         return os.getenv(variable)
@@ -406,11 +406,11 @@ def get_country_isocode_name(iso):
         return np.nan
 
 
-def download_from_googledrive(file_id, token_path="token.pickle"):
+def download_from_googledrive(file_id, token_path):
     """Takes the id and token and reads the bytes of a file
     """
 
-    token = pickle.load(open("token.pickle", "rb"))
+    token = pickle.load(open(token_path, "rb"))
     drive_service = build("drive", "v3", credentials=token)
     fh = io.BytesIO()
 
@@ -422,7 +422,7 @@ def download_from_googledrive(file_id, token_path="token.pickle"):
     return fh
 
 
-def get_googledrive_df(file_id, token_path="token.pickle"):
+def get_googledrive_df(file_id, token_path="secrets/token.pickle"):
     
     data = io.StringIO(str(download_from_googledrive(file_id, token_path).getvalue(), "utf-8"))
     return pd.read_csv(data)

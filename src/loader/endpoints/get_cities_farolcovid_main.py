@@ -209,10 +209,12 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):  # ok
 
     if place_id == "city_id":
 
-        mask = df["notification_rate"] != df["state_notification_rate"]
+        mask = {df["notification_rate"] != df["state_notification_rate"]} & {
+            row["deaths"] <= 0
+        }
         df["subnotification_place_type"] = np.where(mask, "city", "state")
 
-    if place_id == "state" and row["deaths"] <= 0:
+    if place_id == "state":
 
         mask = df["notification_rate"] != np.nan
         df["subnotification_place_type"] = np.nan

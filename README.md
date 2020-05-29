@@ -6,15 +6,19 @@
 
 
 
-This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org:7000/
+This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org/help
 
 ## Current data
 
-- `br/cities/cases/full`: full history data from Brasil.IO with notification rate and estimated active cases;
-- `br/cities/cnes`: beds and ventilators data from Data SUS/CNES;
-- `br/cities/simulacovid/main`: data filtered to serve SimulaCovid app;
-- `br/cities/embaixadores`: beds and ventilators data updated by SimulaCovid's ambassadors;
-
+- `br/cities/cases/full`: full history data from Brasil.IO with notification rate and estimated active cases
+- `br/states/rt`: State Rt calculations
+- `br/cities/rt`: Cities Rt calculations
+- `br/cities/embaixadores`: beds and ventilators data updated by SimulaCovid's ambassadors
+- `br/cities/cnes`: beds and ventilators data from Data SUS/CNES
+- `br/cities/farolcovid/main`: data filtered for cities to serve FarolCovid app
+- `br/states/farolcovid/main`: data filtered for states serve FarolCovid app
+- `br/cities/simulacovid/main`: data filtered to serve SimulaCovid app
+- `world/owid/heatmap`: Our World in Data data to serve the heatmaps
 
 
 ## Building your local API

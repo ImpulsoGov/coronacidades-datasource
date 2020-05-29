@@ -14,6 +14,7 @@ def _get_levels(df, rules):
         bins=rules["cuts"],
         labels=rules["categories"],
         right=False,
+        include_lowest=True,
     )
 
 
@@ -211,7 +212,7 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):  # ok
         mask = df["notification_rate"] != df["state_notification_rate"]
         df["subnotification_place_type"] = np.where(mask, "city", "state")
 
-    if place_id == "state":
+    if place_id == "state" and row["deaths"] <= 0:
 
         mask = df["notification_rate"] != np.nan
         df["subnotification_place_type"] = np.nan

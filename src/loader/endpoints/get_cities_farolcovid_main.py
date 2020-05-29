@@ -14,6 +14,7 @@ def _get_levels(df, rules):
         bins=rules["cuts"],
         labels=rules["categories"],
         right=False,
+        include_lowest=True,
     )
 
 
@@ -197,6 +198,7 @@ def _get_subnotification_rank(df, mask, place_id):
 
     if place_id == "city_id":
         return df[mask].groupby("state_id")["subnotification_rate"].rank(method="first")
+        
     if place_id == "state":
         return df["subnotification_rate"].rank(method="first")
 
@@ -208,8 +210,12 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):  # ok
 
     if place_id == "city_id":
 
-        mask = df["notification_rate"] != df["state_notification_rate"]
-        df["subnotification_place_type"] = np.where(mask, "city", "state")
+        mask = (df["notification_rate"] == df["state_notification_rate"]) & (
+            df["deaths"] <= 0
+        )
+
+        df["subnotification_place_type"] = np.where(mask, "state", "city")
+        # print(df["subnotification_place_type"].value_counts()["city"])
 
     if place_id == "state":
 
@@ -325,10 +331,10 @@ def now(config):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "city without subnotification rate got a rank": lambda df: df[
-        "subnotification_place_type"
-    ].value_counts()["city"]
-    == df["subnotification_rank"].count(),
+    # "city without subnotification rate got a rank": lambda df: df[
+    #     "subnotification_place_type"
+    # ].value_counts()["city"]
+    # == df["subnotification_rank"].count(),
     "city doesnt have both rt classified and growth": lambda df: df[
         "rt_classification"
     ].count()

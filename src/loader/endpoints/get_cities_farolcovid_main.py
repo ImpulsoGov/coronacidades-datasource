@@ -198,7 +198,7 @@ def _get_subnotification_rank(df, mask, place_id):
 
     if place_id == "city_id":
         return df[mask].groupby("state_id")["subnotification_rate"].rank(method="first")
-        
+
     if place_id == "state":
         return df["subnotification_rate"].rank(method="first")
 
@@ -210,11 +210,11 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):  # ok
 
     if place_id == "city_id":
 
-        mask = (df["notification_rate"] == df["state_notification_rate"]) & (
-            df["deaths"] <= 0
+        mask = (df["notification_rate"] != df["state_notification_rate"]) | (
+            df["deaths"] > 0
         )
 
-        df["subnotification_place_type"] = np.where(mask, "state", "city")
+        df["subnotification_place_type"] = np.where(mask, "city", "state")
         # print(df["subnotification_place_type"].value_counts()["city"])
 
     if place_id == "state":
@@ -228,15 +228,14 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):  # ok
     df["subnotification_rank"] = _get_subnotification_rank(df, mask, place_id)
 
     # Taxa de mortalidade até a ultima semana
-    last_week = data["last_updated"].max() - dt.timedelta(7)
-
-    df["last_mortality_ratio"] = (
-        data[data["last_updated"] == last_week]
-        .sort_values(place_id)
-        .groupby(place_id)
-        .sum()
-        .apply(lambda row: _get_mortality_ratio(row), axis=1)
-    )
+    # last_week = data["last_updated"].max() - dt.timedelta(7)
+    # df["last_mortality_ratio"] = (
+    #     data[data["last_updated"] == last_week]
+    #     .sort_values(place_id)
+    #     .groupby(place_id)
+    #     .sum()
+    #     .apply(lambda row: _get_mortality_ratio(row), axis=1)
+    # )
     # Classificação: percentual de subnotificação
     df[classify] = _get_levels(df[mask], rules[classify])
 
@@ -356,8 +355,8 @@ TESTS = {
         .apply(lambda x: any(x), axis=1)
         == True
     ),
-    "city without deaths has mortality ratio": lambda df: len(
-        df[(df["deaths"] == 0) & (~df["last_mortality_ratio"].isnull())]
-    )
-    == 0,
+    # "city without deaths has mortality ratio": lambda df: len(
+    #     df[(df["deaths"] == 0) & (~df["last_mortality_ratio"].isnull())]
+    # )
+    # == 0,
 }

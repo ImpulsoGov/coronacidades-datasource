@@ -115,8 +115,8 @@ TESTS = {
         .apply(lambda x: any(x), axis=1)
         == True
     ),
-    "state without deaths has mortality ratio": lambda df: len(
-        df[(df["deaths"] == 0) & (~df["last_mortality_ratio"].isnull())]
-    )
-    == 0,
+    # "state without deaths has mortality ratio": lambda df: len(
+    #     df[(df["deaths"] == 0) & (~df["last_mortality_ratio"].isnull())]
+    # )
+    # == 0,
 }

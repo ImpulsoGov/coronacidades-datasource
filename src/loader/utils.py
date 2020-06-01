@@ -33,6 +33,7 @@ def _remove_accents(text):
         .encode("ASCII", "ignore")
         .decode("ASCII")
         .upper()
+        .strip()
     )
 
 

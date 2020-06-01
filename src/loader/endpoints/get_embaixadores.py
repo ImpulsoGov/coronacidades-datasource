@@ -32,7 +32,9 @@ def now(config, country="br"):
     updates[c] = updates[c].apply(treat_text)
 
     # treat timestamp
-    updates["last_updated"] = updates["timestamp"].apply(pd.to_datetime)
+    updates["last_updated"] = updates["timestamp"].apply(
+        lambda x: pd.to_datetime(x, format="%d/%m/%Y %H:%M:%S")
+    )
 
     return updates
 

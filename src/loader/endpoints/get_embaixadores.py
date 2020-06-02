@@ -28,8 +28,7 @@ def now(config, country="br"):
     ]
 
     # treat text
-    c = ["city_norm"]
-    updates[c] = updates[c].apply(treat_text)
+    updates["city_norm"] = updates["city_norm"].apply(treat_text)
 
     # treat timestamp
     updates["last_updated"] = updates["timestamp"].apply(
@@ -41,6 +40,7 @@ def now(config, country="br"):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "str are not stripped": lambda df: len(df[df["city_norm"].str.endswith(" ")]) == 0,
 }
 
 if __name__ == "__main__":

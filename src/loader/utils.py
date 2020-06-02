@@ -33,6 +33,7 @@ def _remove_accents(text):
         .encode("ASCII", "ignore")
         .decode("ASCII")
         .upper()
+        .rstrip()
     )
 
 
@@ -79,8 +80,8 @@ def _drop_forbiden(text):
 
 def treat_text(s):
 
-    s = s.apply(_remove_accents)
-    s = s.apply(_drop_forbiden)
+    s = _remove_accents(s)
+    s = _drop_forbiden(s)
     return s
 
 
@@ -414,8 +415,10 @@ def download_from_googledrive(file_id, token_path):
     drive_service = build("drive", "v3", credentials=token)
     fh = io.BytesIO()
 
-    downloader = MediaIoBaseDownload(fh, drive_service.files().get_media(fileId=file_id))
-    
+    downloader = MediaIoBaseDownload(
+        fh, drive_service.files().get_media(fileId=file_id)
+    )
+
     done = False
     while done is False:
         status, done = downloader.next_chunk()
@@ -423,10 +426,11 @@ def download_from_googledrive(file_id, token_path):
 
 
 def get_googledrive_df(file_id, token_path="secrets/token.pickle"):
-    
-    data = io.StringIO(str(download_from_googledrive(file_id, token_path).getvalue(), "utf-8"))
-    return pd.read_csv(data)
 
+    data = io.StringIO(
+        str(download_from_googledrive(file_id, token_path).getvalue(), "utf-8")
+    )
+    return pd.read_csv(data)
 
 
 def gen_googledrive_token(credentials_path, out_token_path):

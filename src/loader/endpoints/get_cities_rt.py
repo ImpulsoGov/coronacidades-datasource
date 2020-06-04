@@ -179,9 +179,6 @@ def highest_density_interval(pmf, p=0.95):
 
 def run_full_model(cases, config):
 
-    # initializing result dict
-    result = {""}
-
     # smoothing series
     smoothed = smooth_new_cases(cases, config["br"]["rt_parameters"],)
 
@@ -201,29 +198,9 @@ def run_full_model(cases, config):
 
 def parallel_run(df, config, place_type="city_id"):
 
-    # Each place_type in chunks
-    errors = dict()
-    results = list()
-
-    for place in df.reset_index()[place_type].unique():
-
-        chunk = df[df.index.isin([place], level=0)]
-
-        try:
-            with Parallel(n_jobs=-1) as parallel:
-                results.append(
-                    parallel(
-                        delayed(run_full_model)(grp[1], config)
-                        for grp in chunk.groupby(level=place_type)
-                    )
-                )
-        except Exception as e:
-            errors[place] = e
-
-    logger.debug("Total places evaluated: {}", len(results))
-    logger.debug("Places that could not be evaluated: {}", len(errors))
-
-    return pd.concat([l[0] for l in results]).reset_index()
+    results = [run_full_model(gr[1], config) for gr in df.groupby(level=place_type)]
+    
+    return pd.concat(results).reset_index()
 
 
 @allow_local

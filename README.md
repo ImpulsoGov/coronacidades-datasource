@@ -101,3 +101,8 @@ you can just call `logger.<level>`, i.e., `logger.info()`.
 - If you use `logger.error`, the message will also be posted to our slack channel **#simulacovid-logs**
 
 Read more at [loguru](https://github.com/Delgan/loguru).
+
+## Development
+
+Use `make loader-dev` to open the docker image and be able to edit the files in 
+your editor.

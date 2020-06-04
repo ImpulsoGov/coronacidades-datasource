@@ -28,7 +28,7 @@ def now(config, country="br"):
     time_cols = [c for c in cities.columns if "last_updated" in c]
     cities[time_cols] = cities[time_cols].apply(pd.to_datetime)
 
-    cities["author"] = config[country]["health"]["source"]  # SUS
+    cities["author"] = "DataSUS"  # config[country]["health"]["source"]
 
     return cities
 

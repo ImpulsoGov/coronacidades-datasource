@@ -106,3 +106,8 @@ Read more at [loguru](https://github.com/Delgan/loguru).
 
 Use `make loader-dev` to open the docker image and be able to edit the files in 
 your editor.
+
+## Ship to Production
+
+1. Set the env variable `IS_PROD=True`
+2. Add secrets folder

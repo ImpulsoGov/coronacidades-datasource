@@ -196,7 +196,7 @@ def run_full_model(cases, config):
     return result
 
 
-def parallel_run(df, config, place_type="city_id"):
+def sequential_run(df, config, place_type="city_id"):
 
     results = [run_full_model(gr[1], config) for gr in df.groupby(level=place_type)]
     
@@ -214,7 +214,7 @@ def now(config):
     df = get_cases_series(df, "city_id", config["br"]["rt_parameters"]["min_days"])
 
     # Run in parallel
-    return parallel_run(df, config, place_type="city_id")
+    return sequential_run(df, config, place_type="city_id")
 
 
 TESTS = {

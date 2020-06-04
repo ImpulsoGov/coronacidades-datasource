@@ -274,20 +274,6 @@ def now(config):
         .set_index("city_id")
         .assign(confirmed_cases=lambda x: x["confirmed_cases"].fillna(0))
         .assign(deaths=lambda x: x["deaths"].fillna(0))
-        .assign(
-            number_beds=lambda x: config["farolcovid"]["resources"][
-                "available_proportion"
-            ]
-            * x["number_beds"]
-            / config["br"]["health"]["initial_proportion"]
-        )
-        .assign(
-            number_ventilators=lambda x: config["farolcovid"]["resources"][
-                "available_proportion"
-            ]
-            * x["number_ventilators"]
-            / config["br"]["health"]["initial_proportion"]
-        )
     )
 
     # Calcula indicadores, classificações e crescimento

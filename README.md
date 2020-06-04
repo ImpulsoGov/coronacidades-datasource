@@ -23,45 +23,42 @@ This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can
 
 ## Building your local API
 
-⚠️ *You need a file in `src/loader/secrets/secrets.yaml` and another in `src/loader/secrets/token.pickle` with very secretive variables.*
+⚠️ *You need a file in `src/loader/secrets/secrets.yaml` and another in `src/loader/secrets/token.pickle` with very secretive variables to run some data.*
 
+### 1️⃣ Run Loader 
 
-1️⃣ Run the code to load the files
-```
+Run the code to load the files
+
+```bash
  make loader-build-run
 ```
 
-> **Remember to rebuild the docker everytime you change the loader folder!** 
-> If the changes have any errors, running `make loader-build-run` will just ignore your changes and get the previous stable version. So, if you change any file on `loader` folder, instead run:
->
-> ```shell
-> >>> make loader-shell # open a terminal on loader container
-> >>> root@blabla:/app python3 main.py
-> ```
+#### For development
+
+If you want to make changes on the code, you should run the loader with `make loader-dev` to open the docker image and be able to edit the files directly in your editor.
 
 
-2️⃣ In a different tab, run the Flask server
+### 2️⃣ Run Server
+
+*In a different tab*, run the Flask server
 
 ```bash
 make server-build-run
 ```
 
-> **Remember to rebuild the docker everytime you change the server folder!** 
-> If the changes have any errors, running `make server-build-run` will just ignore your changes and get the previous stable version. So, if you change any file on `server` folder, instead run:
->
-> ```bash
-> >>> make server-shell # open a terminal on server container
-> >>> root@blabla:/app python3 main.py
-> ```
+#### For development
 
+If you want to make changes on the code, you should run the loader with `make server-dev` to open the docker image and be able to edit the files directly in your editor.
 
+### 3️⃣ All done!
 You should see something at `localhost:7000/<endpoint>`, like `http://localhost:7000/br/cities/cases/full` 
 
 > Check the column `date_last_refreshed` if you made any changes! ;)
 
 ## Adding new data entrypoints
 
-1️⃣ Add the endpoint configuration parameters to `endpoints.yaml`
+
+- Add the endpoint configuration parameters to `endpoints.yaml`
 
 ```yaml
 - endpoint: 'br/cities/cases/full' # endpoint route following [country]/[unit]/[content]
@@ -69,14 +66,8 @@ You should see something at `localhost:7000/<endpoint>`, like `http://localhost:
   update_frequency_minutes: 15  # how often it should be updated in minutes
 ```
 
-2️⃣ Write a .py file in loader/endpoints/ that generates the endpoint data. **This file must be structured as [get_{template}.py](/src/loader/endpoints/get_{template}.py)**
+- Write a .py file in loader/endpoints/ that generates the endpoint data. **This file must be structured as [get_{template}.py](/src/loader/endpoints/get_{template}.py)**
 
-## Analysis
-
-To make some drafts on `notebooks` folder, start the venv
-```
-make loader-create-env-analysis
-```
 
 ## Good Practices
 
@@ -102,12 +93,7 @@ you can just call `logger.<level>`, i.e., `logger.info()`.
 
 Read more at [loguru](https://github.com/Delgan/loguru).
 
-## Development
-
-Use `make loader-dev` to open the docker image and be able to edit the files in 
-your editor.
-
-## Ship to Production
+### Production: print logs on Slack
 
 1. Set the env variable `IS_PROD=True`
 2. Add secrets folder

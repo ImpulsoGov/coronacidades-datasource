@@ -74,3 +74,10 @@ server-shell: server-build
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 
+server-dev: server-build
+	docker run --rm -it \
+		--entrypoint "/bin/bash" \
+		-v "$(PWD):/app/:ro" \
+		-v "datasource:/output" \
+		$(SERVER_IMAGE_TAG)
+

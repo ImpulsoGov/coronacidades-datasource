@@ -198,8 +198,18 @@ def run_full_model(cases, config):
 
 def sequential_run(df, config, place_type="city_id"):
 
-    results = [run_full_model(gr[1], config) for gr in df.groupby(level=place_type)]
-    
+    results = []
+    errors = 0
+    for gr in df.groupby(level=place_type):
+
+        try:
+            results.append(run_full_model(gr[1], config))
+        except:
+            errors += 1
+            pass
+
+    logger.info("PLACES NOT EVALUATED: {}", errors)
+
     return pd.concat(results).reset_index()
 
 
@@ -212,6 +222,9 @@ def now(config):
 
     # Filter more than 14 days
     df = get_cases_series(df, "city_id", config["br"]["rt_parameters"]["min_days"])
+
+    # subs cidades com 0 casos -> 0.1 caso no periodo
+    df = df.replace(0, 0.1)
 
     # Run in parallel
     return sequential_run(df, config, place_type="city_id")

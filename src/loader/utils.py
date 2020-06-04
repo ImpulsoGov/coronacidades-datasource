@@ -35,7 +35,7 @@ def _remove_accents(text):
         .encode("ASCII", "ignore")
         .decode("ASCII")
         .upper()
-        .strip()
+        .rstrip()
     )
 
 
@@ -82,8 +82,8 @@ def _drop_forbiden(text):
 
 def treat_text(s):
 
-    s = s.apply(_remove_accents)
-    s = s.apply(_drop_forbiden)
+    s = _remove_accents(s)
+    s = _drop_forbiden(s)
     return s
 
 

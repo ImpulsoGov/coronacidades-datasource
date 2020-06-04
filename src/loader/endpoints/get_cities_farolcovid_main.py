@@ -18,7 +18,7 @@ def _get_levels(df, rules):
     )
 
 
-def _calculate_recovered(df, params):  # ok
+def _calculate_recovered(df, params):
 
     confirmed_adjusted = int(
         df[["confirmed_cases"]].sum() / (1 - df["subnotification_rate"])
@@ -42,7 +42,7 @@ def _calculate_recovered(df, params):  # ok
     return params
 
 
-def _prepare_simulation(row, config):  # ok
+def _prepare_simulation(row, config):
 
     params = {
         "population_params": {
@@ -64,7 +64,7 @@ def _prepare_simulation(row, config):  # ok
         return dday_beds["best"], dday_beds["worst"]
 
 
-def get_indicators_capacity(df, config, rules, classify):  # ok
+def get_indicators_capacity(df, config, rules, classify):
 
     df["dday_beds_best"], df["dday_beds_worst"] = zip(
         *df.apply(lambda row: _prepare_simulation(row, config), axis=1)
@@ -79,7 +79,7 @@ def get_indicators_capacity(df, config, rules, classify):  # ok
     return df
 
 
-def get_indicators_inloco(df, data, place_id, rules, growth):  # ok
+def get_indicators_inloco(df, data, place_id, rules, growth):
 
     data["dt"] = pd.to_datetime(data["dt"])
 
@@ -125,7 +125,7 @@ def get_indicators_inloco(df, data, place_id, rules, growth):  # ok
     return df
 
 
-def get_indicators_rt(df, data, place_id, rules, classify, growth):  # ok
+def get_indicators_rt(df, data, place_id, rules, classify, growth):
 
     data["last_updated"] = pd.to_datetime(data["last_updated"])
 
@@ -203,7 +203,7 @@ def _get_subnotification_rank(df, mask, place_id):
         return df["subnotification_rate"].rank(method="first")
 
 
-def get_indicators_subnotification(df, data, place_id, rules, classify):  # ok
+def get_indicators_subnotification(df, data, place_id, rules, classify):
 
     data["last_updated"] = pd.to_datetime(data["last_updated"])
     df["last_updated_subnotification"] = data["data_last_refreshed"].max()
@@ -330,10 +330,10 @@ def now(config):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    # "city without subnotification rate got a rank": lambda df: df[
-    #     "subnotification_place_type"
-    # ].value_counts()["city"]
-    # == df["subnotification_rank"].count(),
+    "city without subnotification rate got a rank": lambda df: df[
+        "subnotification_place_type"
+    ].value_counts()["city"]
+    == df["subnotification_rank"].count(),
     "city doesnt have both rt classified and growth": lambda df: df[
         "rt_classification"
     ].count()
@@ -355,8 +355,4 @@ TESTS = {
         .apply(lambda x: any(x), axis=1)
         == True
     ),
-    # "city without deaths has mortality ratio": lambda df: len(
-    #     df[(df["deaths"] == 0) & (~df["last_mortality_ratio"].isnull())]
-    # )
-    # == 0,
 }

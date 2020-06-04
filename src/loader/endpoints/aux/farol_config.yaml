@@ -34,7 +34,7 @@ resources:
 rules:
     rt_classification:
         column_name: 'rt_10days_ago_most_likely'
-        cuts: [0, 1, 1.2, 5.001]
+        cuts: [0, 1, 1.2, 10]
         categories: ['bom', 'insatisfatorio', 'ruim'] # [1, 0, -1]
 
     rt_growth:

@@ -17,7 +17,7 @@ def now(config):
     df = get_cases_series(df, "state", config["br"]["rt_parameters"]["min_days"])
 
     # Run in parallel
-    return get_cities_rt.parallel_run(df, config, place_type="state")
+    return get_cities_rt.sequential_run(df, config, place_type="state")
 
 
 TESTS = {

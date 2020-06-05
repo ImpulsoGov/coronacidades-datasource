@@ -36,20 +36,6 @@ def now(config):
         .rename({"state_notification_rate": "notification_rate"}, axis=1)
         .assign(confirmed_cases=lambda x: x["confirmed_cases"].fillna(0))
         .assign(deaths=lambda x: x["deaths"].fillna(0))
-        .assign(
-            number_beds=lambda x: config["farolcovid"]["resources"][
-                "available_proportion"
-            ]
-            * x["number_beds"]
-            / config["br"]["health"]["initial_proportion"]
-        )
-        .assign(
-            number_ventilators=lambda x: config["farolcovid"]["resources"][
-                "available_proportion"
-            ]
-            * x["number_ventilators"]
-            / config["br"]["health"]["initial_proportion"]
-        )
         .reset_index()
         .set_index("state_id")
     )

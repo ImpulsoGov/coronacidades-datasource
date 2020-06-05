@@ -42,6 +42,13 @@ loader-create-env-analysis:
 			pip3 install --upgrade -r requirements-analysis.txt; \
 			python -m ipykernel install --user --name=loader-anaylsis
 
+loader-dev: loader-build
+	docker run --rm -it \
+		--entrypoint "/bin/bash" \
+		-v "$(PWD):/app/:ro" \
+		-v "datasource:/output" \
+		$(LOADER_IMAGE_TAG)
+
 # Server
 server-remove:
 	docker rm -f datasource-server 2>/dev/null || true
@@ -64,6 +71,13 @@ server-shell: server-build
 	docker run --rm -it \
 		--entrypoint "/bin/bash" \
 		-p 7000:7000 \
+		-v "datasource:/output" \
+		$(SERVER_IMAGE_TAG)
+
+server-dev: server-build
+	docker run --rm -it \
+		--entrypoint "/bin/bash" \
+		-v "$(PWD):/app/:ro" \
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 

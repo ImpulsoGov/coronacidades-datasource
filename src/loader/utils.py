@@ -13,6 +13,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import io
 
+configs_path = os.path.join(os.path.dirname(__file__), "endpoints/aux")
+
 
 def build_file_path(endpoint):
 
@@ -410,7 +412,6 @@ def get_country_isocode_name(iso):
 def download_from_googledrive(file_id, token_path):
     """Takes the id and token and reads the bytes of a file
     """
-
     token = pickle.load(open(token_path, "rb"))
     drive_service = build("drive", "v3", credentials=token)
     fh = io.BytesIO()

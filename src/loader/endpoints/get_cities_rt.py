@@ -179,9 +179,6 @@ def highest_density_interval(pmf, p=0.95):
 
 def run_full_model(cases, config):
 
-    # initializing result dict
-    result = {""}
-
     # smoothing series
     smoothed = smooth_new_cases(cases, config["br"]["rt_parameters"],)
 
@@ -199,31 +196,21 @@ def run_full_model(cases, config):
     return result
 
 
-def parallel_run(df, config, place_type="city_id"):
+def sequential_run(df, config, place_type="city_id"):
 
-    # Each place_type in chunks
-    errors = dict()
-    results = list()
-
-    for place in df.reset_index()[place_type].unique():
-
-        chunk = df[df.index.isin([place], level=0)]
+    results = []
+    errors = 0
+    for gr in df.groupby(level=place_type):
 
         try:
-            with Parallel(n_jobs=-1) as parallel:
-                results.append(
-                    parallel(
-                        delayed(run_full_model)(grp[1], config)
-                        for grp in chunk.groupby(level=place_type)
-                    )
-                )
-        except Exception as e:
-            errors[place] = e
+            results.append(run_full_model(gr[1], config))
+        except:
+            errors += 1
+            pass
 
-    logger.debug("Total places evaluated: {}", len(results))
-    logger.debug("Places that could not be evaluated: {}", len(errors))
+    logger.info("PLACES NOT EVALUATED: {}", errors)
 
-    return pd.concat([l[0] for l in results]).reset_index()
+    return pd.concat(results).reset_index()
 
 
 @allow_local
@@ -236,8 +223,11 @@ def now(config):
     # Filter more than 14 days
     df = get_cases_series(df, "city_id", config["br"]["rt_parameters"]["min_days"])
 
+    # subs cidades com 0 casos -> 0.1 caso no periodo
+    df = df.replace(0, 0.1)
+
     # Run in parallel
-    return parallel_run(df, config, place_type="city_id")
+    return sequential_run(df, config, place_type="city_id")
 
 
 TESTS = {

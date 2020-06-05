@@ -23,7 +23,6 @@ def _get_supplies(cities, updates, country, config):
         c = cities.rename(columns={"last_updated_" + h: "last_updated"})[
             final_cols + [h]
         ]
-        c[h] = c[h] * config[country]["health"]["initial_proportion"]
         f = get_last(pd.concat([c, u]))
         f.columns = (
             ["city_id"] + [i + "_" + h for i in final_cols if i != "city_id"] + [h]

@@ -23,10 +23,12 @@ def now(config, country="br"):
     )
     cities = cities.drop([c for c in cities.columns if "_y" in c], 1)
 
-    cities[["city_norm"]] = cities[["city_name"]].apply(treat_text)
+    cities["city_norm"] = cities["city_name"].apply(treat_text)
 
     time_cols = [c for c in cities.columns if "last_updated" in c]
     cities[time_cols] = cities[time_cols].apply(pd.to_datetime)
+
+    cities["author"] = "DataSUS"  # config[country]["health"]["source"]
 
     return cities
 

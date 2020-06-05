@@ -27,9 +27,7 @@ def now(config):
     )
 
     df = (
-        pd.read_csv(
-            "http://datasource.coronacidades.org:7000/br/cities/simulacovid/main"
-        )[config["farolcovid"]["simulacovid"]["columns"]]
+        get_simulacovid_main.now(config)[config["farolcovid"]["simulacovid"]["columns"]]
         .sort_values("state_id")
         .groupby(["state_id", "state_name"])
         .agg(config["farolcovid"]["simulacovid"]["state_agg"])

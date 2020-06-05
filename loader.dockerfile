@@ -1,7 +1,7 @@
 FROM tiangolo/uwsgi-nginx-flask:python3.7
 
 ENV OUTPUT_DIR=/output \
-    CONFIG_URL="https://raw.githubusercontent.com/ImpulsoGov/simulacovid/update-data/src/configs/config.yaml" \
+    CONFIG_URL="https://raw.githubusercontent.com/ImpulsoGov/simulacovid/master/src/configs/config.yaml" \
     IS_PROD=False
 
 ADD ./requirements.txt /app/

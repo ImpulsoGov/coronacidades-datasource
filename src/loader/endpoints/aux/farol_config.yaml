@@ -35,7 +35,7 @@ rules:
     rt_classification:
         column_name: 'rt_10days_ago_most_likely'
         cuts: [0, 1, 1.2, 10]
-        categories: ['bom', 'insatisfatorio', 'ruim'] # [1, 0, -1]
+        categories: ['bom', 'insatisfatório', 'ruim'] # [1, 0, -1]
 
     rt_growth:
         column_name: "rt_ratio_week_avg"
@@ -45,12 +45,12 @@ rules:
     dday_classification:
         column_name: 'dday_beds_best'
         cuts: [0, 30, 60, 91.001]
-        categories: ['ruim', 'insatisfatorio', 'bom'] # [-1, 0, 1]
+        categories: ['ruim', 'insatisfatório', 'bom'] # [-1, 0, 1]
 
     subnotification_classification:
         column_name: 'subnotification_rate'
         cuts: [0, 0.5, 0.7, 1.001]
-        categories: ['bom', 'insatisfatorio', 'ruim']  # [1, 0, -1]
+        categories: ['bom', 'insatisfatório', 'ruim']  # [1, 0, -1]
 
     inloco_growth:
         column_name: 'inloco_ratio_week_avgs'
@@ -68,25 +68,25 @@ alerts:
         how: "any"
     medio: 
         conditions: {
-            rt_classification: "insatisfatorio",
+            rt_classification: "insatisfatório",
             rt_growth: "melhorando|estabilizando",
-            dday_classification: "bom|insatisfatorio",
-            subnotification_classification: "bom|insatisfatorio"  
+            dday_classification: "bom|insatisfatório",
+            subnotification_classification: "bom|insatisfatório"  
         }
         how: "all"
     medio2: 
         conditions: {
-            rt_classification: "bom|insatisfatorio",
+            rt_classification: "bom|insatisfatório",
             rt_growth: "melhorando|estabilizando",
-            dday_classification: "bom|insatisfatorio",
-            subnotification_classification: "insatisfatorio"  
+            dday_classification: "bom|insatisfatório",
+            subnotification_classification: "insatisfatório"  
         }
         how: "all"
     baixo:
         conditions: {
             rt_classification: "bom",
             rt_growth: "melhorando|estabilizando",
-            dday_classification: "bom|insatisfatorio",
+            dday_classification: "bom|insatisfatório",
             subnotification_classification: "bom"            
         }
         how: "all"

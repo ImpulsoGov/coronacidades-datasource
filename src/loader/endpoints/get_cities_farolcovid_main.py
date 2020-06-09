@@ -50,8 +50,10 @@ def _prepare_simulation(row, config):
             "I": [row["active_cases"] if not np.isnan(row["active_cases"]) else 1][0],
             "D": [row["deaths"] if not np.isnan(row["deaths"]) else 0][0],
         },
-        "n_beds": row["number_beds"],
-        "n_ventilators": row["number_ventilators"],
+        "n_beds": row["number_beds"]
+        * config["simulator"]["resources_available_proportion"],
+        "n_ventilators": row["number_ventilators"]
+        * config["simulator"]["resources_available_proportion"],
         "R0": {"best": row["rt_10days_ago_low"], "worst": row["rt_10days_ago_high"]},
     }
 
@@ -76,7 +78,9 @@ def get_indicators_capacity(df, config, rules, classify):
     # Classificação: numero de dias para acabar a capacidade
     df[classify] = _get_levels(df, rules[classify])
 
-    df["dday_beds_best_months"] = df[classify].replace({"ruim": 1, "insatisfatório": 2, "bom": 3})
+    df["dday_beds_best_months"] = df[classify].replace(
+        {"ruim": 1, "insatisfatório": 2, "bom": 3}
+    )
 
     return df
 

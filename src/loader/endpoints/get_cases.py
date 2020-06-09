@@ -1,6 +1,8 @@
 import pandas as pd
 import datetime
 import numpy as np
+from urllib.request import Request, urlopen
+import json
 
 from endpoints.helpers import allow_local
 
@@ -99,45 +101,60 @@ def _correct_cumulative_cases(df):
     return df
 
 
+def _get_brasilio_json(url):
+
+    page = json.loads(
+        urlopen(Request(url, headers={"User-Agent": "python-urllib"})).read()
+    )
+    data = pd.DataFrame()
+
+    while page["next"]:
+
+        data = data.append(page["results"])
+        page = json.loads(
+            urlopen(
+                Request(page["next"], headers={"User-Agent": "python-urllib"})
+            ).read()
+        )
+
+    return data
+
+
 @allow_local
 def now(config, country="br"):
 
     if country == "br":
-        df = pd.read_csv(config[country]["cases"]["url"])
-        df = (
-            df.query("place_type == 'city'").dropna(subset=["city_ibge_code"]).fillna(0)
-        )
 
-        cases_params = config["br"]["cases"]
-        df = df.rename(columns=cases_params["rename"])
-        df["last_updated"] = pd.to_datetime(df["last_updated"])
+        url = "https://brasil.io/api/dataset/covid19/caso_full/data/?format=json"
 
-        # Corrije dados acumulados
-        df = _correct_cumulative_cases(df)
-
-        # Calcula casos ativos estimados
-
-        # 1. Calcula casos ativos = novos casos no período de progressão
         infectious_period = (
             config["br"]["seir_parameters"]["severe_duration"]
             + config["br"]["seir_parameters"]["critical_duration"]
         )
 
-        df = _get_active_cases(df, infectious_period, cases_params).rename(
-            columns=cases_params["rename"]
+        df = (
+            _get_brasilio_json(url)
+            .query("place_type == 'city'")
+            .dropna(subset=["city_ibge_code"])
+            .fillna(0)
+            .rename(columns=config["br"]["cases"]["rename"])
+            .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
+            .sort_values(["city_id", "state", "last_updated"])
+            .pipe(_correct_cumulative_cases)
+            .pipe(_get_active_cases, infectious_period, config["br"]["cases"])
+            .rename(columns=config["br"]["cases"]["rename"])
         )
 
         df = df.merge(
             _adjust_subnotification_cases(df, config), on=["city_id", "last_updated"]
+        ).assign(
+            active_cases=lambda x: np.where(
+                x["notification_rate"].isnull(),
+                round(x["infectious_period_cases"], 0),
+                round(x["infectious_period_cases"] / x["notification_rate"], 0),
+            ),
+            city_id=lambda x: x["city_id"].astype(int),
         )
-        # 2. Ajusta pela taxa de subnotificacao: quando não tem morte ainda na UF, não ajustamos
-        df["active_cases"] = np.where(
-            df["notification_rate"].isnull(),
-            round(df["infectious_period_cases"], 0),
-            round(df["infectious_period_cases"] / df["notification_rate"], 0),
-        )
-
-        df["city_id"] = df["city_id"].astype(int)
 
     return df
 

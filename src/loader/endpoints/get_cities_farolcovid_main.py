@@ -76,6 +76,8 @@ def get_indicators_capacity(df, config, rules, classify):
     # Classificação: numero de dias para acabar a capacidade
     df[classify] = _get_levels(df, rules[classify])
 
+    df["dday_beds_best_months"] = df[classify].replace({"ruim": 1, "insatisfatório": 2, "bom": 3})
+
     return df
 
 

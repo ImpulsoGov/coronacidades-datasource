@@ -10,6 +10,10 @@ This repo runs our API for Coronacidades tools, such as [FarolCovid](farolcovid.
 
 ## Current data
 
+Use it like:
+
+`http://datasource.coronacidades.org/br/cities/cases/full`
+
 - `br/cities/cases/full`: full history data from Brasil.IO with notification rate and estimated active cases
 - `br/states/rt`: State Rt calculations
 - `br/cities/rt`: Cities Rt calculations

@@ -54,3 +54,13 @@
   python_file: get_states_farolcovid_main
   update_frequency_minutes: 360
   skip: False
+
+- endpoint: br/CNAE/sectors
+  python_file: get_CNAE_sectors
+  update_frequency_minutes: 720
+  skip: False
+
+- endpoint: br/states/reopening
+  python_file: get_states_reopening
+  update_frequency_minutes: 720
+  skip: False

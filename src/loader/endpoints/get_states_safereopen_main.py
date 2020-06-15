@@ -8,9 +8,8 @@ from numpy import dtype
 def now(config, country="br"):
     updates = (
         download_from_drive(config[country]["drive_paths"]["reopening_data"])
-        .rename({})
-        .assign(state_id=lambda df: df["uf"].astype("int64"))
-        .drop("uf", axis=1)
+        .rename(config["br"]["safereopen"]["rename"], axis=1)
+        .assign(state_id=lambda df: df["state_id"].astype("int64"))
         .assign(cnae=lambda df: df["cnae"].astype("int64"))
     )
 

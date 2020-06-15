@@ -1,5 +1,6 @@
 import pandas as pd
 from utils import download_from_drive, treat_text
+from endpoints.helpers import allow_local
 
 
 def _read_cities_data(country, config):
@@ -9,6 +10,7 @@ def _read_cities_data(country, config):
     return {name: download_from_drive(url) for name, url in paths.items()}
 
 
+@allow_local
 def now(config, country="br"):
 
     cities = _read_cities_data(country, config)
@@ -20,11 +22,17 @@ def now(config, country="br"):
         suffixes=("", "_y"),
     )
     cities = cities.drop([c for c in cities.columns if "_y" in c], 1)
-
-    cities[["city_norm"]] = cities[["city_name"]].apply(treat_text)
+    # cities["city_norm"] = cities["city_name"].apply(treat_text)
 
     time_cols = [c for c in cities.columns if "last_updated" in c]
     cities[time_cols] = cities[time_cols].apply(pd.to_datetime)
+
+    cities[["number_beds", "number_ventilators"]] = cities[
+        ["number_beds", "number_ventilators"]
+    ].fillna(0)
+
+    cities["author_number_beds"] = "DataSUS"  # config[country]["health"]["source"]
+    cities["author_number_ventilators"] = "DataSUS"
 
     return cities
 
@@ -35,5 +43,4 @@ TESTS = {
 
 
 if __name__ == "__main__":
-
     pass

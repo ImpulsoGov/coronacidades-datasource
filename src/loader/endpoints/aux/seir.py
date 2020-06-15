@@ -172,7 +172,7 @@ def SEIR(y, t, model_params, initial=False):
     return dSdt, dEdt, dI1dt, dI2dt, dI3dt, dRdt, dDdt
 
 
-def entrypoint(population_params, model_params, rt, initial=False):
+def entrypoint(population_params, model_params, phase, initial=False):
     """
     Function to receive user input and run model.
     
@@ -191,7 +191,11 @@ def entrypoint(population_params, model_params, rt, initial=False):
     model_params: dict
         Parameters of model dynamic (transmission, progression, recovery and death rates)
                                  
-    Rt: reproduction number
+    phase: dict
+       Scenario and days to run 
+            - scenario
+            - date
+        
 
     Return
     -------
@@ -202,14 +206,14 @@ def entrypoint(population_params, model_params, rt, initial=False):
     if initial:  # Get I1, I2, I3 & E
         population_params, model_params = (
             prepare_states(population_params, model_params),
-            prepare_params(population_params, model_params, rt),
+            prepare_params(population_params, model_params, phase["R0"]),
         )
     else:
         model_params = prepare_params(population_params, model_params, phase["R0"])
         del population_params["N"]
         # population_params = population_params[:-1]
 
-    # Run step model
+    # Run model
     params = {
         "y0": list(population_params.values()),
         "t": np.linspace(0, phase["n_days"], phase["n_days"] + 1),
@@ -224,8 +228,3 @@ def entrypoint(population_params, model_params, rt, initial=False):
     result.index.name = "dias"
 
     return result
-
-
-# if __name__ == '__main__':
-
-#     pass

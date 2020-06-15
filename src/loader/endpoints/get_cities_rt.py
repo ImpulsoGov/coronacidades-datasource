@@ -6,9 +6,11 @@ import pandas as pd
 import datetime as dt
 from scipy import stats as sps
 from joblib import Parallel, delayed
-from tqdm import tqdm
 from utils import get_cases_series
 from endpoints import get_cases
+from loguru import logger
+
+from endpoints.helpers import allow_local
 
 
 def smooth_new_cases(new_cases, params):
@@ -177,9 +179,6 @@ def highest_density_interval(pmf, p=0.95):
 
 def run_full_model(cases, config):
 
-    # initializing result dict
-    result = {""}
-
     # smoothing series
     smoothed = smooth_new_cases(cases, config["br"]["rt_parameters"],)
 
@@ -197,48 +196,38 @@ def run_full_model(cases, config):
     return result
 
 
-def parallel_run(df, config, place_type="city_id"):
+def sequential_run(df, config, place_type="city_id"):
 
-    # Each place_type in chunks
-    errors = dict()
-    results = list()
-
-    for place in tqdm(df.reset_index()[place_type].unique()):
-
-        chunk = df[df.index.isin([place], level=0)]
+    results = []
+    errors = 0
+    for gr in df.groupby(level=place_type):
 
         try:
-            with Parallel(n_jobs=-1) as parallel:
-                results.append(
-                    parallel(
-                        delayed(run_full_model)(grp[1], config)
-                        for grp in chunk.groupby(level=place_type)
-                    )
-                )
-        except Exception as e:
-            errors[place] = e
+            results.append(run_full_model(gr[1], config))
+        except:
+            errors += 1
+            pass
 
-    print(
-        "\nTotal places evaluated:",
-        len(results),
-        "\nPlaces that could not be evaluated:",
-        len(errors),
-    )
+    logger.info("PLACES NOT EVALUATED: {}", errors)
 
-    return pd.concat([l[0] for l in results]).reset_index()
+    return pd.concat(results).reset_index()
 
 
-def now(config, last=False):
+@allow_local
+def now(config):
 
     # Import cases
-    df = get_cases.now(config, "br", last)
+    df = get_cases.now(config, "br")
     df["last_updated"] = pd.to_datetime(df["last_updated"])
 
     # Filter more than 14 days
     df = get_cases_series(df, "city_id", config["br"]["rt_parameters"]["min_days"])
 
+    # subs cidades com 0 casos -> 0.1 caso no periodo
+    df = df.replace(0, 0.1)
+
     # Run in parallel
-    return parallel_run(df, config, place_type="city_id")
+    return sequential_run(df, config, place_type="city_id")
 
 
 TESTS = {

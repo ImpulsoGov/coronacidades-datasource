@@ -6,4 +6,10 @@ urllib3==1.24.3
 timeloop
 scipy
 joblib
-tqdm
+loguru
+notifiers
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+python-Levenshtein
+psutil

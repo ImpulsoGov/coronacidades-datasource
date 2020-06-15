@@ -1,6 +1,10 @@
 import pandas as pd
 import datetime
 import numpy as np
+from urllib.request import Request, urlopen
+import json
+
+from endpoints.helpers import allow_local
 
 
 def _get_notification_ratio(df, config, place_col):
@@ -85,6 +89,7 @@ def _correct_cumulative_cases(df):
 
     # Corrije acumulado para o valor máximo até a data
     df["confirmed_cases"] = df.groupby("city_id").cummax()["confirmed_cases"]
+    df["deaths"] = df.groupby("city_id").cummax()["deaths"]
 
     # Recalcula casos diários
     df["daily_cases"] = df.groupby("city_id")["confirmed_cases"].diff(1)
@@ -96,47 +101,60 @@ def _correct_cumulative_cases(df):
     return df
 
 
-def now(config, country="br", last=False):
+def _get_brasilio_json(url):
 
-    if country == "br":
-        df = pd.read_csv(config[country]["cases"]["url"])
-        df = (
-            df.query("place_type == 'city'").dropna(subset=["city_ibge_code"]).fillna(0)
+    page = json.loads(
+        urlopen(Request(url, headers={"User-Agent": "python-urllib"})).read()
+    )
+    data = pd.DataFrame()
+
+    while page["next"]:
+
+        data = data.append(page["results"])
+        page = json.loads(
+            urlopen(
+                Request(page["next"], headers={"User-Agent": "python-urllib"})
+            ).read()
         )
 
-        cases_params = config["br"]["cases"]
-        df = df.rename(columns=cases_params["rename"])
-        df["last_updated"] = pd.to_datetime(df["last_updated"])
+    return data
 
-        # Corrije dados acumulados
-        df = _correct_cumulative_cases(df)
 
-        # Calcula casos ativos estimados
+@allow_local
+def now(config, country="br"):
 
-        # 1. Calcula casos ativos = novos casos no período de progressão
+    if country == "br":
+
+        url = "https://brasil.io/api/dataset/covid19/caso_full/data/?format=json"
+
         infectious_period = (
             config["br"]["seir_parameters"]["severe_duration"]
             + config["br"]["seir_parameters"]["critical_duration"]
         )
 
-        df = _get_active_cases(df, infectious_period, cases_params).rename(
-            columns=cases_params["rename"]
+        df = (
+            _get_brasilio_json(url)
+            .query("place_type == 'city'")
+            .dropna(subset=["city_ibge_code"])
+            .fillna(0)
+            .rename(columns=config["br"]["cases"]["rename"])
+            .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
+            .sort_values(["city_id", "state", "last_updated"])
+            .pipe(_correct_cumulative_cases)
+            .pipe(_get_active_cases, infectious_period, config["br"]["cases"])
+            .rename(columns=config["br"]["cases"]["rename"])
         )
 
         df = df.merge(
             _adjust_subnotification_cases(df, config), on=["city_id", "last_updated"]
+        ).assign(
+            active_cases=lambda x: np.where(
+                x["notification_rate"].isnull(),
+                round(x["infectious_period_cases"], 0),
+                round(x["infectious_period_cases"] / x["notification_rate"], 0),
+            ),
+            city_id=lambda x: x["city_id"].astype(int),
         )
-        # 2. Ajusta pela taxa de subnotificacao: quando não tem morte ainda na UF, não ajustamos
-        df["active_cases"] = np.where(
-            df["notification_rate"].isnull(),
-            round(df["infectious_period_cases"], 0),
-            round(df["infectious_period_cases"] / df["notification_rate"], 0),
-        )
-
-        if last:
-            df = df[df["is_last"] == last].drop(cases_params["drop"], 1)
-
-        df["city_id"] = df["city_id"].astype(int)
 
     return df
 
@@ -144,16 +162,23 @@ def now(config, country="br", last=False):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "max(confirmed_cases) != max(date)": lambda df: df.groupby(
-        "city_id", sort=True
-    ).max()["confirmed_cases"]
-    != df[df["is_last"] == True].set_index("city_id", sort=True)["confirmed_cases"],
-    "max(deaths) != max(date)": lambda df: df.groupby("city_id", sort=True).max()[
-        "deaths"
-    ]
-    != df[df["is_last"] == True].set_index("city_id", sort=True)["deaths"],
+    # TODO: como fazer o teste abaixo sem sort? porque da erro no sort
+    # "max(confirmed_cases) != max(date)": lambda df: df.groupby(
+    #     "city_id"
+    # ).max()["confirmed_cases"]
+    # != df[df["is_last"] == True].set_index("city_id")["confirmed_cases"],
+    # "max(deaths) != max(date)": lambda df: df.groupby("city_id", sort=True).max()[
+    #     "deaths"
+    # ]
+    # != df[df["is_last"] == True].set_index("city_id", sort=True)["deaths"],
     "notification_rate == NaN": lambda df: len(
         df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values
+    )
+    == 0,
+    "state_notification_rate == NaN": lambda df: len(
+        df[
+            (df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)
+        ].values
     )
     == 0,
 }

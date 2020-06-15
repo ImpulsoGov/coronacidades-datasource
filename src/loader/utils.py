@@ -6,6 +6,27 @@ import yaml
 import os
 import requests
 import numpy as np
+import pickle
+from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+import io
+
+configs_path = os.path.join(os.path.dirname(__file__), "endpoints/aux")
+
+
+def build_file_path(endpoint):
+
+    if endpoint["endpoint"] == "secret":
+
+        route = secrets(endpoint["secret_path"])["route"]
+    else:
+        route = endpoint["endpoint"]
+
+    fn = route.replace("/", "-")
+
+    return "/".join([os.getenv("OUTPUT_DIR"), fn]) + ".csv"
 
 
 def _remove_accents(text):
@@ -14,6 +35,7 @@ def _remove_accents(text):
         .encode("ASCII", "ignore")
         .decode("ASCII")
         .upper()
+        .rstrip()
     )
 
 
@@ -60,8 +82,8 @@ def _drop_forbiden(text):
 
 def treat_text(s):
 
-    s = s.apply(_remove_accents)
-    s = s.apply(_drop_forbiden)
+    s = _remove_accents(s)
+    s = _drop_forbiden(s)
     return s
 
 
@@ -75,13 +97,13 @@ def download_from_drive(url):
     temp_path = tempfile.gettempdir() + "/temp.csv"
 
     response = subprocess.run(
-        ["curl", "-k", "-o", temp_path, url + "/export?format=csv&id"]
+        ["curl", "-sk", "-o", temp_path, url + "/export?format=csv&id"]
     )
 
     return pd.read_csv(temp_path)
 
 
-def secrets(variable, path="secrets.yaml"):
+def secrets(variable, path="secrets/secrets.yaml"):
 
     if (isinstance(variable, str)) and (os.getenv(variable)):
         return os.getenv(variable)
@@ -100,6 +122,11 @@ def secrets(variable, path="secrets.yaml"):
 def get_config(url=os.getenv("CONFIG_URL")):
 
     return yaml.load(requests.get(url).text, Loader=yaml.FullLoader)
+
+
+def get_endpoints():
+
+    return yaml.load(open("endpoints.yaml", "r"), Loader=yaml.FullLoader)
 
 
 def get_cases_series(df, place_type, min_days):
@@ -380,3 +407,40 @@ def get_country_isocode_name(iso):
         return names[iso]
     else:
         return np.nan
+
+
+def download_from_googledrive(file_id, token_path):
+    """Takes the id and token and reads the bytes of a file
+    """
+    token = pickle.load(open(token_path, "rb"))
+    drive_service = build("drive", "v3", credentials=token)
+    fh = io.BytesIO()
+
+    downloader = MediaIoBaseDownload(
+        fh, drive_service.files().get_media(fileId=file_id)
+    )
+
+    done = False
+    while done is False:
+        status, done = downloader.next_chunk()
+    return fh
+
+
+def get_googledrive_df(file_id, token_path="secrets/token.pickle"):
+
+    data = io.StringIO(
+        str(download_from_googledrive(file_id, token_path).getvalue(), "utf-8")
+    )
+    return pd.read_csv(data)
+
+
+def gen_googledrive_token(credentials_path, out_token_path):
+    """Gens a token file for use in the above function if needed.
+    """
+
+    SCOPES = ["https://www.googleapis.com/auth/drive"]
+    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
+    creds = flow.run_local_server(port=0)
+    # Save the credentials for the next run
+    with open(out_token_path, "wb") as token:
+        pickle.dump(creds, token)

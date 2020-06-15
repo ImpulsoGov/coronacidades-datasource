@@ -1,7 +1,9 @@
 import pandas as pd
 from utils import treat_text, download_from_drive
+from endpoints.helpers import allow_local
 
 
+@allow_local
 def now(config, country="br"):
 
     # print(config[country]["drive_paths"]["embaixadores"])
@@ -26,17 +28,19 @@ def now(config, country="br"):
     ]
 
     # treat text
-    c = ["city_norm"]
-    updates[c] = updates[c].apply(treat_text)
+    updates["city_norm"] = updates["city_norm"].apply(treat_text)
 
     # treat timestamp
-    updates["last_updated"] = updates["timestamp"].apply(pd.to_datetime)
+    updates["last_updated"] = updates["timestamp"].apply(
+        lambda x: pd.to_datetime(x, format="%d/%m/%Y %H:%M:%S")
+    )
 
     return updates
 
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "str are not stripped": lambda df: len(df[df["city_norm"].str.endswith(" ")]) == 0,
 }
 
 if __name__ == "__main__":

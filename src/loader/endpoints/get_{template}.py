@@ -1,3 +1,7 @@
+from endpoints.helpers import allow_local
+
+
+@allow_local
 def now(config):
     """This method is going to be called by main.py and it should return the output
     DataFrame.
@@ -6,7 +10,6 @@ def now(config):
     ----------
     config : dict
     """
-
     pass
 
 

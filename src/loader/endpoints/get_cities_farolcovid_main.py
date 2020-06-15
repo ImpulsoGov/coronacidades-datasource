@@ -51,9 +51,9 @@ def _prepare_simulation(row, config):
             "D": [row["deaths"] if not np.isnan(row["deaths"]) else 0][0],
         },
         "n_beds": row["number_beds"]
-        * config["simulator"]["resources_available_proportion"],
+        * config["br"]["simulacovid"]["resources_available_proportion"],
         "n_ventilators": row["number_ventilators"]
-        * config["simulator"]["resources_available_proportion"],
+        * config["br"]["simulacovid"]["resources_available_proportion"],
         "R0": {"best": row["rt_10days_ago_low"], "worst": row["rt_10days_ago_high"]},
     }
 

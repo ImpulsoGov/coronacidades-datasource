@@ -1,0 +1,18 @@
+name: Loader Docker Image CI
+
+on:
+  pull_request:
+    branches: 
+    - master
+    - stable
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Loader Docker image
+      run: docker build -f loader.dockerfile -t impulsogov/simulacovid:1.0-loader .

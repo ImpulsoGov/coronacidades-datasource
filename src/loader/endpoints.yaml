@@ -1,6 +1,6 @@
 - endpoint: br/cities/embaixadores
   python_file: get_embaixadores
-  update_frequency_minutes: 15
+  update_frequency_minutes: 360
   skip: False
 
 - endpoint: br/cities/cnes
@@ -10,12 +10,12 @@
 
 - endpoint: br/cities/cases/full
   python_file: get_cases
-  update_frequency_minutes: 15
+  update_frequency_minutes: 360
   skip: False
 
 - endpoint: br/cities/simulacovid/main
   python_file: get_simulacovid_main
-  update_frequency_minutes: 20
+  update_frequency_minutes: 360
   skip: False
 
 - endpoint: br/states/rt

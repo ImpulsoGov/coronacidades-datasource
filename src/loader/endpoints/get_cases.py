@@ -3,6 +3,11 @@ import datetime
 import numpy as np
 from urllib.request import Request, urlopen
 import json
+import time
+
+import gzip
+import io
+from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
 
@@ -101,23 +106,11 @@ def _correct_cumulative_cases(df):
     return df
 
 
-def _get_brasilio_json(url):
+def _download_brasilio_table(url):
 
-    page = json.loads(
-        urlopen(Request(url, headers={"User-Agent": "python-urllib"})).read()
-    )
-    data = pd.DataFrame()
+    response = urlopen(Request(url, headers={"User-Agent": "python-urllib"}))
 
-    while page["next"]:
-
-        data = data.append(page["results"])
-        page = json.loads(
-            urlopen(
-                Request(page["next"], headers={"User-Agent": "python-urllib"})
-            ).read()
-        )
-
-    return data
+    return pd.read_csv(io.StringIO(gzip.decompress(response.read()).decode("utf-8")))
 
 
 @allow_local
@@ -125,15 +118,13 @@ def now(config, country="br"):
 
     if country == "br":
 
-        url = "https://brasil.io/api/dataset/covid19/caso_full/data/?format=json"
-
         infectious_period = (
             config["br"]["seir_parameters"]["severe_duration"]
             + config["br"]["seir_parameters"]["critical_duration"]
         )
 
         df = (
-            _get_brasilio_json(url)
+            _download_brasilio_table(config["br"]["cases"]["url"])
             .query("place_type == 'city'")
             .dropna(subset=["city_ibge_code"])
             .fillna(0)

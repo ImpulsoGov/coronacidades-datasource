@@ -73,13 +73,22 @@ def main(endpoint):
 
     except Exception as e:
         logger.error("ERROR: {}", e)
+        return e
 
+    return None
 
 if __name__ == "__main__":
+    hasError = False
 
     for endpoint in get_endpoints():
 
         if endpoint.get("skip"):
             continue
 
-        main(endpoint)
+        err = main(endpoint)
+
+        if err not None:
+            hasError = True
+
+    if hasError:
+        exit(1)

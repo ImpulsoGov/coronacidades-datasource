@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
         err = main(endpoint)
 
-        if err not None:
+        if err is not None:
             hasError = True
 
     if hasError:

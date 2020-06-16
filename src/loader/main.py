@@ -72,7 +72,7 @@ def main(endpoint):
             _write_data(data, endpoint)
 
     except Exception as e:
-        logger.error("ERROR: {}", e)
+        logger.opt(exception=True).error("ERROR: {}", e)
         return e
 
     return None

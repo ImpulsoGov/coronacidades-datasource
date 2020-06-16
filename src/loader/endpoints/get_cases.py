@@ -52,23 +52,40 @@ def _adjust_subnotification_cases(df, config):
     )
 
     # Escolha taxa de notificação para a cidade: caso sem mortes, usa taxa UF
-    df["notification_rate"] = df["city_notification_rate"]
-    df["notification_rate"] = np.where(
-        df["notification_rate"].isnull(),
-        df["state_notification_rate"],
-        df["city_notification_rate"],
-    )
-    # Ajusta caso taxa > 1:
-    df["notification_rate"] = np.where(
-        df["notification_rate"] > 1, 1, df["notification_rate"]
-    )
 
-    df["state_notification_rate"] = np.where(
-        df["state_notification_rate"] > 1, 1, df["state_notification_rate"]
+    df = (
+        df.assign(
+            notification_rate_type=lambda df: np.where(
+                df["city_notification_rate"].isnull(), "state", "city"
+            )
+        )
+        .assign(
+            notification_rate=lambda df: np.where(
+                df["notification_rate_type"] == "state",
+                df["state_notification_rate"],
+                df["city_notification_rate"],
+            )
+        )
+        .assign(
+            notification_rate=lambda df: np.where(
+                df["notification_rate"] > 1, 1, df["notification_rate"]
+            )
+        )
+        .assign(
+            state_notification_rate=lambda df: np.where(
+                df["state_notification_rate"] > 1, 1, df["state_notification_rate"]
+            )
+        )
     )
 
     return df[
-        ["city_id", "state_notification_rate", "notification_rate", "last_updated"]
+        [
+            "city_id",
+            "state_notification_rate",
+            "notification_rate",
+            "notification_rate_type",
+            "last_updated",
+        ]
     ].drop_duplicates()
 
 

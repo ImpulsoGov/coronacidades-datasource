@@ -22,16 +22,4 @@ def now(config):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "dataframe has null data": lambda df: all(df.isnull().any() == False),
-    "rt most likely outside confidence interval": lambda df: len(
-        df[
-            (df["Rt_most_likely"] >= df["Rt_high_95"])
-            & (df["Rt_most_likely"] <= df["Rt_high_95"])
-        ]
-    )
-    == 0,
-    "state has rt with less than 14 days": lambda df: all(
-        df.groupby("state")["last_updated"].count() > 14
-    )
-    == True,
 }

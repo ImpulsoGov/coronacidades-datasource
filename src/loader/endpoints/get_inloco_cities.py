@@ -156,7 +156,6 @@ def now(config):
         Loader=yaml.FullLoader,
     )
     raw_inloco_cities = get_googledrive_df(file_id)
-
     return StateFrame(
         raw_inloco_cities, cities_table, states_table, corrections_table
     ).get_clean_df()
@@ -164,10 +163,4 @@ def now(config):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "dataframe has null data": lambda df: all(df.isnull().any() == False),
-    "isolation index has negative data": lambda df: len(df.query("isolated < 0")) == 0,
-    "isolation index is more than 100%": lambda df: len(df.query("isolated > 1")) == 0,
-    "state id is not on city id": lambda df: all(
-        df["state_num_id"].astype(str) == df["city_id"].apply(lambda x: str(x)[:2])
-    ),
 }

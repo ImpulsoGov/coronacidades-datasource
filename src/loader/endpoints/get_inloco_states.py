@@ -23,9 +23,4 @@ def now(config):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "dataframe has null data": lambda df: all(df.isnull().any() == False),
-    "dataframe doesnt have some states": lambda df: len(df["state_num_id"].unique())
-    == 27,
-    "isolation index has negative data": lambda df: len(df.query("isolated < 0")) == 0,
-    "isolation index is more than 100%": lambda df: len(df.query("isolated > 1")) == 0,
 }

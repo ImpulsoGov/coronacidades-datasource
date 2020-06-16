@@ -76,27 +76,31 @@ def now(config):
 
 
 TESTS = {
+    "more than 27 states": lambda df: len(df["state_id"].unique()) <= 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "the total is not 27 states": lambda df: len(df["state_id"].unique()) == 27,
-    # NEED TO CHECK: "dataframe has null data": lambda df: all(df.drop(["subnotification_place_type"], axis=1).isnull().any() == False),
+    "state doesnt have both rt classified and growth": lambda df: df[
+        "rt_classification"
+    ].count()
+    == df["rt_growth"].count(),
     "dday worst greater than best": lambda df: len(
         df[df["dday_beds_worst"] > df["dday_beds_best"]]
     )
     == 0,
-    "state with rt classified doesnt have rt growth": lambda df: len(
-        df[(~df["rt_classification"].isnull()) & (df["rt_growth"].isnull())]
-    )
-    == 0,
     "state with all classifications got null alert": lambda df: all(
-        df.dropna(
-            subset=[
+        df[df["overall_alert"].isnull()][
+            [
                 "rt_classification",
                 "rt_growth",
                 "dday_classification",
                 "subnotification_classification",
-            ],
-            how="any",
-        )["overall_alert"].isnull()
-        == False
+            ]
+        ]
+        .isnull()
+        .apply(lambda x: any(x), axis=1)
+        == True
     ),
+    # "state without deaths has mortality ratio": lambda df: len(
+    #     df[(df["deaths"] == 0) & (~df["last_mortality_ratio"].isnull())]
+    # )
+    # == 0,
 }

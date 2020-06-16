@@ -8,19 +8,17 @@ def _get_rolling_amount(grp, time, data_col="last_updated", col_to_roll="deaths"
 
 
 @allow_local
-def now(config):
+def now(config=None):
 
     df = (
-        pd.read_csv(config["br"]["drive_paths"]["owid"])
+        pd.read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv")
         .dropna(subset=["new_deaths"])[
             ["iso_code", "date", "total_deaths", "new_deaths"]
         ]
         .groupby(["iso_code", "date", "total_deaths"])["new_deaths"]
         .sum()
         .reset_index()
-        .assign(country_pt=lambda df: get_country_isocode_name(df["iso_code"]))
-        .assign(new_deaths=lambda df: df["new_deaths"].clip(0))
-        .assign(total_deaths=lambda df: df["total_deaths"].clip(0))
+        .assign(country_pt=lambda x: get_country_isocode_name(x.iso_code))
         .dropna(subset=["country_pt"])
     )
 
@@ -33,9 +31,4 @@ def now(config):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "dataframe has null data": lambda df: all(df.isnull().any() == False),
-    "total deaths is negative": lambda df: len(df.query("total_deaths < 0")) == 0,
-    "new deaths is negative": lambda df: len(df.query("new_deaths < 0")) == 0,
-    "rolling deaths is negative": lambda df: len(df.query("rolling_deaths_new < 0"))
-    == 0,
 }

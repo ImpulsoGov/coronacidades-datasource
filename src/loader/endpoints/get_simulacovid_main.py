@@ -118,7 +118,6 @@ TESTS = {
     "len(data) != 5570": lambda df: len(df) == 5570,
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "notification_rate == NaN": lambda df: len(
-        df[df["notification_rate"].isnull() == True]
-    )
-    == 0,
+        df[df["notification_rate"].isnull() == True]) == 0,
+    "more ventilators than beds": lambda df: len(df[df['number_ventilators'].values > df['number_beds'].values]) == 0
 }

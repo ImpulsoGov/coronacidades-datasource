@@ -39,6 +39,8 @@ def now(config, country="br"):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "more ventilators than beds": lambda df: len(df[df['number_ventilators'].values > df['number_beds'].values]) == 0,
+    "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570
 }
 
 

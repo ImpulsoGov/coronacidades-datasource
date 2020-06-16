@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python ./scheduler.py
+python ./main.py

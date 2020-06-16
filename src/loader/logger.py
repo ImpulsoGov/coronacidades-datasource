@@ -9,4 +9,4 @@ if os.getenv("IS_PROD") == 'True':
         "slack", defaults=dict(webhook_url=secrets(["SLACK_WEBHOOK"])),
     )
     
-    logger.add(handler, level="ERROR")
+    logger.add(handler, level="ERROR", diagnose=True)

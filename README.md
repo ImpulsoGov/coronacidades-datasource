@@ -1,4 +1,4 @@
-# SimulaCovid API
+# Coronacidades API 🎲 
 
 <p align="left">
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://github.com/ImpulsoGov/simulacovid-datasource/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/ImpulsoGov/simulacovid-datasource"></a> <a href=""><img alt="Contributors" src="https://img.shields.io/github/last-commit/ImpulsoGov/simulacovid-datasource/master?label=last%20updated%20%28master%29"></a>
@@ -6,9 +6,13 @@
 
 
 
-This repo runs our API for [SimulaCovid](simulacovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org/help
+This repo runs our API for Coronacidades tools, such as [FarolCovid](farolcovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org/help
 
 ## Current data
+
+Use it like:
+
+`http://datasource.coronacidades.org/br/cities/cases/full`
 
 - `br/cities/cases/full`: full history data from Brasil.IO with notification rate and estimated active cases
 - `br/states/rt`: State Rt calculations

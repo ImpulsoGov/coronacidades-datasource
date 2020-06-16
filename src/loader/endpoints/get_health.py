@@ -5,9 +5,12 @@ from endpoints.helpers import allow_local
 
 def _read_cities_data(country, config):
 
-    paths = config[country]["drive_paths"]
+    tables = ["cities_population", "health_infrastructure"]
 
-    return {name: download_from_drive(url) for name, url in paths.items()}
+    return {
+        name: download_from_drive(config[country]["drive_paths"][name])
+        for name in tables
+    }
 
 
 @allow_local

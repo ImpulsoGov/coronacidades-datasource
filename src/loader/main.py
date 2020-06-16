@@ -72,8 +72,7 @@ def main(endpoint):
             _write_data(data, endpoint)
 
     except Exception as e:
-        logger.info("ERROR: {}", e)
-        pass
+        logger.error("ERROR: {}", e)
 
 
 if __name__ == "__main__":

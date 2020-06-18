@@ -29,7 +29,8 @@ def now(config):
     df = (
         get_simulacovid_main.now(config)[config["farolcovid"]["simulacovid"]["columns"]]
         .sort_values("state_id")
-        .groupby(["state_id", "state_name"])
+        .assign(state_num_id=lambda df: df["city_id"].apply(lambda x: int(str(x)[:2])))
+        .groupby(["state_id", "state_num_id", "state_name"])
         .agg(config["farolcovid"]["simulacovid"]["state_agg"])
         .rename({"state_notification_rate": "notification_rate"}, axis=1)
         .assign(confirmed_cases=lambda x: x["confirmed_cases"].fillna(0))
@@ -78,7 +79,9 @@ def now(config):
 TESTS = {
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "the total is not 27 states": lambda df: len(df["state_id"].unique()) == 27,
-    # NEED TO CHECK: "dataframe has null data": lambda df: all(df.drop(["subnotification_place_type"], axis=1).isnull().any() == False),
+    "dataframe has null data": lambda df: all(
+        df.drop(["subnotification_place_type"], axis=1).isnull().any() == False
+    ),
     "dday worst greater than best": lambda df: len(
         df[df["dday_beds_worst"] > df["dday_beds_best"]]
     )

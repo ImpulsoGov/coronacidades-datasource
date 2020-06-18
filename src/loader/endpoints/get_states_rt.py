@@ -23,6 +23,10 @@ def now(config):
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "dataframe has null data": lambda df: all(df.isnull().any() == False),
+    "not all 27 states with updated rt": lambda df: len(
+        df.drop_duplicates("state", keep="last")
+    )
+    == 27,
     "rt most likely outside confidence interval": lambda df: len(
         df[
             (df["Rt_most_likely"] >= df["Rt_high_95"])

@@ -95,7 +95,7 @@ def get_indicators_inloco(df, data, place_id, rules, growth):
         group = ["city_name", "state_name"]
 
     if place_id == "state_id":
-        group = ["state_name"]
+        group = ["state_num_id"]
 
     # Média móvel do distanciamento para cada 7 dias
     data = (
@@ -233,15 +233,6 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):
     # Ranking de subnotificação dos municípios para cada estado
     df["subnotification_rank"] = _get_subnotification_rank(df, mask, place_id)
 
-    # Taxa de mortalidade até a ultima semana
-    # last_week = data["last_updated"].max() - dt.timedelta(7)
-    # df["last_mortality_ratio"] = (
-    #     data[data["last_updated"] == last_week]
-    #     .sort_values(place_id)
-    #     .groupby(place_id)
-    #     .sum()
-    #     .apply(lambda row: _get_mortality_ratio(row), axis=1)
-    # )
     # Classificação: percentual de subnotificação
     df[classify] = _get_levels(df[mask], rules[classify])
 

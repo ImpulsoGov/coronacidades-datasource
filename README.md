@@ -4,8 +4,8 @@
  <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
  <a href="https://github.com/ImpulsoGov/coronacidades-datasource/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/ImpulsoGov/coronacidades-datasource"></a>
  <a href=""><img alt="Update master" src="https://img.shields.io/github/last-commit/ImpulsoGov/coronacidades-datasource/master?label=last%20updated%20%28master%29"></a>
- <a href="https://hub.docker.com/repository/docker/impulsogov/coronacidades-datasource-server"><img alt="docker build server" src="https://img.shields.io/docker/build/impulsogov/coronacidades-datasource-server?label=docker%20build%20server"></a>
- <a href="https://hub.docker.com/repository/docker/impulsogov/coronacidades-datasource-loader"><img alt="docker build loader" src="https://img.shields.io/docker/build/impulsogov/coronacidades-datasource-loader?label=docker%20build%20loader"></a>
+ <a href="https://hub.docker.com/repository/docker/impulsogov/coronacidades-datasource-server"><img alt="docker build server" src="https://img.shields.io/docker/cloud/build/impulsogov/coronacidades-datasource-server?label=docker%20build%20server"></a>
+ <a href="https://hub.docker.com/repository/docker/impulsogov/coronacidades-datasource-loader"><img alt="docker build loader" src="https://img.shields.io/docker/cloud/build/impulsogov/coronacidades-datasource-loader?label=docker%20build%20loader"></a>
 </p>
 
 This repo runs our API for Coronacidades tools, such as [FarolCovid](farolcovid.coronacidades.org). You can access the API here: http://datasource.coronacidades.org/help

@@ -61,7 +61,7 @@ server-build: server-remove
 server-run: server-remove
 	docker run -d --restart=unless-stopped \
 		--name datasource-server \
-		-p 80:80 \
+		-p 7000:7000 \
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 

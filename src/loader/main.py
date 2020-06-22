@@ -1,3 +1,4 @@
+# RUNNING EVERY 6 HOURS
 import pandas as pd
 import requests
 from copy import deepcopy
@@ -29,6 +30,7 @@ def _write_data(data, endpoint):
 
     data["data_last_refreshed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     data.to_csv(output_path, index=False)
+
     logger.info("WRITTING DATA FOR {}", endpoint["python_file"])
 
 
@@ -37,7 +39,9 @@ def _test_data(data, tests, endpoint):
     results = [v(data) for k, v in tests.items()]
 
     if not all(results):
+
         logger.info("TESTS FAILED FOR {}", endpoint["python_file"])
+
         for k, v in tests.items():
             if not v(data):
 
@@ -46,8 +50,10 @@ def _test_data(data, tests, endpoint):
                 )
 
         return False
+
     else:
         logger.info("TESTS PASSED FOR {}", endpoint["python_file"])
+
         return True
 
 
@@ -56,20 +62,33 @@ def main(endpoint):
 
     logger.info("STARTING: {}", endpoint["python_file"])
 
-    runner = importlib.import_module("endpoints.{}".format(endpoint["python_file"]))
+    try:
+        runner = importlib.import_module("endpoints.{}".format(endpoint["python_file"]))
 
-    data = runner.now(get_config(), force=True)
+        data = runner.now(get_config(), force=True)
 
-    if _test_data(data, runner.TESTS, endpoint):
+        if _test_data(data, runner.TESTS, endpoint):
 
-        _write_data(data, endpoint)
+            _write_data(data, endpoint)
 
+    except Exception as e:
+        logger.opt(exception=True).error("ERROR: {}", e)
+        return e
+
+    return None
 
 if __name__ == "__main__":
+    hasError = False
 
     for endpoint in get_endpoints():
 
         if endpoint.get("skip"):
             continue
 
-        main(endpoint)
+        err = main(endpoint)
+
+        if err is not None:
+            hasError = True
+
+    if hasError:
+        exit(1)

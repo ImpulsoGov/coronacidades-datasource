@@ -232,4 +232,6 @@ def now(config):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "rt maximum and minimum values": lambda df: len(df[~((df['Rt_low_95'] < df['Rt_most_likely']) & (df['Rt_most_likely'] < df['Rt_high_95']))]) == 0
+    "df upper and lower limit size": lambda df: (len(df['city_id'].unique()) > 3110) & (len(df['city_id'].unique()) <= 5570)
 }

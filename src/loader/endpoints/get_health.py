@@ -42,8 +42,10 @@ def now(config, country="br"):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "more ventilators than beds": lambda df: len(df[df['number_ventilators'].values > df['number_beds'].values]) == 0,
+    "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
+    "no negative beds or ventilators": lambda df: len(df.query("number_beds < 0 | number_ventilators < 0")) == 0
 }
-
 
 if __name__ == "__main__":
     pass

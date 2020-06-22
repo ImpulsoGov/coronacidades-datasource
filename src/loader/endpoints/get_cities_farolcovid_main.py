@@ -312,6 +312,7 @@ def now(config):
 
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
+    "27 states": lambda df: len(df["state_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "city without subnotification rate got a rank": lambda df: df[
         "subnotification_place_type"
@@ -338,4 +339,10 @@ TESTS = {
         .apply(lambda x: any(x), axis=1)
         == True
     ),
+    "rt 10 days maximum and minimum values": lambda lambda df: all(df[~((df['rt_10days_ago_low'] < df['rt_10days_ago_most_likely'])
+                                                     &
+                         (df['rt_10days_ago_most_likely'] < df['rt_10days_ago_high']))]['rt_10days_ago_most_likely'].isnull()),
+    "rt 10 days maximum and minimum values": lambda df: lambda df: all(df[~((df['rt_17days_ago_low'] < df['rt_17days_ago_most_likely'])
+                                                     &
+                        (df['rt_17days_ago_most_likely'] < df['rt_17days_ago_high']))]['rt_17days_ago_most_likely'].isnull())
 }

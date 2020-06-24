@@ -1,30 +1,30 @@
 coluna,descricao
-country_iso, códigos para os nomes de países e dependências
-country_name,Nome do País
-state_id,Codigo do estado
-state_name,Nome do estado
-city_id,Código IBGE
-city_name,Nome do municipio
-population,Numero de habitantes
-health_system_region,Corresponde à esfera administrativa a qual o estabelecimento de saúde está diretamente subordinado
-last_updated_number_ventilators,Data de obtenção deste dado
-author_number_ventilators,
-number_ventilators,Numero de ventiladores no municipio
-last_updated_number_beds,Data de obtenção deste dado
-author_number_beds,
-number_beds,Numero de leitos
-last_updated_number_icu_beds,Data de obtenção deste dado
-author_number_icu_beds,
-number_icu_beds,Numero de leitos de UTI
-date,Dia da atualização dos dados
-epidemiological_week,número da semana epidemiológica
-confirmed_cases,Numero de casos confirmados
-deaths,Numero de Mortes
-order_for_place,número que identifica a ordem do registro para este local. O registro referente ao primeiro boletim em que esse local aparecer será contabilizado como 1 e os demais boletins incrementarão esse valor
-state,Estado a que o municipio pertence
-daily_cases,
-infectious_period_cases,
-state_notification_rate,Taxa de notificação estadual
-notification_rate,Taxa de notificação municipal
-active_cases,
-data_last_refreshed,Dia em que o dado foi consultado
+country_iso, Código ISO para os nomes de países e dependências
+country_name, Nome do País
+state_id, Sigla da unidade federativa
+state_name, Nome do estado
+city_id, Código IBGE do município
+city_name, Nome do municipio
+population, População estimada pelo IBGE em 2019
+health_system_region, Região SUS a qual o muncípio pertence
+last_updated_number_ventilators, Data de atualização do número de ventiladores
+author_number_ventilators, Fonte dos dados de ventiladores(DataSus)
+number_ventilators, Número de ventiladores registrados no municipio pelo DataSus
+last_updated_number_beds, Data de atualização do número de leitos (clínicos + cirúrgicos + hospital-dia)
+author_number_beds, Fonte dos dados de leitos (clínicos + cirúrgicos + hospital-dia - DataSus)
+number_beds, Número de leitos (clínicos + cirúrgicos + hospital-dia) registrados no municipio pelo DataSus
+last_updated_number_icu_beds, Data de atualização do número de leitos UTI
+author_number_icu_beds, Fonte dos dados de leitos UTI (DataSus)
+number_icu_beds, Número de leitos UTI registrados no municipio pelo DataSus
+last_updated,	Data da atualização dos dados
+epidemiological_week, Número de mortes do último dia disponível igual ou anterior à data
+confirmed_cases, Número de casos confirmados do último dia disponível igual ou anterior à data
+deaths, Número de mortes confirmados do último dia disponível igual ou anterior à data
+order_for_place, Número que identifica a ordem do registro para este local (ver br_cities_cases_full)
+state, Sigla da unidade federativa
+daily_cases, Número de novos casos confirmados desde o último dia
+infectious_period_cases, Número de novos casos no período de progressão da doença (até 14 dias antes da data da linha)
+state_notification_rate,Taxa de notificação de casos estimada no estado
+notification_rate, Taxa de notificação de casos estimada no município (é utilizada a do estado quando ainda não há mortes por Covid-19)
+active_cases, Casos ativos estimados no dia
+data_last_refreshed, Data da última atualização do dado na API

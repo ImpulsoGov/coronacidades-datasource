@@ -5,7 +5,7 @@ last_updated, Data da atualização dos dados* (renomeado de date)
 epidemiological_week, Número da semana epidemiológica*
 estimated_population_2019, População estimada pelo IBGE em 2019*
 is_last, Campo pré-computado que diz se esse registro é o mais novo para esse local, pode ser True ou False*
-is_repeated, Campo pré-computado que diz se as informações nesse registro foram publicadas pela Secretaria Estadual de Saúde no dia date ou se o dado é repetido do último dia em que o dado está disponível (igual ou anterior a date). Isso ocorre pois nem todas as secretarias publicam boletins todos os dias. Veja também o campo last_available_date*,
+is_repeated, Campo pré-computado que diz se as informações nesse registro foram publicadas pela Secretaria Estadual de Saúde no dia date ou se o dado é repetido do último dia em que o dado está disponível (igual ou anterior a date). Isso ocorre pois nem todas as secretarias publicam boletins todos os dias. Veja também o campo last_available_date*
 confirmed_cases, Número de casos confirmados do último dia disponível igual ou anterior à data* (renomeado de last_available_confirmed)
 last_available_confirmed_per_100k_inhabitants, Número de casos confirmados por 100.000 habitantes na data*
 last_available_date, Data da qual o dado se refere*

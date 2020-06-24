@@ -21,4 +21,4 @@ state_notification_rate, Taxa de notificação de casos estimada no estado
 notification_rate, Taxa de notificação de casos estimada no município
 active_cases, Casos ativos estimados no dia
 data_last_refreshed, Data da última atualização do dado na API
-Referências, https://github.com/turicas/covid19-br/blob/master/api.md#caso_full
+REFERÊNCIA, * https://github.com/turicas/covid19-br/blob/master/api.md#caso_full

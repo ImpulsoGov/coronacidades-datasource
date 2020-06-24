@@ -93,11 +93,17 @@ def get_last(_df, sort_by="last_updated"):
 
 
 def download_from_drive(url):
-
     temp_path = tempfile.gettempdir() + "/temp.csv"
 
     response = subprocess.run(
-        ["curl", "-sk", "-o", temp_path, url + "/export?format=csv&id"]
+        [
+            "wget",
+            "--no-check-certificate",
+            "-q",
+            "-O",
+            temp_path,
+            url + "/export?format=csv",
+        ]
     )
 
     return pd.read_csv(temp_path)

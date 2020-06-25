@@ -23,6 +23,7 @@ Use it like:
 - `br/cities/simulacovid/main`:	Data filtered to serve SimulaCovid app
 - `br/states/farolcovid/main`:	Data filtered & states' indicators for FarolCovid app
 - `br/states/rt`:	State effective reproduction number (Rt) calculations by date
+- `br/states/safereopen/main`: States' security and economic priority index for reopening sectors
 - `world/owid/heatmap`:	Our World in Data data to serve the heatmaps
 
 **[Check data dictionaries here](/dictionaries).**

@@ -5,7 +5,7 @@ Essa pasta contém os dicionários de cada uma das bases da API, descritas abaix
 endpoint | description
 --- | ---
 [br/cities/cases/full](/dictionaries/br_cities_cases_full.csv) | Full history data from [Brasil.IO](https://brasil.io/dataset/covid19/caso_full/) with notification rate and estimated active cases
-[br/cities/cnes](/dictionaries/br_cities_cnes) | Deds and ventilators data from DataSus/CNES
+[br/cities/cnes](/dictionaries/br_cities_cnes) | Beds and ventilators data from DataSus/CNES
 [br/cities/farolcovid/main](/dictionaries/br_cities_farolcovid_main) | Data filtered & cities'indicatores for FarolCovid app
 [br/cities/rt](/dictionaries/br_cities_rt) | Cities effective reproduction number (Rt) calculations by date
 [br/cities/simulacovid/main](/dictionaries/br_cities_simulacovid_main) | Data filtered to serve SimulaCovid app

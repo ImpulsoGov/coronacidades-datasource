@@ -1,0 +1,24 @@
+coluna,descricao
+city, Nome do município*
+city_id, Código IBGE* (renomeado de city_ibge_code)
+last_updated, Data da atualização dos dados* (renomeado de date)
+epidemiological_week, Número da semana epidemiológica*
+estimated_population_2019, População estimada pelo IBGE em 2019*
+is_last, "Campo pré-computado que diz se esse registro é o mais novo para esse local, pode ser True ou False*"
+is_repeated, "Campo pré-computado que diz se as informações nesse registro foram publicadas pela Secretaria Estadual de Saúde no dia date ou se o dado é repetido do último dia em que o dado está disponível (igual ou anterior a date). Isso ocorre pois nem todas as secretarias publicam boletins todos os dias. Veja também o campo last_available_date*"
+confirmed_cases, Número de casos confirmados do último dia disponível igual ou anterior à data* (renomeado de last_available_confirmed)
+last_available_confirmed_per_100k_inhabitants, Número de casos confirmados por 100.000 habitantes na data*
+last_available_date, Data da qual o dado se refere*
+last_available_death_rate, taxa de mortalidade (mortes / confirmados) do último dia disponível igual ou anterior à data*
+deaths, Número de mortes do último dia disponível igual ou anterior à data (renomeado de last_available_deaths)*
+order_for_place, Número que identifica a ordem do registro para este local. O registro referente ao primeiro boletim em que esse local aparecer será contabilizado como 1 e os demais boletins incrementarão esse valor*
+place_type, "Tipo de local que esse registro descreve, pode ser city ou state* (filtrado somente para city)"
+state, Sigla da unidade federativa*
+daily_cases, Número de novos casos confirmados desde o último dia (renomeado de new_confirmed)*
+new_deaths, Número de novos óbitos desde o último dia*
+infectious_period_cases, Número de novos casos no período de progressão da doença (até 14 dias antes da data da linha)
+state_notification_rate, Taxa de notificação de casos estimada no estado
+notification_rate, Taxa de notificação de casos estimada no município
+active_cases, Casos ativos estimados no dia
+data_last_refreshed, Data da última atualização do dado na API
+REFERÊNCIA, * https://github.com/turicas/covid19-br/blob/master/api.md#caso_full

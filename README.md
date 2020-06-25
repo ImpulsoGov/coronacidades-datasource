@@ -16,15 +16,16 @@ Use it like:
 
 `http://datasource.coronacidades.org/br/cities/cases/full`
 
-- `br/cities/cases/full`: full history data from Brasil.IO with notification rate and estimated active cases
-- `br/states/rt`: State Rt calculations
-- `br/cities/rt`: Cities Rt calculations
-- `br/cities/embaixadores`: beds and ventilators data updated by SimulaCovid's ambassadors
-- `br/cities/cnes`: beds and ventilators data from Data SUS/CNES
-- `br/cities/farolcovid/main`: data filtered for cities to serve FarolCovid app
-- `br/states/farolcovid/main`: data filtered for states serve FarolCovid app
-- `br/cities/simulacovid/main`: data filtered to serve SimulaCovid app
-- `world/owid/heatmap`: Our World in Data data to serve the heatmaps
+- `br/cities/cases/full`:	Full history data from Brasil.IO with notification rate and estimated active cases
+- `br/cities/cnes`:	Beds and ventilators data from DataSus/CNES
+- `br/cities/farolcovid/main`:	Data filtered & cities'indicatores for FarolCovid app
+- `br/cities/rt`:	Cities effective reproduction number (Rt) calculations by date
+- `br/cities/simulacovid/main`:	Data filtered to serve SimulaCovid app
+- `br/states/farolcovid/main`:	Data filtered & states' indicators for FarolCovid app
+- `br/states/rt`:	State effective reproduction number (Rt) calculations by date
+- `world/owid/heatmap`:	Our World in Data data to serve the heatmaps
+
+**[Check data dictionaries here](/dictionaries).**
 
 
 ## Building your local API

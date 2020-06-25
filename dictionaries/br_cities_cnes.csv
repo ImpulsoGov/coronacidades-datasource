@@ -1,0 +1,41 @@
+coluna,descricao
+country_iso, códigos para os nomes de países e dependências
+country_name,Nome do País
+state_id,Codigo do estado
+state_name,Nome do estado
+city_id,Código IBGE
+city_name,Nome do municipio
+population,Numero de habitantes
+male,Numeros de individuos do sexo masculino
+female,Numero de individuos do sexo feminino
+male-0-19,Numeros de individuos do sexo masculino nesta faixa etária
+male-20-29,Numeros de individuos do sexo masculino nesta faixa etária
+male-30-39,Numeros de individuos do sexo masculino nesta faixa etária
+male-40-49,Numeros de individuos do sexo masculino nesta faixa etária
+male-50-59,Numeros de individuos do sexo masculino nesta faixa etária
+male-60-69,Numeros de individuos do sexo masculino nesta faixa etária
+male-70-79,Numeros de individuos do sexo masculino nesta faixa etária
+male-80>,Numeros de individuos do sexo masculino nesta faixa etária
+female-0-19,Numero de individuos do sexo feminino nesta faixa etária
+female-20-29,Numero de individuos do sexo feminino nesta faixa etária
+female-30-39,Numero de individuos do sexo feminino nesta faixa etária
+female-40-49,Numero de individuos do sexo feminino nesta faixa etária
+female-50-59,Numero de individuos do sexo feminino nesta faixa etária
+female-60-69,Numero de individuos do sexo feminino nesta faixa etária
+female-70-79,Numero de individuos do sexo feminino nesta faixa etária
+female-80>,Numero de individuos do sexo feminino nesta faixa etária
+health_system_region,Corresponde à esfera administrativa a qual o estabelecimento de saúde está diretamente subordinado
+number_ventilators,Numero de ventiladores no municipio
+last_updated_number_ventilators,Data de obtenção deste dado
+number_beds,Numero de leitos
+last_updated_number_beds,Data de obtenção deste dado
+number_icu_beds,Numero de leitosde UTI
+last_updated_number_icu_beds,Data de obtenção deste dado
+population_dependent_public_health,População dependente do SUS
+icu_historical_use_rate,
+useful_beds_historical_occupation,
+number_doctors,Numero de médicos disponíveis
+number_nurses,Numero de enfermeiros disponíveis
+number_technicians,Numero de tecnicos em infermagem disponíveis
+city_norm,Nome do municipio padronizado
+data_last_refreshed,Data de obtenção do dado

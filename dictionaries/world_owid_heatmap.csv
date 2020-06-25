@@ -1,8 +1,8 @@
 coluna,descricao
-iso_code, códigos para os nomes de países e dependências
-date,Dia da atualização dos dados
-total_deaths,Numero de Mortes
-new_deaths,Novas Mortes registradas (No dia)
+iso_code,Código ISO para os nomes de países e dependências
+date,Data da atualização dos dados
+total_deaths,Número de mortes confirmados do último dia disponível igual ou anterior à data
+new_deaths,Número de novos óbitos desde o último dia*
 country_pt,Nome do País
 rolling_deaths_new,Média móvel das mortes (5 dias anteriores)
-data_last_refreshed,Dia em que o dado foi consultado
+data_last_refreshed,Data da última atualização do dado na API

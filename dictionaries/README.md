@@ -10,5 +10,6 @@ endpoint | description
 [br/cities/rt](/dictionaries/br_cities_rt) | Cities effective reproduction number (Rt) calculations by date
 [br/cities/simulacovid/main](/dictionaries/br_cities_simulacovid_main) | Data filtered to serve SimulaCovid app
 [br/states/farolcovid/main](/dictionaries/br_states_farolcovid_main) | Data filtered & states' indicators for FarolCovid app
-[br/states/rt](/dictionaries/br_states_rt.csv) | State effective reproduction number (Rt) calculations by date
+[br/states/rt](/dictionaries/br_states_rt.csv) | States' effective reproduction number (Rt) calculations by date
+[br/states/safereopen/main](/dictionaries/br_states_safereopen_main.csv) | States' security and economic priority index for reopening sectors
 [world/owid/heatmap](/dictionaries/world_owid_heatmap) | [Our World in Data](https://github.com/owid/covid-19-data/tree/master/public/data) data to serve the heatmaps

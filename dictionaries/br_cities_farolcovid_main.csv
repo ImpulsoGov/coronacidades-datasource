@@ -1,0 +1,47 @@
+coluna,descricao
+city_id,Código IBGE* (renomeado de city_ibge_code)
+city_name,Nome do município*
+state_id,Sigla da unidade federativa
+state_name,Nome do estado
+population,População estimada pelo IBGE em 2019
+health_system_region,Região SUS a qual o muncípio pertence
+last_updated_number_beds,Data de atualização do número de leitos UTI
+author_number_beds,Fonte dos dados de leitos UTI (DataSus)
+number_beds,Número de leitos (clínicos + cirúrgicos + hospital-dia) registrados no municipio pelo DataSus
+last_updated_number_ventilators,Data de atualização do número de ventiladores
+author_number_ventilators,Fonte dos dados de ventiladores(DataSus)
+number_ventilators,Número de ventiladores registrados no municipio pelo DataSus
+confirmed_cases,Número de casos confirmados do último dia disponível igual ou anterior à data
+active_cases,Casos ativos estimados no dia
+deaths,Número de mortes confirmados do último dia disponível igual ou anterior à data
+notification_rate,Taxa de notificação de casos estimada no município (é utilizada a do estado quando ainda não há mortes por Covid-19)
+state_notification_rate,Taxa de notificação de casos estimada no estado
+last_updated_subnotification,Data da atualização dos dados de subnotificação
+subnotification_place_type,Indica se há notification_rate municipal ou se é utilizado o estadual
+subnotification_rate,Taxa de subnotificação de casos estimada
+subnotification_rank,Posição do município quanto a subnotificação comparado aos demais do mesmo estado
+subnotification_classification,"Classificação quanto a subnotificação ('bom', 'insatisfatório', nan, 'ruim')"
+last_updated_rt,Data da atualização dos dados de ritmo de contágio
+rt_10days_ago_low,Intervalo de confiança inferior para a estimação (IC-95%) referente 10º dia anterior a data analisada
+rt_10days_ago_high,Intervalo de confiança superior para a estimação (IC-95%) referente 10º dia anterior a data analisada
+rt_10days_ago_most_likely,Ritmo de contágio mais provável estimado para o 10º dia anterior a data
+rt_17days_ago_low,Intervalo de confiança inferior para a estimação (IC-95%) referente 17º dia anterior a data analisada
+rt_17days_ago_high,Intervalo de confiança superior para a estimação (IC-95%) referente 17º dia anterior a data analisada
+rt_17days_ago_most_likely,Ritmo de contágio mais provável estimado para o 17º dia anterior a data
+rt_classification,"Classificação quanto ao ritmo de contágio estimado ('bom', 'insatisfatório', nan, 'ruim')"
+rt_10days_ago_avg,Média do ritmo de contágio da semana imediatamente anterior ao dia
+rt_17days_ago_avg,Média do ritmo de contágio da semana imediatamente anterior ao dia
+rt_ratio_week_avg,Razão entre as médias móveis dos periodos consecutivos
+rt_growth,"Tendencia de crescimento do ritmo de contágio ('estabilizando', 'melhorando', nan, 'piorando')"
+last_updated_inloco,Data de atualização dos dados inloco
+inloco_today_7days_avg,Média do isolamento social na semana
+inloco_last_week_7days_avg,Média do isolamento social na semana anterior
+inloco_ratio_week_avgs,Razão entre as médias móveis dos periodos consecutivos
+inloco_growth,"Tendencia de crescimento do indice de isolamento social ('estabilizando', 'melhorando', nan, 'piorando')"
+dday_beds_best,Numero de dias até se esgotarem os leitos (melhor cenário)
+dday_beds_worst,Numero de dias até se esgotarem os leitos (pior cenário)
+dday_classification,"Classificação quanto ao numero de dias até se esgotarem os leitos ('bom', 'insatisfatório', nan, 'ruim')"
+dday_beds_best_months,Numero de meses até se esgotarem os leitos
+overall_alert,Nivel de risco
+data_last_refreshed,Data da última atualização do dado na API
+REFERÊNCIA,* https://github.com/turicas/covid19-br/blob/master/api.md#caso_full

@@ -1,0 +1,7 @@
+coluna,descricao
+state, Sigla da unidade federativa
+last_updated,Data referente o cálculo do ritmo de contágio
+Rt_most_likely, Ritmo de contágio mais provável estimado para a data
+Rt_low_95, Intervalo de confiança inferior para a estimação (IC-95%)
+Rt_high_95, Intervalo de confiança superior para a estimação (IC-95%)
+data_last_refreshed,Data da última atualização do dado na API

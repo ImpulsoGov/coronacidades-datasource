@@ -181,13 +181,13 @@ def now(config, country="br"):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    # "max(confirmed_cases) != max(date)": lambda df: all((df.groupby("city_id").max()["confirmed_cases"] == df.query("is_last==True").set_index("city_id").sort_index()["confirmed_cases"]).values),
-    # "max(deaths) != max(date)": lambda df: all((df.groupby("city_id").max()["deaths"] == df.query("is_last==True").set_index("city_id").sort_index()["deaths"]).values),
     "notification_rate == NaN": lambda df: len(df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values) == 0,
     "state_notification_rate == NaN": lambda df: len(df[(df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)].values) == 0,
+    # TODO: test it before update to master
+    # "max(confirmed_cases) != max(date)": lambda df: all(
+    # (df.groupby("city_id").max()["confirmed_cases"] \
+    #  == df.query("is_last==True").set_index("city_id").sort_index()["confirmed_cases"]).values),
+    # "max(deaths) != max(date)": lambda df: all(
+    # (df.groupby("city_id").max()["deaths"] \
+    #  == df.query("is_last==True").set_index("city_id").sort_index()["deaths"]).values)
 }
-
-
-if __name__ == "__main__":
-
-    pass

@@ -89,21 +89,48 @@ def _get_active_cases(df, window_period, cases_params):
 
     return df
 
+# def _correct_cumulative_cases(df):
 
-def _correct_cumulative_cases(df):
+#     # Corrije acumulado para o valor máximo até a data
+#     df["confirmed_cases"] = df.groupby("city_id").cummax()["confirmed_cases"]
+#     df["deaths"] = df.groupby("city_id").cummax()["deaths"]
 
-    # Corrije acumulado para o valor máximo até a data
-    df["confirmed_cases"] = df.groupby("city_id").cummax()["confirmed_cases"]
-    df["deaths"] = df.groupby("city_id").cummax()["deaths"]
+#     # Recalcula casos diários
+#     df["daily_cases"] = df.groupby("city_id")["confirmed_cases"].diff(1)
 
-    # Recalcula casos diários
-    df["daily_cases"] = df.groupby("city_id")["confirmed_cases"].diff(1)
+#     # Ajusta 1a dia para o acumulado
+#     df["daily_cases"] = np.where(
+#         df["daily_cases"].isnull() == True, df["confirmed_cases"], df["daily_cases"]
+#     )
+#     return df
 
-    # Ajusta 1a dia para o acumulado
-    df["daily_cases"] = np.where(
-        df["daily_cases"].isnull() == True, df["confirmed_cases"], df["daily_cases"]
+def _correct_negatives(group):
+
+    # Identify days not filled
+    group["is_zero"] = np.where(
+        (group["confirmed_cases"] == 0) & (group["deaths"] == 0), 1, 0
     )
-    return df
+
+    cols = {"confirmed_cases": "daily_cases", "deaths": "new_deaths"}
+
+    # Get previous day of total cases & deaths when not filled
+    for col, new in cols.items():
+
+        group["previous_{}".format(col)] = group[col].shift(1)
+
+        group[col] = np.where(
+            (group[col] < group["previous_{}".format(col)]) & (group["is_zero"]),
+            group["previous_{}".format(col)],
+            group[col],
+        )
+
+        group[new] = group[col].diff(1)
+
+        del group["previous_{}".format(col)]
+
+    # del group["is_zero"]
+
+    return group
 
 
 def _download_brasilio_table(url):
@@ -131,7 +158,8 @@ def now(config, country="br"):
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
             .sort_values(["city_id", "state", "last_updated"])
-            .pipe(_correct_cumulative_cases)
+            .groupby("city_id")
+            .apply(_correct_negatives)
             .pipe(_get_active_cases, infectious_period, config["br"]["cases"])
             .rename(columns=config["br"]["cases"]["rename"])
         )
@@ -153,25 +181,10 @@ def now(config, country="br"):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    # TODO: como fazer o teste abaixo sem sort? porque da erro no sort
-    # "max(confirmed_cases) != max(date)": lambda df: df.groupby(
-    #     "city_id"
-    # ).max()["confirmed_cases"]
-    # != df[df["is_last"] == True].set_index("city_id")["confirmed_cases"],
-    # "max(deaths) != max(date)": lambda df: df.groupby("city_id", sort=True).max()[
-    #     "deaths"
-    # ]
-    # != df[df["is_last"] == True].set_index("city_id", sort=True)["deaths"],
-    "notification_rate == NaN": lambda df: len(
-        df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values
-    )
-    == 0,
-    "state_notification_rate == NaN": lambda df: len(
-        df[
-            (df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)
-        ].values
-    )
-    == 0,
+    # "max(confirmed_cases) != max(date)": lambda df: all((df.groupby("city_id").max()["confirmed_cases"] == df.query("is_last==True").set_index("city_id").sort_index()["confirmed_cases"]).values),
+    # "max(deaths) != max(date)": lambda df: all((df.groupby("city_id").max()["deaths"] == df.query("is_last==True").set_index("city_id").sort_index()["deaths"]).values),
+    "notification_rate == NaN": lambda df: len(df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values) == 0,
+    "state_notification_rate == NaN": lambda df: len(df[(df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)].values) == 0,
 }
 
 

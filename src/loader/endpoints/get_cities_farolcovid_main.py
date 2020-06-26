@@ -95,7 +95,7 @@ def get_indicators_inloco(df, data, place_id, rules, growth):
         group = ["city_name", "state_name"]
 
     if place_id == "state_id":
-        group = ["state_name"]
+        group = ["state_num_id"]
 
     # Média móvel do distanciamento para cada 7 dias
     data = (
@@ -321,6 +321,7 @@ def now(config):
 
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
+    "27 states": lambda df: len(df["state_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "city without subnotification rate got a rank": lambda df: df[
         "subnotification_place_type"
@@ -347,4 +348,10 @@ TESTS = {
         .apply(lambda x: any(x), axis=1)
         == True
     ),
+    "rt 10 days maximum and minimum values": lambda df: all(df[~((df['rt_10days_ago_low'] < df['rt_10days_ago_most_likely'])
+                                                     &
+                         (df['rt_10days_ago_most_likely'] < df['rt_10days_ago_high']))]['rt_10days_ago_most_likely'].isnull()),
+    "rt 10 days maximum and minimum values": lambda df: lambda df: all(df[~((df['rt_17days_ago_low'] < df['rt_17days_ago_most_likely'])
+                                                     &
+                        (df['rt_17days_ago_most_likely'] < df['rt_17days_ago_high']))]['rt_17days_ago_most_likely'].isnull())
 }

@@ -31,10 +31,7 @@ def _write_data(data, endpoint):
     data["data_last_refreshed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     data.to_csv(output_path, index=False)
 
-    logger.info(
-        "WRITTING DATA FOR {}",
-        " - ".join([endpoint["python_file"], str(data["data_last_refreshed"].max())]),
-    )
+    logger.info("WRITTING DATA FOR {}", endpoint["python_file"])
 
 
 def _test_data(data, tests, endpoint):

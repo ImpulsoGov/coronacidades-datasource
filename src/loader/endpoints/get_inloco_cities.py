@@ -1,7 +1,7 @@
 import pandas as pd
 import sys
 import numpy as np
-from utils import secrets, get_googledrive_df, configs_path
+from utils import get_googledrive_df, configs_path
 from endpoints.helpers import allow_local
 import Levenshtein as lev
 import os
@@ -148,14 +148,14 @@ class StateFrame:
 
 @allow_local
 def now(config):
-    file_id = secrets(["inloco", "cities", "id"])
+
     cities_table = pd.read_csv(os.path.join(configs_path, "cities_table.csv"))
     states_table = pd.read_csv(os.path.join(configs_path, "states_table.csv"))
     corrections_table = yaml.load(
         open(os.path.join(configs_path, "city_corrections.yaml"), "r"),
         Loader=yaml.FullLoader,
     )
-    raw_inloco_cities = get_googledrive_df(file_id)
+    raw_inloco_cities = get_googledrive_df(os.getenv("INLOCO_CITIES_ID"))
     return StateFrame(
         raw_inloco_cities, cities_table, states_table, corrections_table
     ).get_clean_df()

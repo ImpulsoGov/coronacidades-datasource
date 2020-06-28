@@ -12,7 +12,6 @@ from logger import logger
 from utils import (
     get_last,
     get_config,
-    secrets,
     build_file_path,
     get_endpoints,
 )

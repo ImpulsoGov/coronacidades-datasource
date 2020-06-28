@@ -1,5 +1,5 @@
 import pandas as pd
-from utils import secrets, get_googledrive_df, configs_path
+from utils import get_googledrive_df, configs_path
 from endpoints.helpers import allow_local
 import os
 import numpy as np
@@ -7,8 +7,8 @@ import numpy as np
 
 @allow_local
 def now(config):
-    file_id = secrets(["inloco", "states", "id"])
-    df = get_googledrive_df(file_id)
+
+    df = get_googledrive_df(os.getenv("INLOCO_STATES_ID"))
     states_table = pd.read_csv(os.path.join(configs_path, "states_table.csv"))
     states_table = states_table.sort_values(by=["state_name"])
     states_num_ids = states_table["state_num_id"].values

@@ -16,11 +16,50 @@ import io
 configs_path = os.path.join(os.path.dirname(__file__), "endpoints/aux")
 
 
+### PATHS & CREDENTIALS 
+
+def download_from_googledrive(file_id, token_path):
+    """Takes the id and token and reads the bytes of a file
+    """
+    token = pickle.load(open(token_path, "rb"))
+    drive_service = build("drive", "v3", credentials=token)
+    fh = io.BytesIO()
+
+    downloader = MediaIoBaseDownload(
+        fh, drive_service.files().get_media(fileId=file_id)
+    )
+
+    done = False
+    while done is False:
+        status, done = downloader.next_chunk()
+    return fh
+
+
+def get_googledrive_df(file_id, token_path="secrets/token.pickle"):
+
+    data = io.StringIO(
+        str(download_from_googledrive(file_id, token_path).getvalue(), "utf-8")
+    )
+    return pd.read_csv(data)
+
+
+def gen_googledrive_token(credentials_path, out_token_path):
+    """Gens a token file for use in the above function if needed.
+    """
+
+    SCOPES = ["https://www.googleapis.com/auth/drive"]
+    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
+    creds = flow.run_local_server(port=0)
+    # Save the credentials for the next run
+    with open(out_token_path, "wb") as token:
+        pickle.dump(creds, token)
+
+## == // ==
+
 def build_file_path(endpoint):
 
-    if endpoint["endpoint"] == "secret":
-
-        route = secrets(endpoint["secret_path"])["route"]
+    if endpoint["endpoint"] == "INLOCO_CITIES_ROUTE" or endpoint["endpoint"] == "INLOCO_STATES_ROUTE":
+        route = os.getenv(endpoint["endpoint"])
     else:
         route = endpoint["endpoint"]
 
@@ -107,22 +146,6 @@ def download_from_drive(url):
     )
 
     return pd.read_csv(temp_path)
-
-
-def secrets(variable, path="secrets/secrets.yaml"):
-
-    if (isinstance(variable, str)) and (os.getenv(variable)):
-        return os.getenv(variable)
-    else:
-        if not isinstance(variable, list):
-            variable = list(variable)
-
-        secrets = yaml.load(open(path, "r"), Loader=yaml.FullLoader)
-
-        for var in variable:
-            secrets = secrets[var]
-
-        return secrets
 
 
 def get_config(url=os.getenv("CONFIG_URL")):
@@ -413,40 +436,3 @@ def get_country_isocode_name(iso):
         return names[iso]
     else:
         return np.nan
-
-
-def download_from_googledrive(file_id, token_path):
-    """Takes the id and token and reads the bytes of a file
-    """
-    token = pickle.load(open(token_path, "rb"))
-    drive_service = build("drive", "v3", credentials=token)
-    fh = io.BytesIO()
-
-    downloader = MediaIoBaseDownload(
-        fh, drive_service.files().get_media(fileId=file_id)
-    )
-
-    done = False
-    while done is False:
-        status, done = downloader.next_chunk()
-    return fh
-
-
-def get_googledrive_df(file_id, token_path="secrets/token.pickle"):
-
-    data = io.StringIO(
-        str(download_from_googledrive(file_id, token_path).getvalue(), "utf-8")
-    )
-    return pd.read_csv(data)
-
-
-def gen_googledrive_token(credentials_path, out_token_path):
-    """Gens a token file for use in the above function if needed.
-    """
-
-    SCOPES = ["https://www.googleapis.com/auth/drive"]
-    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
-    creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
-    with open(out_token_path, "wb") as token:
-        pickle.dump(creds, token)

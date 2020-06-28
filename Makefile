@@ -29,6 +29,8 @@ loader-build-run: loader-build loader-run
 loader-shell: loader-build
 	docker run --rm -it \
 		--entrypoint "/bin/bash" \
+		-v "$(PWD)/.env:/app/.env:ro" \
+		-v "$(PWD)/src/loader:/app/src/:ro" \
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
 

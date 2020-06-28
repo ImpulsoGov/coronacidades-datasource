@@ -15,7 +15,6 @@ import io
 
 configs_path = os.path.join(os.path.dirname(__file__), "endpoints/aux")
 
-
 ### PATHS & CREDENTIALS 
 
 def download_from_googledrive(file_id, token_path):

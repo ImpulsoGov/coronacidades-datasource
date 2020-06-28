@@ -5,8 +5,6 @@ SERVER_IMAGE_TAG=impulsogov/simulacovid:$(VERSION)-server
 
 build-and-run-all: loader-build-run server-build-run
 
-
-
 # Loader
 loader-remove:
 	docker rm -f datasource-loader 2>/dev/null || true
@@ -17,8 +15,12 @@ loader-build: loader-remove
 		-t $(LOADER_IMAGE_TAG) .
 
 loader-run: loader-remove
-	docker run -d --restart=unless-stopped \
+	touch $(PWD)/.env
+	chmod +x $(PWD)/src/loader/*.sh
+	docker run -it --rm \
 		--name datasource-loader \
+		-v "$(PWD)/.env:/app/.env:ro" \
+		-v "$(PWD)/src/loader:/app/src/:ro" \
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
 
@@ -36,18 +38,18 @@ loader-run-shell:
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
 
-loader-create-env-analysis:
-	virtualenv .loader-anaylsis
-	source .loader-anaylsis/bin/activate; \
-			pip3 install --upgrade -r requirements-analysis.txt; \
-			python -m ipykernel install --user --name=loader-anaylsis
-
 loader-dev: loader-build
 	docker run --rm -it \
 		--entrypoint "/bin/bash" \
 		-v "$(PWD):/app/:ro" \
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
+
+loader-create-env-analysis:
+	virtualenv .loader-anaylsis
+	source .loader-anaylsis/bin/activate; \
+			pip3 install --upgrade -r requirements-analysis.txt; \
+			python -m ipykernel install --user --name=loader-anaylsis
 
 # Server
 server-remove:

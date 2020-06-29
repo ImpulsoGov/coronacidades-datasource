@@ -5,14 +5,13 @@ ENV OUTPUT_DIR="/output" \
     CONFIG_URL="https://raw.githubusercontent.com/ImpulsoGov/simulacovid/stable/src/configs/config.yaml" \
     IS_PROD="False" \
     SLACK_WEBHOOK="" \
-    INLOCO_CITIES_URL="" \
     INLOCO_CITIES_KEY="" \
     INLOCO_CITIES_ID="" \
     INLOCO_CITIES_ROUTE="" \
-    INLOCO_STATES_URL="" \
     INLOCO_STATES_KEY="" \
     INLOCO_STATES_ID="" \
-    INLOCO_STATES_ROUTE=""
+    INLOCO_STATES_ROUTE="" \
+    GOOGLE_TOKEN=""
 
 ADD ./requirements.txt /app/
 

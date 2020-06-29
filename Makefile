@@ -5,15 +5,17 @@ SERVER_IMAGE_TAG=impulsogov/simulacovid:$(VERSION)-server
 
 build-and-run-all: loader-build-run server-build-run
 
-# Loader
+# LOADER
 loader-remove:
 	docker rm -f datasource-loader 2>/dev/null || true
 
+# Build image
 loader-build: loader-remove
 	docker build \
 		-f loader.dockerfile \
 		-t $(LOADER_IMAGE_TAG) .
 
+# Run for production environment
 loader-run: loader-remove
 	touch $(PWD)/.env
 	chmod +x $(PWD)/src/loader/*.sh
@@ -24,9 +26,8 @@ loader-run: loader-remove
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
 
-loader-build-run: loader-build loader-run
-
-loader-shell: loader-build
+# DEBUGGING Run for dev environment
+loader-run-shell: loader-remove
 	docker run --rm -it \
 		--entrypoint "/bin/bash" \
 		-v "$(PWD)/.env:/app/.env:ro" \
@@ -34,34 +35,22 @@ loader-shell: loader-build
 		-v "datasource:/output" \
 		$(LOADER_IMAGE_TAG)
 
-loader-run-shell:
-	docker run --rm -it \
-		--entrypoint "/bin/bash" \
-		-v "datasource:/output" \
-		$(LOADER_IMAGE_TAG)
+# Groups
+loader-build-run: loader-build loader-run
+loader-shell: loader-build loader-run-shell
 
-loader-dev: loader-build
-	docker run --rm -it \
-		--entrypoint "/bin/bash" \
-		-v "$(PWD):/app/:ro" \
-		-v "datasource:/output" \
-		$(LOADER_IMAGE_TAG)
 
-loader-create-env-analysis:
-	virtualenv .loader-anaylsis
-	source .loader-anaylsis/bin/activate; \
-			pip3 install --upgrade -r requirements-analysis.txt; \
-			python -m ipykernel install --user --name=loader-anaylsis
-
-# Server
+# SERVER
 server-remove:
 	docker rm -f datasource-server 2>/dev/null || true
 
+# Build image
 server-build: server-remove
 	docker build \
 		-f server.dockerfile \
 		-t $(SERVER_IMAGE_TAG) .
 
+# Run for production environment
 server-run: server-remove
 	docker run -d --restart=unless-stopped \
 		--name datasource-server \
@@ -69,19 +58,21 @@ server-run: server-remove
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 
-server-build-run: server-build server-run
-
-server-shell: server-build
+# DEBUGGING Run for dev environment
+server-run-shell: server-remove
 	docker run --rm -it \
 		--entrypoint "/bin/bash" \
 		-p 7000:7000 \
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 
-server-dev: server-build
-	docker run --rm -it \
-		--entrypoint "/bin/bash" \
-		-v "$(PWD):/app/:ro" \
-		-v "datasource:/output" \
-		$(SERVER_IMAGE_TAG)
+# Groups
+server-build-run: server-build server-run
+server-shell: server-build server-run-shell
 
+# ANALYSIS VENV
+loader-create-env-analysis:
+	virtualenv .loader-anaylsis
+	source .loader-anaylsis/bin/activate; \
+			pip3 install --upgrade -r requirements-analysis.txt; \
+			python -m ipykernel install --user --name=loader-anaylsis

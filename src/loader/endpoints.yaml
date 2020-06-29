@@ -26,12 +26,12 @@
   python_file: get_owid_heatmap
   skip: False
 
-- endpoint: secret
+- endpoint: INLOCO_STATES_ROUTE
   secret_path: [inloco, states]
   python_file: get_inloco_states
   skip: False
 
-- endpoint: secret
+- endpoint: INLOCO_CITIES_ROUTE
   secret_path: [inloco, cities]
   python_file: get_inloco_cities
   skip: False

@@ -31,7 +31,7 @@ Use it like:
 
 ## Building your local API
 
-⚠️ *You need a file in `src/loader/secrets/secrets.yaml` and another in `src/loader/secrets/token.pickle` with very secretive variables to run some data.*
+⚠️ *You need a `.env` file in root folder with very secretive variables to run some data.*
 
 ### 1️⃣ Run Loader 
 
@@ -43,7 +43,7 @@ Run the code to load the files
 
 #### For development
 
-If you want to make changes on the code, you should run the loader with `make loader-dev` to open the docker image and be able to edit the files directly in your editor.
+If you want to make changes on the code, you should run the loader with `make loader-shell` to open the docker image and be able to edit the files directly in your editor.
 
 
 ### 2️⃣ Run Server
@@ -56,7 +56,7 @@ make server-build-run
 
 #### For development
 
-If you want to make changes on the code, you should run the loader with `make server-dev` to open the docker image and be able to edit the files directly in your editor.
+If you want to make changes on the code, you should run the loader with `make server-shell` to open the docker image and be able to edit the files directly in your editor.
 
 ### 3️⃣ All done!
 You should see something at `localhost:7000/<endpoint>`, like `http://localhost:7000/br/cities/cases/full` 

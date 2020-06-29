@@ -10,7 +10,8 @@ ENV OUTPUT_DIR="/output" \
     INLOCO_CITIES_ROUTE="" \
     INLOCO_STATES_KEY="" \
     INLOCO_STATES_ID="" \
-    INLOCO_STATES_ROUTE=""
+    INLOCO_STATES_ROUTE="" \
+    GOOGLE_TOKEN=""
 
 ADD ./requirements.txt /app/
 

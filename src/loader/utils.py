@@ -12,15 +12,21 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import io
+import binascii
 
 configs_path = os.path.join(os.path.dirname(__file__), "endpoints/aux")
 
-### PATHS & CREDENTIALS 
+### PATHS & CREDENTIALS
+
 
 def download_from_googledrive(file_id, token_path):
     """Takes the id and token and reads the bytes of a file
     """
-    token = pickle.load(open(token_path, "rb"))
+    if token_path == None:
+        binary_string = binascii.unhexlify(os.getenv("GOOGLE_TOKEN"))
+        token = pickle.loads(binary_string)
+    else:
+        token = pickle.load(open(token_path, "rb"))
     drive_service = build("drive", "v3", credentials=token)
     fh = io.BytesIO()
 
@@ -34,8 +40,7 @@ def download_from_googledrive(file_id, token_path):
     return fh
 
 
-def get_googledrive_df(file_id, token_path="secrets/token.pickle"):
-
+def get_googledrive_df(file_id, token_path=None):
     data = io.StringIO(
         str(download_from_googledrive(file_id, token_path).getvalue(), "utf-8")
     )
@@ -53,11 +58,16 @@ def gen_googledrive_token(credentials_path, out_token_path):
     with open(out_token_path, "wb") as token:
         pickle.dump(creds, token)
 
+
 ## == // ==
+
 
 def build_file_path(endpoint):
 
-    if endpoint["endpoint"] == "INLOCO_CITIES_ROUTE" or endpoint["endpoint"] == "INLOCO_STATES_ROUTE":
+    if (
+        endpoint["endpoint"] == "INLOCO_CITIES_ROUTE"
+        or endpoint["endpoint"] == "INLOCO_STATES_ROUTE"
+    ):
         route = os.getenv(endpoint["endpoint"])
     else:
         route = endpoint["endpoint"]

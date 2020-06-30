@@ -16,20 +16,22 @@ Use it like:
 
 `http://datasource.coronacidades.org/br/cities/cases/full`
 
-- `br/cities/cases/full`: full history data from Brasil.IO with notification rate and estimated active cases
-- `br/states/rt`: State Rt calculations
-- `br/cities/rt`: Cities Rt calculations
-- `br/cities/embaixadores`: beds and ventilators data updated by SimulaCovid's ambassadors
-- `br/cities/cnes`: beds and ventilators data from Data SUS/CNES
-- `br/cities/farolcovid/main`: data filtered for cities to serve FarolCovid app
-- `br/states/farolcovid/main`: data filtered for states serve FarolCovid app
-- `br/cities/simulacovid/main`: data filtered to serve SimulaCovid app
-- `world/owid/heatmap`: Our World in Data data to serve the heatmaps
+- `br/cities/cases/full`:	Full history data from Brasil.IO with notification rate and estimated active cases
+- `br/cities/cnes`:	Beds and ventilators data from DataSus/CNES
+- `br/cities/farolcovid/main`:	Data filtered & cities'indicatores for FarolCovid app
+- `br/cities/rt`:	Cities effective reproduction number (Rt) calculations by date
+- `br/cities/simulacovid/main`:	Data filtered to serve SimulaCovid app
+- `br/states/farolcovid/main`:	Data filtered & states' indicators for FarolCovid app
+- `br/states/rt`:	State effective reproduction number (Rt) calculations by date
+- `br/states/safereopen/main`: States' security and economic priority index for reopening sectors
+- `world/owid/heatmap`:	Our World in Data data to serve the heatmaps
+
+**[Check data dictionaries here](/dictionaries).**
 
 
 ## Building your local API
 
-⚠️ *You need a file in `src/loader/secrets/secrets.yaml` and another in `src/loader/secrets/token.pickle` with very secretive variables to run some data.*
+⚠️ *You need a `.env` file in root folder with very secretive variables to run some data.*
 
 ### 1️⃣ Run Loader 
 
@@ -41,7 +43,7 @@ Run the code to load the files
 
 #### For development
 
-If you want to make changes on the code, you should run the loader with `make loader-dev` to open the docker image and be able to edit the files directly in your editor.
+If you want to make changes on the code, you should run the loader with `make loader-shell` to open the docker image and be able to edit the files directly in your editor.
 
 
 ### 2️⃣ Run Server
@@ -54,7 +56,7 @@ make server-build-run
 
 #### For development
 
-If you want to make changes on the code, you should run the loader with `make server-dev` to open the docker image and be able to edit the files directly in your editor.
+If you want to make changes on the code, you should run the loader with `make server-shell` to open the docker image and be able to edit the files directly in your editor.
 
 ### 3️⃣ All done!
 You should see something at `localhost:7000/<endpoint>`, like `http://localhost:7000/br/cities/cases/full` 

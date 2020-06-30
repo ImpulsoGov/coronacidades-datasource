@@ -1,5 +1,5 @@
 import pandas as pd
-from utils import secrets, get_googledrive_df, configs_path
+from utils import get_googledrive_df, configs_path
 from endpoints.helpers import allow_local
 import os
 import numpy as np
@@ -7,8 +7,8 @@ import numpy as np
 
 @allow_local
 def now(config):
-    file_id = secrets(["inloco", "states", "id"])
-    df = get_googledrive_df(file_id)
+
+    df = get_googledrive_df(os.getenv("INLOCO_STATES_ID"))
     states_table = pd.read_csv(os.path.join(configs_path, "states_table.csv"))
     states_table = states_table.sort_values(by=["state_name"])
     states_num_ids = states_table["state_num_id"].values
@@ -23,4 +23,9 @@ def now(config):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "dataframe has null data": lambda df: all(df.isnull().any() == False),
+    "dataframe doesnt have some states": lambda df: len(df["state_num_id"].unique())
+    == 27,
+    "isolation index has negative data": lambda df: len(df.query("isolated < 0")) == 0,
+    "isolation index is more than 100%": lambda df: len(df.query("isolated > 1")) == 0,
 }

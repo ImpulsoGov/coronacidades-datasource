@@ -232,4 +232,19 @@ def now(config):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "dataframe has null data": lambda df: all(df.isnull().any() == False),
+    "rt maximum and minimum values": lambda df: len(df[~((df['Rt_low_95'] < df['Rt_most_likely']) & (df['Rt_most_likely'] < df['Rt_high_95']))]) == 0,
+    "df upper and lower limit size": lambda df: (len(df['city_id'].unique()) > 3110) & (len(df['city_id'].unique()) <= 5570),
+    "rt most likely outside confidence interval": lambda df: len(
+        df[
+            (df["Rt_most_likely"] >= df["Rt_high_95"])
+            & (df["Rt_most_likely"] <= df["Rt_high_95"])
+        ]
+    )
+    == 0,
+    # TODO: study ways to handle days with zero cases!
+    # "city has rt with less than 14 days": lambda df: all(
+    #     df.groupby("city_id")["last_updated"].count() > 14
+    # )
+    # == True,
 }

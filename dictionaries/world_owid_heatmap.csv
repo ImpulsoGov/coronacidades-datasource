@@ -1,0 +1,8 @@
+coluna,descricao
+iso_code,Código ISO para os nomes de países e dependências
+date,Data da atualização dos dados
+total_deaths,Número de mortes confirmados do último dia disponível igual ou anterior à data
+new_deaths,Número de novos óbitos desde o último dia*
+country_pt,Nome do País
+rolling_deaths_new,Média móvel das mortes (5 dias anteriores)
+data_last_refreshed,Data da última atualização do dado na API

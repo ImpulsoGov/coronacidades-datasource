@@ -31,4 +31,9 @@ def now(config=None):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "dataframe has null data": lambda df: all(df.isnull().any() == False),
+    "total deaths is negative": lambda df: len(df.query("total_deaths < 0")) == 0,
+    # "new deaths is negative": lambda df: len(df.query("new_deaths < 0")) == 0,
+    # "rolling deaths is negative": lambda df: len(df.query("rolling_deaths_new < 0"))
+    # == 0,
 }

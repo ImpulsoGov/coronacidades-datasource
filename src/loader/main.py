@@ -8,11 +8,17 @@ from datetime import datetime
 import numpy as np
 import importlib
 
+# Environment variables from '../.env' file
+from dotenv import load_dotenv
+from pathlib import Path
+
+env_path = Path("..") / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
+
 from logger import logger
 from utils import (
     get_last,
     get_config,
-    secrets,
     build_file_path,
     get_endpoints,
 )

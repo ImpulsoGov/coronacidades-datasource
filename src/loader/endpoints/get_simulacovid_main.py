@@ -51,6 +51,6 @@ def now(config):
 TESTS = {
     "len(data) != 5570": lambda df: len(df) == 5570,
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "notification_rate == NaN": lambda df: len(
-        df[df["notification_rate"].isnull() == True]) == 0,
+    "notification_rate == NaN": lambda df: len(df[df["notification_rate"].isnull() == True]) == 0,
+    "no negative beds or ventilators": lambda df: len(df.query("number_beds < 0 | number_ventilators < 0")) == 0
 }

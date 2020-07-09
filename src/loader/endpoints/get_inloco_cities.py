@@ -1,11 +1,10 @@
 import pandas as pd
 import sys
 import numpy as np
-from utils import get_googledrive_df, configs_path
+from utils import get_googledrive_df, download_from_drive
 from endpoints.helpers import allow_local
 import Levenshtein as lev
 import os
-import yaml
 from logger import logger
 
 
@@ -88,11 +87,12 @@ class StateFrame:
         return self.states_num_ids[state_index]
 
     def solve_word(self, wrong_word, correct_word, lev_dis):
+
         if lev_dis <= 2:
             return correct_word
         else:
             try:
-                return self.corrections["inloco"][wrong_word]["correct_name"]
+                return self.corrections[wrong_word]["correct_name"]
             except:
                 logger.warning("City not found in corrections: " + wrong_word)
 
@@ -116,7 +116,10 @@ class StateFrame:
         for not_found_name in not_found:
             min_dis, closest = self.minlev2(not_found_name, correct_state_cities)
             final_name = self.solve_word(not_found_name, closest, min_dis)
+
+            # ERRO
             final_name_index = np.searchsorted(correct_state_cities, final_name)
+
             final_name_id = correct_state[final_name_index][1]
             correction_data = np.array([not_found_name, final_name, str(final_name_id)])
             idx = np.searchsorted(corrections_state[:, 0], correction_data[0])
@@ -149,12 +152,19 @@ class StateFrame:
 @allow_local
 def now(config):
 
-    cities_table = pd.read_csv(os.path.join(configs_path, "cities_table.csv"))
-    states_table = pd.read_csv(os.path.join(configs_path, "states_table.csv"))
-    corrections_table = yaml.load(
-        open(os.path.join(configs_path, "city_corrections.yaml"), "r"),
-        Loader=yaml.FullLoader,
+    df_places_id = download_from_drive(
+        config["br"]["drive_paths"]["br_id_state_region_city"]
     )
+
+    cities_table = df_places_id[
+        ["city_id", "city_name", "state_num_id"]
+    ].drop_duplicates()
+    states_table = df_places_id[
+        ["state_id", "state_name", "state_num_id"]
+    ].drop_duplicates()
+
+    corrections_table = config["br"]["inloco"]["replace"]
+
     raw_inloco_cities = get_googledrive_df(os.getenv("INLOCO_CITIES_ID"))
     return StateFrame(
         raw_inloco_cities, cities_table, states_table, corrections_table

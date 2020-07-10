@@ -1,6 +1,7 @@
 import pandas as pd
-from utils import download_from_drive, treat_text
+from utils import download_from_drive, treat_text, match_place_id
 from endpoints.helpers import allow_local
+from endpoints import get_places_id
 
 
 def _read_cities_data(country, config):
@@ -24,7 +25,18 @@ def now(config, country="br"):
         how="left",
         suffixes=("", "_y"),
     )
-    cities = cities.drop([c for c in cities.columns if "_y" in c], 1)
+
+    matchs = {
+        "city_name": "city_id",
+        "state_name": "state_id",
+        "state_num_id": "state_id",
+        "health_region_id": ["health_system_region", "state_id"],
+    }
+    cities = match_place_id(
+        cities.drop([c for c in cities.columns if "_y" in c], 1),
+        get_places_id.now(config),
+        matchs,
+    )
     # cities["city_norm"] = cities["city_name"].apply(treat_text)
 
     time_cols = [c for c in cities.columns if "last_updated" in c]
@@ -43,5 +55,8 @@ def now(config, country="br"):
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
-    "no negative beds or ventilators": lambda df: len(df.query("number_beds < 0 | number_ventilators < 0")) == 0
+    "no negative beds or ventilators": lambda df: len(
+        df.query("number_beds < 0 | number_ventilators < 0")
+    )
+    == 0,
 }

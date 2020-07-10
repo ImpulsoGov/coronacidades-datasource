@@ -10,6 +10,8 @@ import io
 from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
+from endpoints import get_places_id
+from utils import download_from_drive, match_place_id
 
 
 def _get_notification_ratio(df, config, place_col):
@@ -43,12 +45,12 @@ def _adjust_subnotification_cases(df, config):
     df_city = _get_notification_ratio(df, config, "city_id").rename(
         {0: "city_notification_rate"}, axis=1
     )
-    df_state = _get_notification_ratio(df, config, "state").rename(
+    df_state = _get_notification_ratio(df, config, "state_id").rename(
         {0: "state_notification_rate"}, axis=1
     )
 
     df = df.merge(df_city, on=["city_id", "last_updated"]).merge(
-        df_state, on=["state", "last_updated"]
+        df_state, on=["state_id", "last_updated"]
     )
 
     # Escolha taxa de notificação para a cidade: caso sem mortes, usa taxa UF
@@ -89,6 +91,7 @@ def _get_active_cases(df, window_period, cases_params):
 
     return df
 
+
 # def _correct_cumulative_cases(df):
 
 #     # Corrije acumulado para o valor máximo até a data
@@ -103,6 +106,7 @@ def _get_active_cases(df, window_period, cases_params):
 #         df["daily_cases"].isnull() == True, df["confirmed_cases"], df["daily_cases"]
 #     )
 #     return df
+
 
 def _correct_negatives(group):
 
@@ -157,7 +161,7 @@ def now(config, country="br"):
             .fillna(0)
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
-            .sort_values(["city_id", "state", "last_updated"])
+            .sort_values(["city_id", "state_id", "last_updated"])
             .groupby("city_id")
             .apply(_correct_negatives)
             .pipe(_get_active_cases, infectious_period, config["br"]["cases"])
@@ -175,14 +179,27 @@ def now(config, country="br"):
             city_id=lambda x: x["city_id"].astype(int),
         )
 
-    return df
+    # Fix places names & ids from default
+    return match_place_id(
+        df,
+        get_places_id.now(config),
+        {"city_name": "city_id", "state_name": "state_id", "state_num_id": "state_id"},
+    )
 
 
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "notification_rate == NaN": lambda df: len(df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values) == 0,
-    "state_notification_rate == NaN": lambda df: len(df[(df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)].values) == 0,
+    "notification_rate == NaN": lambda df: len(
+        df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values
+    )
+    == 0,
+    "state_notification_rate == NaN": lambda df: len(
+        df[
+            (df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)
+        ].values
+    )
+    == 0,
     # TODO: test it before update to master
     # "max(confirmed_cases) != max(date)": lambda df: all(
     # (df.groupby("city_id").max()["confirmed_cases"] \

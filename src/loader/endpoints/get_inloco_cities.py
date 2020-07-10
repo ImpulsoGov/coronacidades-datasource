@@ -3,6 +3,7 @@ import sys
 import numpy as np
 from utils import get_googledrive_df, download_from_drive
 from endpoints.helpers import allow_local
+from endpoints import get_places_id
 import Levenshtein as lev
 import os
 from logger import logger
@@ -152,9 +153,7 @@ class StateFrame:
 @allow_local
 def now(config):
 
-    df_places_id = download_from_drive(
-        config["br"]["drive_paths"]["br_id_state_region_city"]
-    )
+    df_places_id = get_places_id.now(config)
 
     cities_table = df_places_id[
         ["city_id", "city_name", "state_num_id"]

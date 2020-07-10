@@ -1,6 +1,7 @@
 import pandas as pd
 from utils import get_googledrive_df, configs_path, download_from_drive
 from endpoints.helpers import allow_local
+from endpoints import get_places_id
 import os
 import numpy as np
 
@@ -11,9 +12,7 @@ def now(config):
     df = get_googledrive_df(os.getenv("INLOCO_STATES_ID"))
 
     states_table = (
-        download_from_drive(config["br"]["drive_paths"]["br_id_state_region_city"])[
-            ["state_id", "state_name", "state_num_id"]
-        ]
+        get_places_id.now(config)[["state_id", "state_name", "state_num_id"]]
         .drop_duplicates()
         .sort_values(by=["state_name"])
     )

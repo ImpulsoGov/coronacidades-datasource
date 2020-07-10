@@ -180,10 +180,18 @@ def now(config, country="br"):
         )
 
     # Fix places names & ids from default
-    return match_place_id(
+    places_ids = get_places_id.now(config)
+
+    df = match_place_id(
         df,
-        get_places_id.now(config),
+        places_ids,
         {"city_name": "city_id", "state_name": "state_id", "state_num_id": "state_id"},
+    )
+
+    # Add health_region
+    return df.merge(
+        places_ids[["city_id", "health_system_region", "health_region_id"]],
+        on="city_id",
     )
 
 

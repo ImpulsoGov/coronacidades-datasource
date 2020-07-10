@@ -153,6 +153,7 @@ class StateFrame:
 @allow_local
 def now(config):
 
+    # Get places ids
     df_places_id = get_places_id.now(config)
 
     cities_table = df_places_id[
@@ -162,12 +163,21 @@ def now(config):
         ["state_id", "state_name", "state_num_id"]
     ].drop_duplicates()
 
-    corrections_table = config["br"]["inloco"]["replace"]
-
-    raw_inloco_cities = get_googledrive_df(os.getenv("INLOCO_CITIES_ID"))
-    return StateFrame(
-        raw_inloco_cities, cities_table, states_table, corrections_table
+    # Match names & ids
+    df = StateFrame(
+        get_googledrive_df(os.getenv("INLOCO_CITIES_ID")),
+        cities_table,
+        states_table,
+        config["br"]["inloco"]["replace"],
     ).get_clean_df()
+
+    # Add health id
+    return df.merge(
+        df_places_id[
+            ["city_id", "health_system_region", "health_region_id"]
+        ].drop_duplicates(),
+        on="city_id",
+    )
 
 
 TESTS = {

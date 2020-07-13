@@ -91,24 +91,17 @@ def get_indicators_inloco(df, data, place_id, rules, growth):
 
     df["last_updated_inloco"] = data["data_last_refreshed"].max()
 
-    if place_id == "city_id":
-        group = ["city_name", "state_name"]
-
-    if place_id == "state_id":
-        group = ["state_num_id"]
+    # REGIONAL: Pega a mediana das cidades
+    if place_id == "health_region_id":
+        data = data.groupby(["health_region_id", "dt"]).median().reset_index()
 
     # Média móvel do distanciamento para cada 7 dias
     data = (
-        data.sort_values(group + ["dt"])
-        .groupby(group)
+        data.sort_values([place_id, "dt"])
+        .groupby(place_id)
         .rolling(7, 7, on="dt")["isolated"]
         .mean()
         .reset_index()
-    )
-
-    # InLoco não tem ID! TODO: +100 cidades que o nome não bate
-    data = (
-        df.reset_index()[[place_id] + group].merge(data, on=group).set_index(place_id)
     )
 
     # Valores de referência: média da semana, média da ultima semana
@@ -190,22 +183,23 @@ def get_indicators_rt(df, data, place_id, rules, classify, growth):
     return df
 
 
-def _get_mortality_ratio(row):
-
-    if row["deaths"] == 0:
-        return np.nan
-    elif row["confirmed_cases"] > 0:
-        return row["deaths"] / row["confirmed_cases"]
-    else:
-        return np.nan
-
-
 def _get_subnotification_rank(df, mask, place_id):
 
     if place_id == "city_id":
-        return df[mask].groupby("state_id")["subnotification_rate"].rank(method="first")
+        return (
+            df[mask]
+            .groupby("state_num_id")["subnotification_rate"]
+            .rank(method="first")
+        )
 
-    if place_id == "state":
+    if place_id == "health_region_id":
+        return (
+            df[mask]
+            .groupby("state_num_id")["subnotification_rate"]
+            .rank(method="first")
+        )
+
+    if place_id == "state_num_id":
         return df["subnotification_rate"].rank(method="first")
 
 
@@ -223,7 +217,8 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):
         df["subnotification_place_type"] = np.where(mask, "city", "state")
         # print(df["subnotification_place_type"].value_counts()["city"])
 
-    if place_id == "state":
+    # TODO: checar com a escolha de subnotificação (atual é health_region = max state)
+    if place_id == "state_num_id" or place_id == "health_region_id":
 
         mask = df["notification_rate"] != np.nan
         df["subnotification_place_type"] = np.nan
@@ -233,15 +228,6 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):
     # Ranking de subnotificação dos municípios para cada estado
     df["subnotification_rank"] = _get_subnotification_rank(df, mask, place_id)
 
-    # Taxa de mortalidade até a ultima semana
-    # last_week = data["last_updated"].max() - dt.timedelta(7)
-    # df["last_mortality_ratio"] = (
-    #     data[data["last_updated"] == last_week]
-    #     .sort_values(place_id)
-    #     .groupby(place_id)
-    #     .sum()
-    #     .apply(lambda row: _get_mortality_ratio(row), axis=1)
-    # )
     # Classificação: percentual de subnotificação
     df[classify] = _get_levels(df[mask], rules[classify])
 
@@ -269,13 +255,10 @@ def get_overall_alert(row, alerts):
 @allow_local
 def now(config):
 
-    # TODO: add to config on simulacovid
-    config["farolcovid"] = yaml.load(
-        open("endpoints/aux/farol_config.yaml"), Loader=yaml.FullLoader
-    )
-
     df = (
-        get_simulacovid_main.now(config)[config["farolcovid"]["simulacovid"]["columns"]]
+        get_simulacovid_main.now(config)[
+            config["br"]["farolcovid"]["simulacovid"]["columns"]
+        ]
         .sort_values("city_id")
         .set_index("city_id")
         .assign(confirmed_cases=lambda x: x["confirmed_cases"].fillna(0))
@@ -285,9 +268,9 @@ def now(config):
     # Calcula indicadores, classificações e crescimento
     df = get_indicators_subnotification(
         df,
-        data=get_cases.now(config).rename({"state": "state_id"}, axis=1),
+        data=get_cases.now(config),
         place_id="city_id",
-        rules=config["farolcovid"]["rules"],
+        rules=config["br"]["farolcovid"]["rules"],
         classify="subnotification_classification",
     )
 
@@ -295,7 +278,7 @@ def now(config):
         df,
         data=get_cities_rt.now(config),
         place_id="city_id",
-        rules=config["farolcovid"]["rules"],
+        rules=config["br"]["farolcovid"]["rules"],
         classify="rt_classification",
         growth="rt_growth",
     )
@@ -304,16 +287,19 @@ def now(config):
         df,
         data=get_inloco_cities.now(config),
         place_id="city_id",
-        rules=config["farolcovid"]["rules"],
+        rules=config["br"]["farolcovid"]["rules"],
         growth="inloco_growth",
     )
 
     df = get_indicators_capacity(
-        df, config, rules=config["farolcovid"]["rules"], classify="dday_classification"
+        df,
+        config,
+        rules=config["br"]["farolcovid"]["rules"],
+        classify="dday_classification",
     )
 
     df["overall_alert"] = df.apply(
-        lambda x: get_overall_alert(x, config["farolcovid"]["alerts"]), axis=1
+        lambda x: get_overall_alert(x, config["br"]["farolcovid"]["alerts"]), axis=1
     ).replace("medio2", "medio")
 
     return df.reset_index()
@@ -321,7 +307,7 @@ def now(config):
 
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
-    "27 states": lambda df: len(df["state_id"].unique()) == 27,
+    "doesnt have 27 states": lambda df: len(df["state_num_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "city without subnotification rate got a rank": lambda df: df[
         "subnotification_place_type"
@@ -348,10 +334,20 @@ TESTS = {
         .apply(lambda x: any(x), axis=1)
         == True
     ),
-    "rt 10 days maximum and minimum values": lambda df: all(df[~((df['rt_10days_ago_low'] < df['rt_10days_ago_most_likely'])
-                                                     &
-                         (df['rt_10days_ago_most_likely'] < df['rt_10days_ago_high']))]['rt_10days_ago_most_likely'].isnull()),
-    "rt 10 days maximum and minimum values": lambda df: lambda df: all(df[~((df['rt_17days_ago_low'] < df['rt_17days_ago_most_likely'])
-                                                     &
-                        (df['rt_17days_ago_most_likely'] < df['rt_17days_ago_high']))]['rt_17days_ago_most_likely'].isnull())
+    "rt 10 days maximum and minimum values": lambda df: all(
+        df[
+            ~(
+                (df["rt_10days_ago_low"] < df["rt_10days_ago_most_likely"])
+                & (df["rt_10days_ago_most_likely"] < df["rt_10days_ago_high"])
+            )
+        ]["rt_10days_ago_most_likely"].isnull()
+    ),
+    "rt 10 days maximum and minimum values": lambda df: lambda df: all(
+        df[
+            ~(
+                (df["rt_17days_ago_low"] < df["rt_17days_ago_most_likely"])
+                & (df["rt_17days_ago_most_likely"] < df["rt_17days_ago_high"])
+            )
+        ]["rt_17days_ago_most_likely"].isnull()
+    ),
 }

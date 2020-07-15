@@ -14,3 +14,4 @@ google-auth-oauthlib
 python-Levenshtein
 psutil
 python-dotenv
+fuzzyset

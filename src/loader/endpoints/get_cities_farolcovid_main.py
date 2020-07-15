@@ -3,7 +3,13 @@ import numpy as np
 import datetime as dt
 import yaml
 
-from endpoints import get_simulacovid_main, get_cases, get_cities_rt, get_inloco_cities
+from endpoints import (
+    get_simulacovid_main,
+    get_cases,
+    get_cities_rt,
+    get_inloco_cities,
+    get_health,
+)
 from endpoints.helpers import allow_local
 from endpoints.aux.simulator import run_simulation
 
@@ -85,15 +91,29 @@ def get_indicators_capacity(df, config, rules, classify):
     return df
 
 
-def get_indicators_inloco(df, data, place_id, rules, growth):
+def get_indicators_inloco(df, data, place_id, rules, growth, config=None):
 
     data["dt"] = pd.to_datetime(data["dt"])
 
     df["last_updated_inloco"] = data["data_last_refreshed"].max()
 
-    # REGIONAL: Pega a mediana das cidades
+    # REGIONAL: Pega a média ponderada pela população das cidades
     if place_id == "health_region_id":
-        data = data.groupby(["health_region_id", "dt"]).median().reset_index()
+        data = data.merge(
+            get_health.now(config)[["city_id", "population"]], on="city_id"
+        )
+        data = (
+            data.groupby([place_id, "dt"])
+            .agg(
+                {
+                    "city_id": lambda x: x.nunique(),
+                    "isolated": lambda x: np.average(
+                        x, weights=data.loc[x.index, "population"]
+                    ),
+                }
+            )
+            .reset_index()
+        )
 
     # Média móvel do distanciamento para cada 7 dias
     data = (
@@ -101,7 +121,9 @@ def get_indicators_inloco(df, data, place_id, rules, growth):
         .groupby(place_id)
         .rolling(7, 7, on="dt")["isolated"]
         .mean()
+        .dropna()
         .reset_index()
+        .set_index(place_id)
     )
 
     # Valores de referência: média da semana, média da ultima semana
@@ -341,13 +363,5 @@ TESTS = {
                 & (df["rt_10days_ago_most_likely"] < df["rt_10days_ago_high"])
             )
         ]["rt_10days_ago_most_likely"].isnull()
-    ),
-    "rt 10 days maximum and minimum values": lambda df: lambda df: all(
-        df[
-            ~(
-                (df["rt_17days_ago_low"] < df["rt_17days_ago_most_likely"])
-                & (df["rt_17days_ago_most_likely"] < df["rt_17days_ago_high"])
-            )
-        ]["rt_17days_ago_most_likely"].isnull()
     ),
 }

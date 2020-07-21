@@ -48,7 +48,7 @@ def _calculate_recovered(df, params):
     return params
 
 
-def _prepare_simulation(row, config):
+def _prepare_simulation(row, place_id, config):
 
     params = {
         "population_params": {
@@ -66,16 +66,21 @@ def _prepare_simulation(row, config):
     params = _calculate_recovered(row, params)
     dday_beds, _ = run_simulation(params, config)
 
-    if row["subnotification_place_type"] == "state":
-        return np.nan, np.nan
-    else:
-        return dday_beds["best"], dday_beds["worst"]
+    # Se não tem subnotificação do local, não roda a simulação -- depois puxar a nível maior?
+    if place_id == "health_region_id":
+        if row["health_region_notification_place_type"] == "state":
+            return np.nan, np.nan
+    elif place_id == "city_id":
+        if row["city_notification_place_type"] == "state":
+            return np.nan, np.nan
+
+    return dday_beds["best"], dday_beds["worst"]
 
 
-def get_indicators_capacity(df, config, rules, classify):
+def get_indicators_capacity(df, place_id, config, rules, classify):
 
     df["dday_beds_best"], df["dday_beds_worst"] = zip(
-        *df.apply(lambda row: _prepare_simulation(row, config), axis=1)
+        *df.apply(lambda row: _prepare_simulation(row, place_id, config), axis=1)
     )
 
     df["dday_beds_best"] = df["dday_beds_best"].replace(-1, 91)
@@ -231,19 +236,13 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):
     df["last_updated_subnotification"] = data["data_last_refreshed"].max()
 
     if place_id == "city_id":
+        mask = df["city_notification_place_type"] != "state"
 
-        mask = (df["notification_rate"] != df["state_notification_rate"]) | (
-            df["deaths"] > 0
-        )
+    if place_id == "health_region_id":
+        mask = df["health_region_notification_place_type"] != "state"
 
-        df["subnotification_place_type"] = np.where(mask, "city", "state")
-        # print(df["subnotification_place_type"].value_counts()["city"])
-
-    # TODO: checar com a escolha de subnotificação (atual é health_region = max state)
-    if place_id == "state_num_id" or place_id == "health_region_id":
-
+    if place_id == "state_num_id":
         mask = df["notification_rate"] != np.nan
-        df["subnotification_place_type"] = np.nan
 
     df["subnotification_rate"] = 1 - df["notification_rate"]
 
@@ -280,6 +279,7 @@ def now(config):
     df = (
         get_simulacovid_main.now(config)[
             config["br"]["farolcovid"]["simulacovid"]["columns"]
+            + ["city_notification_place_type"]
         ]
         .sort_values("city_id")
         .set_index("city_id")
@@ -315,7 +315,8 @@ def now(config):
 
     df = get_indicators_capacity(
         df,
-        config,
+        place_id="city_id",
+        config=config,
         rules=config["br"]["farolcovid"]["rules"],
         classify="dday_classification",
     )
@@ -331,10 +332,8 @@ TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "doesnt have 27 states": lambda df: len(df["state_num_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "city without subnotification rate got a rank": lambda df: df[
-        "subnotification_place_type"
-    ].value_counts()["city"]
-    == df["subnotification_rank"].count(),
+    "city without subnotification rate got a rank": lambda df: len(df[(df["city_notification_place_type"] == "state") & (~df["subnotification_rank"].isnull())]) == 0,
+    "city with subnotification rate didn't got a rank": lambda df: len(df[(df["city_notification_place_type"] == "city") & (df["subnotification_rank"].isnull())]) == 0,
     "city doesnt have both rt classified and growth": lambda df: df[
         "rt_classification"
     ].count()

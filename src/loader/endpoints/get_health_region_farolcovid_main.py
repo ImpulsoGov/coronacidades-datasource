@@ -23,20 +23,20 @@ from endpoints.helpers import allow_local
 def now(config):
 
     df = (
-        get_simulacovid_main.now(config)[
-            config["br"]["farolcovid"]["simulacovid"]["columns"]
-        ]
+        get_simulacovid_main.now(config)
         .sort_values("health_region_id")
         .groupby(
             [
                 "state_num_id",
                 "state_id",
                 "state_name",
-                "health_system_region",
+                "health_region_name",
                 "health_region_id",
+                "health_region_notification_place_type",
             ]
-        )  # just to keep this columns
+        )
         .agg(config["br"]["farolcovid"]["simulacovid"]["health_region_agg"])
+        .rename(columns={"health_region_notification_rate": "notification_rate"})
         .assign(confirmed_cases=lambda x: x["confirmed_cases"].fillna(0))
         .assign(deaths=lambda x: x["deaths"].fillna(0))
         .reset_index()
@@ -67,12 +67,13 @@ def now(config):
         place_id="health_region_id",
         rules=config["br"]["farolcovid"]["rules"],
         growth="inloco_growth",
-        config=config
+        config=config,
     )
 
     df = get_indicators_capacity(
         df,
-        config,
+        place_id="health_region_id",
+        config=config,
         rules=config["br"]["farolcovid"]["rules"],
         classify="dday_classification",
     )
@@ -87,9 +88,20 @@ def now(config):
 TESTS = {
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "doesnt have 27 states": lambda df: len(df["state_id"].unique()) == 27,
-    # "dataframe has null data": lambda df: all(
-    #     df.drop(["subnotification_place_type"], axis=1).isnull().any() == False
-    # ),
+    "region without subnotification rate got a rank": lambda df: len(
+        df[
+            (df["health_region_notification_place_type"] == "state")
+            & (~df["subnotification_rank"].isnull())
+        ]
+    )
+    == 0,
+    "region with subnotification rate didn't got a rank": lambda df: len(
+        df[
+            (df["health_region_notification_place_type"] == "health_region")
+            & (df["subnotification_rank"].isnull())
+        ]
+    )
+    == 0,
     "dday worst greater than best": lambda df: len(
         df[df["dday_beds_worst"] > df["dday_beds_best"]]
     )

@@ -19,8 +19,6 @@ def now(config):
     # Get places ids
     df_places_id = get_places_id.now(config)
     df = get_googledrive_df(os.getenv("INLOCO_CITIES_ID"))
-    # df_places_id = pd.read_csv("http://45.55.43.231:7000/br/places/ids")
-    # df = pd.read_csv("Social Distancing Index by Cities.csv")
 
     # Get states closest matches
     states = fuzzyset.FuzzySet()
@@ -55,7 +53,7 @@ def now(config):
                 "state_city",
                 "state_num_id",
                 "state_name",
-                "health_system_region",
+                "health_region_name",
                 "health_region_id",
                 "city_name",
                 "city_id",
@@ -72,7 +70,7 @@ def now(config):
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "dataframe has null data": lambda df: all(
-        df.drop(["health_system_region", "health_region_id"], axis=1).isnull().any()
+        df.drop(["health_region_name", "health_region_id"], axis=1).isnull().any()
         == False
     ),
     "isolation index has negative data": lambda df: len(df.query("isolated < 0")) == 0,

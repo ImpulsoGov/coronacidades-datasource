@@ -23,9 +23,7 @@ from endpoints.helpers import allow_local
 def now(config):
 
     df = (
-        get_simulacovid_main.now(config)[
-            config["br"]["farolcovid"]["simulacovid"]["columns"]
-        ]
+        get_simulacovid_main.now(config)
         .sort_values("state_num_id")
         .groupby(["state_num_id", "state_id", "state_name"])
         .agg(config["br"]["farolcovid"]["simulacovid"]["state_agg"])
@@ -64,7 +62,8 @@ def now(config):
 
     df = get_indicators_capacity(
         df,
-        config,
+        place_id="state_num_id",
+        config=config,
         rules=config["br"]["farolcovid"]["rules"],
         classify="dday_classification",
     )
@@ -79,9 +78,7 @@ def now(config):
 TESTS = {
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "the total is not 27 states": lambda df: len(df["state_num_id"].unique()) == 27,
-    "dataframe has null data": lambda df: all(
-        df.drop(["subnotification_place_type"], axis=1).isnull().any() == False
-    ),
+    "dataframe has null data": lambda df: all(df.isnull().any() == False),
     "dday worst greater than best": lambda df: len(
         df[df["dday_beds_worst"] > df["dday_beds_best"]]
     )

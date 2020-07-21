@@ -8,12 +8,15 @@ from utils import get_last
 from endpoints.helpers import allow_local
 
 
-def _fix_state_notification(row, states_rate):
+def _recover_notification_rate(row, rates):
+    """
+    Recupera a taxa de notificação da regional para cidades sem casos i.e. que não vêm de get_cases
+    """
 
-    if np.isnan(row["state_notification_rate"]):
-        return states_rate.loc[row["state_num_id"]].values[0]
+    if np.isnan(row["health_region_notification_rate"]):
+        return rates.loc[row["health_region_id"]].values[0]
     else:
-        return row["state_notification_rate"]
+        return row["health_region_notification_rate"]
 
 
 @allow_local
@@ -28,26 +31,25 @@ def now(config):
     df = df.merge(cases, on="city_id", how="left", suffixes=("", "_y"))
     df = df[[c for c in df.columns if not c.endswith("_y")]]
 
-    states_rate = (
-        df[["state_num_id", "state_notification_rate"]]
+    health_region_rate = (
+        df[["health_region_id", "health_region_notification_rate"]]
         .dropna()
-        .groupby("state_num_id")
+        .groupby("health_region_id")
         .mean()
     )
 
     # get notification for cities without cases
-    df["state_notification_rate"] = df.apply(
-        lambda row: _fix_state_notification(row, states_rate), axis=1
+    df["health_region_notification_rate"] = df.apply(
+        lambda row: _recover_notification_rate(row, health_region_rate), axis=1
     )
 
     df["notification_rate"] = np.where(
         df["notification_rate"].isnull(),
-        df["state_notification_rate"],
+        df["health_region_notification_rate"],
         df["notification_rate"],
     )
 
     df["last_updated"] = pd.to_datetime(df["last_updated"])
-
     return df
 
 

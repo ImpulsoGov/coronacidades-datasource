@@ -17,7 +17,7 @@ def now(config, country="br"):
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "data without 74 sectors": lambda df: len(df) == 74,
+    "data without at least 74 sectors": lambda df: len(df) >= 74,
     "data contains null datafield": lambda df: df.isna().sum().sum() == 0,
     "CNAE field is not exclusively ints": lambda df: df["cnae"].dtype == dtype("int64"),
     "essential field is not exclusively bool": lambda df: df["essential"].dtype

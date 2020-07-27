@@ -14,6 +14,10 @@
   python_file: get_states_safereopen_main
   skip: False
 
+- endpoint: br/health_region/safereopen/main
+  python_file: get_health_region_safereopen_main
+  skip: False
+
 - endpoint: br/cities/cases/full
   python_file: get_cases
   skip: False

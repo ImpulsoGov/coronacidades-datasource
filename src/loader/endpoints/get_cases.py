@@ -57,29 +57,33 @@ def _get_notification_rates(df, config):
             on=[place, "last_updated"],
         )
 
-    # Ajusta taxas de notificação: quando não tem, usa a do estado!
-    df["notification_rate"] = df["city_notification_rate"].fillna(
-        df["state_notification_rate"]
-    )
-    df["health_region_notification_rate"] = df[
-        "health_region_notification_rate"
-    ].fillna(df["state_notification_rate"])
-
-    df["city_notification_place_type"] = (
-        df[~df["state_notification_rate"].isnull()]["city_notification_rate"]
-        .isnull()
-        .map({True: "state", False: "city"})
-    )
-
+    # Ajusta taxas de notificação da regional: quando não tem, usa a do estado!
     df["health_region_notification_place_type"] = (
         df[~df["state_notification_rate"].isnull()]["health_region_notification_rate"]
         .isnull()
         .map({True: "state", False: "health_region"})
     )
 
+    df["health_region_notification_rate"] = df[
+        "health_region_notification_rate"
+    ].fillna(df["state_notification_rate"])
+
+    # Ajusta taxas de notificação do municipio: quando não tem, usa a da regional!
+    df["city_notification_place_type"] = (
+        df[~df["state_notification_rate"].isnull()]["city_notification_rate"]
+        .isnull()
+        .map({False: "city"})
+        .fillna(df["health_region_notification_place_type"])
+    )
+
+    df["notification_rate"] = df["city_notification_rate"].fillna(
+        df["health_region_notification_rate"]
+    )
+
     # Ajusta caso taxa > 1:
     rates_cols = [
         "notification_rate",
+        "city_notification_rate",
         "health_region_notification_rate",
         "state_notification_rate",
     ]

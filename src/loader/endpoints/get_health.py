@@ -1,5 +1,5 @@
 import pandas as pd
-from utils import download_from_drive, treat_text, match_place_id
+from utils import download_from_drive
 from endpoints.helpers import allow_local
 from endpoints import get_places_id
 

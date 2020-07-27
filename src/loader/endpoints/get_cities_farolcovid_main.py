@@ -236,10 +236,10 @@ def get_indicators_subnotification(df, data, place_id, rules, classify):
     df["last_updated_subnotification"] = data["data_last_refreshed"].max()
 
     if place_id == "city_id":
-        mask = df["city_notification_place_type"] != "state"
+        mask = df["city_notification_place_type"] == "city"
 
     if place_id == "health_region_id":
-        mask = df["health_region_notification_place_type"] != "state"
+        mask = df["health_region_notification_place_type"] == "health_region"
 
     if place_id == "state_num_id":
         mask = df["notification_rate"] != np.nan
@@ -332,8 +332,20 @@ TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "doesnt have 27 states": lambda df: len(df["state_num_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "city without subnotification rate got a rank": lambda df: len(df[(df["city_notification_place_type"] == "state") & (~df["subnotification_rank"].isnull())]) == 0,
-    "city with subnotification rate didn't got a rank": lambda df: len(df[(df["city_notification_place_type"] == "city") & (df["subnotification_rank"].isnull())]) == 0,
+    "city without subnotification rate got a rank": lambda df: len(
+        df[
+            (df["city_notification_place_type"] == "state")
+            & (~df["subnotification_rank"].isnull())
+        ]
+    )
+    == 0,
+    "city with subnotification rate didn't got a rank": lambda df: len(
+        df[
+            (df["city_notification_place_type"] == "city")
+            & (df["subnotification_rank"].isnull())
+        ]
+    )
+    == 0,
     "city doesnt have both rt classified and growth": lambda df: df[
         "rt_classification"
     ].count()

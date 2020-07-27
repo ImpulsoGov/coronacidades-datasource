@@ -184,25 +184,6 @@ def get_cases_series(df, place_type, min_days):
     return df[df.index.isin(v[v > min_days].index, level=0)]
 
 
-def match_place_id(df, places_ids, matchs):
-
-    for new_col, ref in matchs.items():
-
-        if type(ref) == list:
-            places_ids["temp"] = places_ids[ref].dropna().astype(str).agg("_".join, axis=1)
-            df["temp"] = df[ref].dropna().astype(str).agg("_".join, axis=1)
-
-            ref = "temp"
-
-        replaces = places_ids[[ref, new_col]].drop_duplicates()
-        df[new_col] = df[ref].map(dict(zip(replaces[ref], replaces[new_col])))
-
-        if "temp" in df.columns:
-            del df["temp"]
-
-    return df
-
-
 def get_country_isocode_name(iso):
     names = {
         "AFG": "Afeganistão",

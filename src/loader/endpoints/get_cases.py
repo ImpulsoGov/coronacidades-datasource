@@ -10,7 +10,7 @@ from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
 from endpoints import get_places_id
-from utils import download_from_drive, match_place_id
+from utils import download_from_drive
 
 
 def _calculate_notification_rate(df, config, place_col, rate_col):
@@ -178,17 +178,20 @@ def now(config, country="br"):
             city_id=lambda df: df["city_id"].astype(int)
         )
 
-        fix_places = {
-            "city_name": "city_id",
-            "state_name": "state_id",
-            "state_num_id": "state_id",
-        }
-
         df = (
-            df.pipe(match_place_id, places_ids, fix_places)
+            df.drop(["city_name"], 1)
             .assign(city_id=lambda df: df["city_id"].astype(int))
             .merge(
-                places_ids[["city_id", "health_region_name", "health_region_id"]],
+                places_ids[
+                    [
+                        "city_id",
+                        "city_name",
+                        "health_region_name",
+                        "health_region_id",
+                        "state_name",
+                        "state_num_id",
+                    ]
+                ],
                 on="city_id",
             )
         )

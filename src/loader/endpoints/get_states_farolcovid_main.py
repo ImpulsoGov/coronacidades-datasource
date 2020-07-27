@@ -78,7 +78,7 @@ def now(config):
 TESTS = {
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "the total is not 27 states": lambda df: len(df["state_num_id"].unique()) == 27,
-    "dataframe has null data": lambda df: all(df.isnull().any() == False),
+    # "dataframe has null data": lambda df: all(df.isnull().any() == False),
     "dday worst greater than best": lambda df: len(
         df[df["dday_beds_worst"] > df["dday_beds_best"]]
     )

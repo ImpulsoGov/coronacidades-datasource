@@ -205,7 +205,8 @@ def get_indicators_rt(df, data, place_id, rules, classify, growth):
     df[growth] = _get_levels(df, rules[growth])
 
     # Classificação: considerando somente os que tem dados há 14 dias
-    df.loc[df["rt_ratio_week_avg"].isnull(), classify] = np.nan
+    cols = [col for col in df.columns if col.startswith("rt_")]
+    df.loc[df["rt_ratio_week_avg"].isnull(), cols] = np.nan
 
     return df
 
@@ -276,6 +277,7 @@ def get_overall_alert(row, alerts):
 @allow_local
 def now(config):
 
+    print(config["br"]["farolcovid"]["simulacovid"]["columns"])
     df = (
         get_simulacovid_main.now(config)[
             config["br"]["farolcovid"]["simulacovid"]["columns"]

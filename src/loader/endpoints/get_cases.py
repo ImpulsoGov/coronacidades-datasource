@@ -23,7 +23,7 @@ def _calculate_notification_rate(df, config, place_col, rate_col):
 
     cfr = config["br"]["seir_parameters"]["fatality_ratio"]
 
-    # Get group total cases & deaths per day
+    # 1. Get daily 1/death_ratio = I(t) / D(t)
     df = (
         df.sort_values([place_col, "last_updated"])
         .groupby([place_col, "last_updated"])
@@ -31,16 +31,19 @@ def _calculate_notification_rate(df, config, place_col, rate_col):
         .assign(rate=lambda df: df["confirmed_cases"] / df["deaths"])
         .reset_index()
         .rename(columns={"rate": rate_col})
+        .drop(["confirmed_cases", "deaths"], 1)
     )
 
-    # Get notification rate mavg
+    # 2. Calculate mavg of 7 days = CFR / death_ratio
     df = (
         df.groupby(place_col)[[rate_col, "last_updated"]]
-        .rolling(window=7, min_periods=1, on="last_updated")
-        .apply(lambda x: np.mean(x) * cfr, raw=True)
-        .reset_index()
+        .rolling(window=7, min_periods=7, on="last_updated")
+        .mean()
+        .reset_index(level=0)
     )
-    return df[[place_col, rate_col, "last_updated"]]
+
+    df[rate_col] = df[rate_col].apply(lambda x: x * cfr)
+    return df
 
 
 def _get_notification_rates(df, config):

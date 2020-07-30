@@ -277,7 +277,6 @@ def get_overall_alert(row, alerts):
 @allow_local
 def now(config):
 
-    print(config["br"]["farolcovid"]["simulacovid"]["columns"])
     df = (
         get_simulacovid_main.now(config)[
             config["br"]["farolcovid"]["simulacovid"]["columns"]

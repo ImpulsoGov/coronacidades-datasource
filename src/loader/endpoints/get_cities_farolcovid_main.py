@@ -234,7 +234,9 @@ def _get_subnotification_rank(df, mask, place_id):
 def get_indicators_subnotification(df, data, place_id, rules, classify):
 
     data["last_updated"] = pd.to_datetime(data["last_updated"])
-    df["last_updated_subnotification"] = data["data_last_refreshed"].max()
+    df["last_updated_subnotification"] = (
+        data[data["is_last"] == True].groupby(place_id)["last_updated"].max()
+    )
 
     if place_id == "city_id":
         mask = df["city_notification_place_type"] == "city"

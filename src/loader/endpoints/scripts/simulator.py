@@ -4,7 +4,7 @@ import yaml
 from scipy.integrate import odeint
 import sys
 
-from endpoints.aux.seir import entrypoint
+from endpoints.scripts.seir import entrypoint
 import datetime as dt
 
 

@@ -220,6 +220,9 @@ def now(config):
     df = get_cases.now(config, "br")
     df["last_updated"] = pd.to_datetime(df["last_updated"])
 
+    # Filter cities with deaths i.e. has subnotification!
+    df = df[df["city_notification_place_type"] == "city"]
+
     # Filter more than 14 days
     df = get_cases_series(df, "city_id", config["br"]["rt_parameters"]["min_days"])
 
@@ -233,8 +236,17 @@ def now(config):
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "dataframe has null data": lambda df: all(df.isnull().any() == False),
-    "rt maximum and minimum values": lambda df: len(df[~((df['Rt_low_95'] < df['Rt_most_likely']) & (df['Rt_most_likely'] < df['Rt_high_95']))]) == 0,
-    "df upper and lower limit size": lambda df: (len(df['city_id'].unique()) > 3110) & (len(df['city_id'].unique()) <= 5570),
+    "rt maximum and minimum values": lambda df: len(
+        df[
+            ~(
+                (df["Rt_low_95"] < df["Rt_most_likely"])
+                & (df["Rt_most_likely"] < df["Rt_high_95"])
+            )
+        ]
+    )
+    == 0,
+    "df upper limit size": lambda df: len(df["city_id"].unique())
+    <= 5570,  # & (len(df["city_id"].unique()) > 3110),
     "rt most likely outside confidence interval": lambda df: len(
         df[
             (df["Rt_most_likely"] >= df["Rt_high_95"])

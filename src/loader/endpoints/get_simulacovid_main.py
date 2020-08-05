@@ -1,6 +1,5 @@
-from endpoints import get_embaixadores
-from endpoints import get_cases
-from endpoints import get_health
+# from endpoints import get_embaixadores
+from endpoints import get_cases, get_health
 import pandas as pd
 import numpy as np
 from copy import deepcopy
@@ -9,12 +8,15 @@ from utils import get_last
 from endpoints.helpers import allow_local
 
 
-def _fix_state_notification(row, states_rate):
+def _recover_notification_rate(row, rates):
+    """
+    Recupera a taxa de notificação da regional para cidades sem casos i.e. que não vêm de get_cases
+    """
 
-    if np.isnan(row["state_notification_rate"]):
-        return states_rate.loc[row["state_id"]].values[0]
+    if np.isnan(row["health_region_notification_rate"]):
+        return rates.loc[row["health_region_id"]].values[0]
     else:
-        return row["state_notification_rate"]
+        return row["health_region_notification_rate"]
 
 
 @allow_local
@@ -26,31 +28,40 @@ def now(config):
     cases = get_cases.now(config, "br")
     cases = cases[cases["is_last"] == True].drop(config["br"]["cases"]["drop"], 1)
 
-    df = df.merge(cases, on="city_id", how="left")
+    df = df.merge(cases, on="city_id", how="left", suffixes=("", "_y"))
+    df = df[[c for c in df.columns if not c.endswith("_y")]]
 
-    states_rate = (
-        df[["state_id", "state_notification_rate"]].dropna().groupby("state_id").mean()
+    health_region_rate = (
+        df[["health_region_id", "health_region_notification_rate"]]
+        .dropna()
+        .groupby("health_region_id")
+        .mean()
     )
 
     # get notification for cities without cases
-    df["state_notification_rate"] = df.apply(
-        lambda row: _fix_state_notification(row, states_rate), axis=1
+    df["health_region_notification_rate"] = df.apply(
+        lambda row: _recover_notification_rate(row, health_region_rate), axis=1
     )
 
     df["notification_rate"] = np.where(
         df["notification_rate"].isnull(),
-        df["state_notification_rate"],
+        df["health_region_notification_rate"],
         df["notification_rate"],
     )
 
     df["last_updated"] = pd.to_datetime(df["last_updated"])
-
     return df
 
 
 TESTS = {
     "len(data) != 5570": lambda df: len(df) == 5570,
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "notification_rate == NaN": lambda df: len(df[df["notification_rate"].isnull() == True]) == 0,
-    "no negative beds or ventilators": lambda df: len(df.query("number_beds < 0 | number_ventilators < 0")) == 0
+    "notification_rate == NaN": lambda df: len(
+        df[df["notification_rate"].isnull() == True]
+    )
+    == 0,
+    "no negative beds or ventilators": lambda df: len(
+        df.query("number_beds < 0 | number_ventilators < 0")
+    )
+    == 0,
 }

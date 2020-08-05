@@ -1,4 +1,4 @@
-pandas
+pandas==1.0.5
 pyyaml
 pytest
 requests
@@ -14,3 +14,4 @@ google-auth-oauthlib
 python-Levenshtein
 psutil
 python-dotenv
+fuzzyset

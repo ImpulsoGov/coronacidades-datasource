@@ -1,47 +1,61 @@
 import pandas as pd
-from utils import download_from_drive, treat_text
+from utils import download_from_drive
 from endpoints.helpers import allow_local
+from endpoints import get_places_id
 
 
-def _read_cities_data(country, config):
+def _read_df_data(country, config):
 
     tables = ["cities_population", "health_infrastructure"]
 
-    return {
+    dfs = {
         name: download_from_drive(config[country]["drive_paths"][name])
         for name in tables
     }
+
+    df = pd.merge(
+        dfs["cities_population"],
+        dfs["health_infrastructure"],
+        on="city_id",
+        how="left",
+        suffixes=("", "_y"),
+    )
+    return df.drop([c for c in df.columns if "_y" in c], axis=1)
 
 
 @allow_local
 def now(config, country="br"):
 
-    cities = _read_cities_data(country, config)
-    cities = pd.merge(
-        cities["cities_population"],
-        cities["health_infrastructure"],
-        on="city_id",
-        how="left",
-        suffixes=("", "_y"),
+    df = _read_df_data(country, config)
+    places_ids = get_places_id.now(config).assign(
+        city_id=lambda df: df["city_id"].astype(int)
     )
-    cities = cities.drop([c for c in cities.columns if "_y" in c], 1)
-    # cities["city_norm"] = cities["city_name"].apply(treat_text)
 
-    time_cols = [c for c in cities.columns if "last_updated" in c]
-    cities[time_cols] = cities[time_cols].apply(pd.to_datetime)
+    # Fix for default places ids - before "health_system_region"
+    df = df.drop(["city_name", "state_name"], axis=1).merge(
+        places_ids, on=["city_id", "state_id"]
+    )
 
-    cities[["number_beds", "number_ventilators"]] = cities[
+    # Fix date types
+    time_cols = [c for c in df.columns if "last_updated" in c]
+    df[time_cols] = df[time_cols].apply(pd.to_datetime)
+
+    df[["number_beds", "number_ventilators"]] = df[
         ["number_beds", "number_ventilators"]
     ].fillna(0)
 
-    cities["author_number_beds"] = "DataSUS"  # config[country]["health"]["source"]
-    cities["author_number_ventilators"] = "DataSUS"
+    # Add DataSUS author
+    df["author_number_beds"] = config[country]["cnes"]["source"]
+    df["author_number_ventilators"] = config[country]["cnes"]["source"]
 
-    return cities
+    return df
 
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
-    "no negative beds or ventilators": lambda df: len(df.query("number_beds < 0 | number_ventilators < 0")) == 0
+    "no negative beds or ventilators": lambda df: len(
+        df.query("number_beds < 0 | number_ventilators < 0")
+    )
+    == 0,
 }

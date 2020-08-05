@@ -19,7 +19,7 @@ TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "data contains null datafield": lambda df: df.isnull().sum().sum() == 0,
     "CNAE field is not exclusively ints": lambda df: df["cnae"].dtype == dtype("int64"),
-    "UF field is not exclusively ints": lambda df: df["state_num_id"].dtype
+    "UF id field is not exclusively ints": lambda df: df["state_num_id"].dtype
     == dtype("int64"),
 }
 

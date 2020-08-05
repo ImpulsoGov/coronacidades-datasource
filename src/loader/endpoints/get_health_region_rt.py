@@ -13,20 +13,21 @@ def now(config):
     df = get_cases.now(config, "br")
     df["last_updated"] = pd.to_datetime(df["last_updated"])
 
-    # Filter more than 14 days
-    df = get_cases_series(df, "state_num_id", config["br"]["rt_parameters"]["min_days"])
+    # Filter more than 14 days & run
+    df = get_cities_rt.sequential_run(
+        get_cases_series(
+            df, "health_region_id", config["br"]["rt_parameters"]["min_days"]
+        ),
+        config,
+        place_type="health_region_id",
+    )
 
-    # Run in parallel
-    return get_cities_rt.sequential_run(df, config, place_type="state_num_id")
+    return df
 
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "dataframe has null data": lambda df: all(df.isnull().any() == False),
-    "not all 27 states with updated rt": lambda df: len(
-        df.drop_duplicates("state_num_id", keep="last")
-    )
-    == 27,
     "rt most likely outside confidence interval": lambda df: len(
         df[
             (df["Rt_most_likely"] >= df["Rt_high_95"])
@@ -34,8 +35,8 @@ TESTS = {
         ]
     )
     == 0,
-    "state has rt with less than 14 days": lambda df: all(
-        df.groupby("state_num_id")["last_updated"].count() > 14
+    "region has rt with less than 14 days": lambda df: all(
+        df.groupby("health_region_id")["last_updated"].count() > 14
     )
     == True,
 }

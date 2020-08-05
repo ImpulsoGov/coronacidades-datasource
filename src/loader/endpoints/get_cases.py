@@ -1,7 +1,6 @@
 import pandas as pd
 import datetime
 import numpy as np
-from urllib.request import Request, urlopen
 import json
 import time
 
@@ -10,11 +9,13 @@ import io
 from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
+from endpoints import get_places_id
+from utils import download_from_drive
 
 
-def _get_notification_ratio(df, config, place_col):
+def _calculate_notification_rate(df, config, place_col, rate_col):
     """
-    Calculate city/state notification rate = CFR * I(t) / D(t)
+    Calculate place notification rate = CFR * I(t) / D(t)
     
     1. Get daily 1/death_ratio = I(t) / D(t)
     2. Calculate mavg of 7 days = CFR / death_ratio
@@ -22,57 +23,88 @@ def _get_notification_ratio(df, config, place_col):
 
     cfr = config["br"]["seir_parameters"]["fatality_ratio"]
 
-    rate = (
-        df.groupby([place_col, "last_updated"])
-        .sum()
+    # 1. Get daily 1/death_ratio = I(t) / D(t)
+    df = (
+        df.sort_values([place_col, "last_updated"])
+        .groupby([place_col, "last_updated"])
+        .sum()[["confirmed_cases", "deaths"]]
+        .assign(rate=lambda df: df["confirmed_cases"] / df["deaths"])
         .reset_index()
-        .set_index("last_updated", drop=True)
-        .groupby(place_col)
-        .apply(lambda x: x["confirmed_cases"] / x["deaths"])
-        .rolling(window=7, min_periods=1)
-        .apply(lambda x: np.mean(x) * cfr, raw=True)
-        .reset_index()
+        .rename(columns={"rate": rate_col})
+        .drop(["confirmed_cases", "deaths"], 1)
     )
 
-    return rate
-
-
-def _adjust_subnotification_cases(df, config):
-
-    # Calcula taxa de notificação por cidade / estado
-    df_city = _get_notification_ratio(df, config, "city_id").rename(
-        {0: "city_notification_rate"}, axis=1
-    )
-    df_state = _get_notification_ratio(df, config, "state").rename(
-        {0: "state_notification_rate"}, axis=1
+    # 2. Calculate mavg of 7 days = CFR / death_ratio
+    df = (
+        df.groupby(place_col)[[rate_col, "last_updated"]]
+        .rolling(window=7, min_periods=7, on="last_updated")
+        .mean()
+        .reset_index(level=0)
     )
 
-    df = df.merge(df_city, on=["city_id", "last_updated"]).merge(
-        df_state, on=["state", "last_updated"]
+    df[rate_col] = df[rate_col].apply(lambda x: x * cfr)
+    return df
+
+
+def _get_notification_rates(df, config):
+
+    # Calcula taxa de notificação por cidade / regiao / estado
+    dic = {
+        "city_id": "city_notification_rate",
+        "health_region_id": "health_region_notification_rate",
+        "state_id": "state_notification_rate",
+    }
+    for place, new_col in dic.items():
+        df = df.merge(
+            _calculate_notification_rate(df, config, place, new_col),
+            on=[place, "last_updated"],
+        )
+
+    # Ajusta taxas de notificação da regional: quando não tem, usa a do estado!
+    df["health_region_notification_place_type"] = (
+        df[~df["state_notification_rate"].isnull()]["health_region_notification_rate"]
+        .isnull()
+        .map({True: "state", False: "health_region"})
     )
 
-    # Escolha taxa de notificação para a cidade: caso sem mortes, usa taxa UF
-    df["notification_rate"] = df["city_notification_rate"]
-    df["notification_rate"] = np.where(
-        df["notification_rate"].isnull(),
-        df["state_notification_rate"],
-        df["city_notification_rate"],
+    df["health_region_notification_rate"] = df[
+        "health_region_notification_rate"
+    ].fillna(df["state_notification_rate"])
+
+    # Ajusta taxas de notificação do municipio: quando não tem, usa a da regional!
+    df["city_notification_place_type"] = (
+        df[~df["state_notification_rate"].isnull()]["city_notification_rate"]
+        .isnull()
+        .map({False: "city"})
+        .fillna(df["health_region_notification_place_type"])
     )
+
+    df["notification_rate"] = df["city_notification_rate"].fillna(
+        df["health_region_notification_rate"]
+    )
+
     # Ajusta caso taxa > 1:
-    df["notification_rate"] = np.where(
-        df["notification_rate"] > 1, 1, df["notification_rate"]
-    )
-
-    df["state_notification_rate"] = np.where(
-        df["state_notification_rate"] > 1, 1, df["state_notification_rate"]
-    )
+    rates_cols = [
+        "notification_rate",
+        "city_notification_rate",
+        "health_region_notification_rate",
+        "state_notification_rate",
+    ]
+    for col in rates_cols:
+        df[col] = np.where(df[col] > 1, 1, df[col])
 
     return df[
-        ["city_id", "state_notification_rate", "notification_rate", "last_updated"]
+        [
+            "city_id",
+            "last_updated",
+            "city_notification_place_type",
+            "health_region_notification_place_type",
+        ]
+        + rates_cols
     ].drop_duplicates()
 
 
-def _get_active_cases(df, window_period, cases_params):
+def _get_infectious_period_cases(df, window_period, cases_params):
 
     # Soma casos diários dos últimos dias de progressão da doença
     daily_active_cases = (
@@ -89,20 +121,6 @@ def _get_active_cases(df, window_period, cases_params):
 
     return df
 
-# def _correct_cumulative_cases(df):
-
-#     # Corrije acumulado para o valor máximo até a data
-#     df["confirmed_cases"] = df.groupby("city_id").cummax()["confirmed_cases"]
-#     df["deaths"] = df.groupby("city_id").cummax()["deaths"]
-
-#     # Recalcula casos diários
-#     df["daily_cases"] = df.groupby("city_id")["confirmed_cases"].diff(1)
-
-#     # Ajusta 1a dia para o acumulado
-#     df["daily_cases"] = np.where(
-#         df["daily_cases"].isnull() == True, df["confirmed_cases"], df["daily_cases"]
-#     )
-#     return df
 
 def _correct_negatives(group):
 
@@ -119,24 +137,21 @@ def _correct_negatives(group):
         group["previous_{}".format(col)] = group[col].shift(1)
 
         group[col] = np.where(
-            (group[col] < group["previous_{}".format(col)]) & (group["is_zero"]),
+            (group[col] < group["previous_{}".format(col)]) & (group["is_zero"] == 1),
             group["previous_{}".format(col)],
             group[col],
         )
 
-        group[new] = group[col].diff(1)
+        group[new] = group[col].diff(1).fillna(group[col])
 
         del group["previous_{}".format(col)]
 
-    # del group["is_zero"]
-
+    del group["is_zero"]
     return group
 
 
 def _download_brasilio_table(url):
-
     response = urlopen(Request(url, headers={"User-Agent": "python-urllib"}))
-
     return pd.read_csv(io.StringIO(gzip.decompress(response.read()).decode("utf-8")))
 
 
@@ -150,6 +165,7 @@ def now(config, country="br"):
             + config["br"]["seir_parameters"]["critical_duration"]
         )
 
+        # Get data & clean table
         df = (
             _download_brasilio_table(config["br"]["cases"]["url"])
             .query("place_type == 'city'")
@@ -157,15 +173,45 @@ def now(config, country="br"):
             .fillna(0)
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
-            .sort_values(["city_id", "state", "last_updated"])
-            .groupby("city_id")
+            .sort_values(["city_id", "state_id", "last_updated"])
+        )
+
+        # Fix places_ids
+        places_ids = get_places_id.now(config).assign(
+            city_id=lambda df: df["city_id"].astype(int)
+        )
+
+        df = (
+            df.drop(["city_name"], 1)
+            .assign(city_id=lambda df: df["city_id"].astype(int))
+            .merge(
+                places_ids[
+                    [
+                        "city_id",
+                        "city_name",
+                        "health_region_name",
+                        "health_region_id",
+                        "state_name",
+                        "state_num_id",
+                    ]
+                ],
+                on="city_id",
+            )
+        )
+
+        # Correct negative values & get infectious period cases
+        df = (
+            df.groupby("city_id")
             .apply(_correct_negatives)
-            .pipe(_get_active_cases, infectious_period, config["br"]["cases"])
+            .pipe(
+                _get_infectious_period_cases, infectious_period, config["br"]["cases"]
+            )
             .rename(columns=config["br"]["cases"]["rename"])
         )
 
+        # Get notification rates & active cases on date
         df = df.merge(
-            _adjust_subnotification_cases(df, config), on=["city_id", "last_updated"]
+            _get_notification_rates(df, config), on=["city_id", "last_updated"]
         ).assign(
             active_cases=lambda x: np.where(
                 x["notification_rate"].isnull(),
@@ -181,8 +227,16 @@ def now(config, country="br"):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "notification_rate == NaN": lambda df: len(df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values) == 0,
-    "state_notification_rate == NaN": lambda df: len(df[(df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)].values) == 0,
+    "notification_rate == NaN": lambda df: len(
+        df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values
+    )
+    == 0,
+    "state_notification_rate == NaN": lambda df: len(
+        df[
+            (df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)
+        ].values
+    )
+    == 0,
     # TODO: test it before update to master
     # "max(confirmed_cases) != max(date)": lambda df: all(
     # (df.groupby("city_id").max()["confirmed_cases"] \

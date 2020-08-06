@@ -31,8 +31,8 @@ def now(config, country="br"):
         city_id=lambda df: df["city_id"].astype(int)
     )
 
-    # Fix for default places ids
-    df = df.drop(["state_name", "city_name"], axis=1).merge(
+    # Fix for default places ids - before "health_system_region"
+    df = df.drop(["city_name", "state_name"], axis=1).merge(
         places_ids, on=["city_id", "state_id"]
     )
 

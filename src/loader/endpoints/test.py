@@ -29,7 +29,7 @@ def now(config):
 
     df, err = p.communicate(input=(params))
     print(err, df)
-    df = pd.read_csv(df)
+    df = pd.read_csv(df.decode("utf-8").splitlines(), sep="\t")
     rc = p.returncode
 
     time.sleep(1)

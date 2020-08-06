@@ -1,7 +1,8 @@
 # ! /usr/bin/Rscript
 
-install.packages("EpiEstim", repo="https://cloud.r-project.org/");
-install.packages("RCurl", repo="https://cloud.r-project.org/");
+# install.packages("EpiEstim", repo="https://cloud.r-project.org/");
+# install.packages("RCurl", repo="https://cloud.r-project.org/");
+library(tidyverse)
 library(EpiEstim);
 library(RCurl);
 
@@ -71,9 +72,9 @@ now <- function(params){
 
     # Retorna a série
     return(rt_cori_serie)
-
 }
 
+# Run script
 now(params)
 
 

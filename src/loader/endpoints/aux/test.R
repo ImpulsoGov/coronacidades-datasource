@@ -2,7 +2,7 @@
 
 # install.packages("EpiEstim", repo="https://cloud.r-project.org/");
 # install.packages("RCurl", repo="https://cloud.r-project.org/");
-library(tidyverse)
+library(tidyverse);
 library(EpiEstim);
 library(RCurl);
 
@@ -14,6 +14,7 @@ print(params)
 now <- function(params){
    
    df_cities_cases = read.csv(text = getURL("http://datasource.coronacidades.org/br/cities/cases/full"))
+   df_farol = read.csv(text = getURL("http://datasource.coronacidades.org/br/states/farolcovid/main"))
 
    df_state_cases = df_cities_cases %>% select("state","city_id","last_updated","daily_cases", "confirmed_cases") %>% #Seleciona as colunas utilizadas pelo modelo
       filter(!is.na(daily_cases)) %>% # Filtra os dias para que não haja NA
@@ -21,7 +22,6 @@ now <- function(params){
       summarize(new_cases = sum(daily_cases), total_cases = sum(confirmed_cases)) # Soma casos dos municipios
 
     # Altera nomes das colunas
-    names(df_state_cases)[names(df_state_cases) == 'state'] <- 'state_id'
     names(df_state_cases)[names(df_state_cases) == 'last_updated'] <- 'dates'
 
     # Converção dos formatos dos dados

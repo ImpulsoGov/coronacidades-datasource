@@ -26,7 +26,7 @@ RUN echo 'deb [trusted=yes] http://cloud.r-project.org/bin/linux/debian buster-c
 RUN apt -y update
 RUN apt install -y -t buster-cran40 r-base
 
-RUN R -e 'install.packages(c("RCurl", "EpiEstim", "tidyverse"), repo="http://cran.rstudio.com/")'
+RUN R -e 'install.packages(c("RCurl", "EpiEstim", "tidyverse", "vroom", "TTR"), repo="http://cran.rstudio.com/")'
 
 COPY ./src/loader /app/src/
 

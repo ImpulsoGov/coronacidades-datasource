@@ -103,6 +103,7 @@ def _get_notification_rates(df, config):
         + rates_cols
     ].drop_duplicates()
 
+# nova func para ids de cidade, regiao e estado
 
 def _get_infectious_period_cases(df, window_period, cases_params):
 
@@ -199,6 +200,7 @@ def now(config, country="br"):
             )
         )
 
+
         # Correct negative values & get infectious period cases
         df = (
             df.groupby("city_id")
@@ -208,6 +210,11 @@ def now(config, country="br"):
             )
             .rename(columns=config["br"]["cases"]["rename"])
         )
+
+        # criar colunas novos casos/mortes por 100k  e de tendências
+
+        df = df.pipe() #_get_infectious_period_cases
+
 
         # Get notification rates & active cases on date
         df = df.merge(

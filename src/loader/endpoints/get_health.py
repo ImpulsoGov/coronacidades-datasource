@@ -40,14 +40,14 @@ def now(config, country="br"):
     time_cols = [c for c in df.columns if "last_updated" in c]
     df[time_cols] = df[time_cols].apply(pd.to_datetime)
 
-    df[["number_beds", "number_icu_beds"]] = df[
-        ["number_beds", "number_icu_beds"]
+    df[["number_beds", "number_ventilators"]] = df[
+        ["number_beds", "number_ventilators"]
     ].fillna(0)
 
     # Add DataSUS author
     df["author_number_beds"] = config[country]["cnes"]["source"]
+    df["author_number_ventilators"] = config[country]["cnes"]["source"]
     df["author_number_icu_beds"] = config[country]["cnes"]["source"]
-
     return df
 
 
@@ -55,7 +55,7 @@ TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "no negative beds or ventilators": lambda df: len(
-        df.query("number_beds < 0 | number_icu_beds < 0")
+        df.query("number_beds < 0 | number_ventilators < 0")
     )
     == 0,
 }

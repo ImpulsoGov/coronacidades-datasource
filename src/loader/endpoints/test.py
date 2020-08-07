@@ -9,14 +9,13 @@ import json
 
 
 @allow_local
-def now(config):
+def now(config=None):
 
     # Write temp file
     rscript = "Rscript /app/src/endpoints/aux/test.R"
 
-    params = json.dumps({"mean_si": 4.7, "std_si": 2.9, "mean_prior": 3,}).encode(
-        "utf-16"
-    )
+    # TODO: fix config type
+    config = json.dumps(config).encode("utf8")
 
     p = subprocess.Popen(
         rscript,
@@ -27,21 +26,19 @@ def now(config):
         # encoding="utf-16",
     )
 
-    df, err = p.communicate(input=(params))
-    print(err, df)
-    df = pd.read_csv(df.decode("utf-8").splitlines(), sep="\t")
+    df, err = p.communicate(input=(config))
+
+    df = [x.split(",") for x in df.decode("utf-8").split('"')[1].split("\\n")]
     rc = p.returncode
 
-    time.sleep(1)
-
-    return pd.read_csv(df)
+    return pd.DataFrame(df[1:][:-1], columns=df[0])
 
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "dataframe has null data": lambda df: all(df.isnull().any() == False),
     "not all 27 states with updated rt": lambda df: len(
-        df.drop_duplicates("state", keep="last")
+        df.drop_duplicates("state_num_id", keep="last")
     )
     == 27,
     "rt most likely outside confidence interval": lambda df: len(
@@ -52,7 +49,7 @@ TESTS = {
     )
     == 0,
     "state has rt with less than 14 days": lambda df: all(
-        df.groupby("state")["last_updated"].count() > 14
+        df.groupby("state_num_id")["last_updated"].count() > 14
     )
     == True,
 }

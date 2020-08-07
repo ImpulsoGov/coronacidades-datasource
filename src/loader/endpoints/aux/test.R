@@ -5,63 +5,63 @@
 library(tidyverse);
 library(EpiEstim);
 library(RCurl);
+library(vroom);
+library(TTR);
 
 args = commandArgs(trailingOnly=TRUE)
-
 params <- list(args[0], args[1], args[2])
 print(params)
 
 now <- function(params){
    
-   df_cities_cases = read.csv(text = getURL("http://datasource.coronacidades.org/br/cities/cases/full"))
-   df_farol = read.csv(text = getURL("http://datasource.coronacidades.org/br/states/farolcovid/main"))
+   df_cities_cases = vroom("http://datasource.coronacidades.org/br/cities/cases/full", delim=',')
+   df_farol = vroom("http://datasource.coronacidades.org/br/states/farolcovid/main", delim=',')
 
-   df_state_cases = df_cities_cases %>% select("state","city_id","last_updated","daily_cases", "confirmed_cases") %>% #Seleciona as colunas utilizadas pelo modelo
-      filter(!is.na(daily_cases)) %>% # Filtra os dias para que não haja NA
-      group_by(state,last_updated) %>% # Agrupa os dados por estado e data
-      summarize(new_cases = sum(daily_cases), total_cases = sum(confirmed_cases)) # Soma casos dos municipios
+    df_state_cases = df_cities_cases %>% select("state_num_id","city_id","last_updated","active_cases", "confirmed_cases") %>%
+        filter(!is.na(active_cases)) %>% # Filtra os dias para que não haja NA
+        group_by(state_num_id,last_updated) %>% # Agrupa os dados por estado e data
+        summarize(active_cases = sum(active_cases), total_cases = sum(confirmed_cases), .groups = 'drop') # Soma casos dos municipios
 
     # Altera nomes das colunas
     names(df_state_cases)[names(df_state_cases) == 'last_updated'] <- 'dates'
 
     # Converção dos formatos dos dados
-    df_state_cases$state_id = as.character(df_state_cases$state_id)
+    # df_state_cases$state_num_id = as.character(df_state_cases$state_num_id)
     df_state_cases$dates = as.Date(df_state_cases$dates)
 
     # Adicionando a coluna de população ao df
     df_state_cases = merge(x = df_state_cases, 
-                        y = as.data.frame((df_farol %>% select(state_id, population))),
-                        by = "state_id", all = TRUE)
+                        y = as.data.frame((df_farol %>% select(state_num_id, population))),
+                        by = "state_num_id", all = TRUE)
 
-    # Média móvel de nivis casos (7 dias)
+    # Média móvel de casos ativos (7 dias)
     df_state_cases = df_state_cases %>% 
-                        group_by(state_id) %>%
-                        mutate(new_cases_mavg = runMean(new_cases, 7))
+                    group_by(state_num_id) %>%
+                    mutate(active_cases_mavg = runMean(active_cases, 7))
 
     # Incidencia: Infectados por 100k/hab. 
-    df_state_cases$I = (100e3 * df_state_cases$new_cases_mavg)/df_state_cases$population
+    df_state_cases$I = (100e3 * df_state_cases$active_cases_mavg)/df_state_cases$population
 
     # Filtra início da série
     df_state_cases = df_state_cases %>%
                         filter(!is.na(I)) %>%
                         filter(total_cases >= 15)
 
-    # Roda o modelo
     # Gera a tabela dos estados
     rt_cori_serie = 0
-    states = as.vector(unique(df_state_cases$state_id)) 
+    states = as.vector(unique(df_state_cases$state_num_id)) 
 
     for(st in states){
-        rt = estimate_R(df_state_cases %>% filter(state_id == st) %>% select(dates, I), 
+        rt = estimate_R(df_state_cases %>% filter(state_num_id == st) %>% select(dates, I), 
                         method="parametric_si",
                         config = make_config(list(
                             mean_si = 4.7,
                             std_si = 2.9,
                             mean_prior=3))
                     )
-        
-        rtx = bind_cols(state_id=st,rt$R)
-        
+
+        rtx = bind_cols(state_num_id=st,rt$R)
+
         if(rt_cori_serie == 0){
             rt_cori_serie = rtx
                 }

@@ -14,7 +14,7 @@ from google.auth.transport.requests import Request
 import io
 import binascii
 
-configs_path = os.path.join(os.path.dirname(__file__), "endpoints/aux")
+configs_path = os.path.join(os.path.dirname(__file__), "endpoints/scripts")
 
 ### PATHS & CREDENTIALS
 

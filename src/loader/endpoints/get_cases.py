@@ -10,98 +10,8 @@ from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
 from endpoints import get_places_id
+from endpoints.scripts import get_notification_rate
 from utils import download_from_drive
-
-
-def _calculate_notification_rate(df, config, place_col, rate_col):
-    """
-    Calculate place notification rate = CFR * I(t) / D(t)
-    
-    1. Get daily 1/death_ratio = I(t) / D(t)
-    2. Calculate mavg of 7 days = CFR / death_ratio
-    """
-
-    cfr = config["br"]["seir_parameters"]["fatality_ratio"]
-
-    # 1. Get daily 1/death_ratio = I(t) / D(t)
-    df = (
-        df.sort_values([place_col, "last_updated"])
-        .groupby([place_col, "last_updated"])
-        .sum()[["confirmed_cases", "deaths"]]
-        .assign(rate=lambda df: df["confirmed_cases"] / df["deaths"])
-        .reset_index()
-        .rename(columns={"rate": rate_col})
-        .drop(["confirmed_cases", "deaths"], 1)
-    )
-
-    # 2. Calculate mavg of 7 days = CFR / death_ratio
-    df = (
-        df.groupby(place_col)[[rate_col, "last_updated"]]
-        .rolling(window=7, min_periods=7, on="last_updated")
-        .mean()
-        .reset_index(level=0)
-    )
-
-    df[rate_col] = df[rate_col].apply(lambda x: x * cfr)
-    return df
-
-
-def _get_notification_rates(df, config):
-
-    # Calcula taxa de notificação por cidade / regiao / estado
-    dic = {
-        "city_id": "city_notification_rate",
-        "health_region_id": "health_region_notification_rate",
-        "state_id": "state_notification_rate",
-    }
-    for place, new_col in dic.items():
-        df = df.merge(
-            _calculate_notification_rate(df, config, place, new_col),
-            on=[place, "last_updated"],
-        )
-
-    # Ajusta taxas de notificação da regional: quando não tem, usa a do estado!
-    df["health_region_notification_place_type"] = (
-        df[~df["state_notification_rate"].isnull()]["health_region_notification_rate"]
-        .isnull()
-        .map({True: "state", False: "health_region"})
-    )
-
-    df["health_region_notification_rate"] = df[
-        "health_region_notification_rate"
-    ].fillna(df["state_notification_rate"])
-
-    # Ajusta taxas de notificação do municipio: quando não tem, usa a da regional!
-    df["city_notification_place_type"] = (
-        df[~df["state_notification_rate"].isnull()]["city_notification_rate"]
-        .isnull()
-        .map({False: "city"})
-        .fillna(df["health_region_notification_place_type"])
-    )
-
-    df["notification_rate"] = df["city_notification_rate"].fillna(
-        df["health_region_notification_rate"]
-    )
-
-    # Ajusta caso taxa > 1:
-    rates_cols = [
-        "notification_rate",
-        "city_notification_rate",
-        "health_region_notification_rate",
-        "state_notification_rate",
-    ]
-    for col in rates_cols:
-        df[col] = np.where(df[col] > 1, 1, df[col])
-
-    return df[
-        [
-            "city_id",
-            "last_updated",
-            "city_notification_place_type",
-            "health_region_notification_place_type",
-        ]
-        + rates_cols
-    ].drop_duplicates()
 
 
 def _get_infectious_period_cases(df, window_period, cases_params):
@@ -211,7 +121,8 @@ def now(config, country="br"):
 
         # Get notification rates & active cases on date
         df = df.merge(
-            _get_notification_rates(df, config), on=["city_id", "last_updated"]
+            get_notification_rate.now(df, "health_region_id"),
+            on=["health_region_id", "last_updated"],
         ).assign(
             active_cases=lambda x: np.where(
                 x["notification_rate"].isnull(),
@@ -231,13 +142,6 @@ TESTS = {
         df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values
     )
     == 0,
-    "state_notification_rate == NaN": lambda df: len(
-        df[
-            (df["state_notification_rate"].isnull() == True) & (df["is_last"] == True)
-        ].values
-    )
-    == 0,
-    # TODO: test it before update to master
     # "max(confirmed_cases) != max(date)": lambda df: all(
     # (df.groupby("city_id").max()["confirmed_cases"] \
     #  == df.query("is_last==True").set_index("city_id").sort_index()["confirmed_cases"]).values),

@@ -212,6 +212,7 @@ def now(config, country="br"):
         )
 
         # criar colunas novos casos/mortes por 100k  e de tendências
+        df[["new_case_by_100k_mavg","new_cases_100k_mavg_growth","new_deaths_by_100k_mavg","new_deaths_by_100k_mavg_growth","notification_rate","notification_rate_growth","estimated_active_cases","daily_death_rate"]] = 0
 
         df = df.pipe() #_get_infectious_period_cases
 

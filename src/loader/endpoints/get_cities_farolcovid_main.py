@@ -11,7 +11,7 @@ from endpoints import (
     get_health,
 )
 from endpoints.helpers import allow_local
-from endpoints.aux.simulator import run_simulation
+from endpoints.scripts.simulator import run_simulation
 
 
 def _get_levels(df, rules):

@@ -31,8 +31,8 @@ def now(config, country="br"):
         city_id=lambda df: df["city_id"].astype(int)
     )
 
-    # Fix for default places ids
-    df = df.drop(["state_name", "health_system_region", "city_name"], axis=1).merge(
+    # Fix for default places ids - before "health_system_region"
+    df = df.drop(["city_name", "state_name"], axis=1).merge(
         places_ids, on=["city_id", "state_id"]
     )
 
@@ -40,13 +40,14 @@ def now(config, country="br"):
     time_cols = [c for c in df.columns if "last_updated" in c]
     df[time_cols] = df[time_cols].apply(pd.to_datetime)
 
-    df[["number_beds", "number_ventilators"]] = df[
-        ["number_beds", "number_ventilators"]
+    df[["number_beds", "number_ventilators", "number_icu_beds"]] = df[
+        ["number_beds", "number_ventilators", "number_icu_beds"]
     ].fillna(0)
 
     # Add DataSUS author
     df["author_number_beds"] = config[country]["cnes"]["source"]
     df["author_number_ventilators"] = config[country]["cnes"]["source"]
+    df["author_number_icu_beds"] = config[country]["cnes"]["source"]
 
     return df
 

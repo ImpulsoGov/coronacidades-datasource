@@ -10,7 +10,7 @@ from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
 from endpoints import get_places_id
-from endpoints.aux import get_notification_rate
+from endpoints.scripts import get_notification_rate
 from utils import download_from_drive
 
 

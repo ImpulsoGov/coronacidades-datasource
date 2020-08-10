@@ -12,7 +12,7 @@ import json
 def now(config=None):
 
     # Write temp file
-    rscript = "Rscript /app/src/endpoints/aux/test.R"
+    rscript = "Rscript /app/src/endpoints/scripts/test.R"
 
     # TODO: fix config type
     config = json.dumps(config).encode("utf8")

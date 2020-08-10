@@ -64,7 +64,7 @@ def get_population(place_id):
     pop = (
         pd.read_csv(
             Path(
-                "endpoints/aux/br_health_region_tabnet_age_dist_2019_treated.csv"
+                "endpoints/scripts/br_health_region_tabnet_age_dist_2019_treated.csv"
             ).resolve()
         )
         .groupby(place_id)
@@ -130,7 +130,7 @@ def now(df, place_id="health_region_id", is_acum=False):
 
     # Estimate cases on delayed date
     df_estimation = df[[place_id, "date_infected", "deaths_mavg", "expected_mortality"]]
-    df_estimation.loc["estimated_cases"] = df_estimation.apply(
+    df_estimation["estimated_cases"] = df_estimation.apply(
         lambda row: bin_neg_simulation(row["deaths_mavg"], row["expected_mortality"]),
         axis=1,
     )

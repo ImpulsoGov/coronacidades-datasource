@@ -40,8 +40,8 @@ def now(config, country="br"):
     time_cols = [c for c in df.columns if "last_updated" in c]
     df[time_cols] = df[time_cols].apply(pd.to_datetime)
 
-    df[["number_beds", "number_ventilators"]] = df[
-        ["number_beds", "number_ventilators"]
+    df[["number_beds", "number_ventilators", "number_icu_beds"]] = df[
+        ["number_beds", "number_ventilators", "number_icu_beds"]
     ].fillna(0)
 
     # Add DataSUS author

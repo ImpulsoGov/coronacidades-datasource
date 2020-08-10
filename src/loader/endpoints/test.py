@@ -5,7 +5,9 @@ import time
 import os
 import subprocess
 from endpoints.helpers import allow_local
+from endpoints import get_cases
 import json
+import pickle
 
 
 @allow_local
@@ -15,8 +17,6 @@ def now(config=None):
     rscript = "Rscript /app/src/endpoints/scripts/test.R"
 
     # TODO: fix config type
-    config = json.dumps(config).encode("utf8")
-
     p = subprocess.Popen(
         rscript,
         shell=True,
@@ -26,7 +26,7 @@ def now(config=None):
         # encoding="utf-16",
     )
 
-    df, err = p.communicate(input=(config))
+    df, err = p.communicate(input=(pickle.dumps(get_cases.now(config))))
 
     df = [x.split(",") for x in df.decode("utf-8").split('"')[1].split("\\n")]
     rc = p.returncode

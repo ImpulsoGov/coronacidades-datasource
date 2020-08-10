@@ -7,17 +7,19 @@ library(EpiEstim);
 library(RCurl);
 library(vroom);
 library(TTR);
+library(reticulate);
 
 # TODO: fix config
-args = commandArgs(trailingOnly=TRUE)
 # params <- list(args[0], args[1], args[2])
 # print(params)
 
 
-now <- function(){
-   
-   df_cities_cases = vroom("http://datasource.coronacidades.org/br/cities/cases/full", delim=',')
-   df_farol = vroom("http://datasource.coronacidades.org/br/states/farolcovid/main", delim=',')
+now <- function(cases_pickle){
+    
+    pd <- import("pandas")
+    df_cities_cases <- pd$read_pickle(cases_pickle)
+    # df_cities_cases = vroom("http://datasource.coronacidades.org/br/cities/cases/full", delim=',')
+    df_farol = vroom("http://datasource.coronacidades.org/br/states/farolcovid/main", delim=',')
 
     # Agregação dos casos e mortes
     df_state_cases = df_cities_cases %>% select("state_num_id","city_id","last_updated","active_cases", "confirmed_cases") %>%
@@ -78,8 +80,10 @@ now <- function(){
     return(format_csv(rt_cori_serie))
 }
 
-# Run script
-now()
+
+# Calling script
+args = commandArgs(trailingOnly=TRUE)
+now(args[0])
 
 
 # => STDOUT:

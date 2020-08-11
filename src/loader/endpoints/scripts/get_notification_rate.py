@@ -30,7 +30,7 @@ simulation_params = {
 
 agg_params = {
     "mavg_window": 15,  # sizeOfSlidingWindow
-    "delay_days": 19,  # daysBefore
+    "delay_days": 14,  # daysBefore
 }
 
 
@@ -158,4 +158,4 @@ def now(df, place_id="health_region_id", is_acum=False):
 
     # df["notification_rate"] = df["confirmed_cases"] / df["estimated_cases"]
     # df["notification_rate"] = df["notification_rate"].clip(0, 1)
-    return df
+    return df.drop(columns=["new_deaths", "daily_cases"])

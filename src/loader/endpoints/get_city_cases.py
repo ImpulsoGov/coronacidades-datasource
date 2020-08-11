@@ -30,33 +30,24 @@ def _get_infectious_period_cases(df, window_period, cases_params):
 
     return df
 
-def _get_new_cases_1M_mavg(df, cases_params):
-    # Média móvel de casos nos últimos 7 dias
-    new_cases_1M_mavg = (
-        df.sort_values(["city_id","last_updated"])
-        .groupby("city_id")
-        .rolling(7,window_period=7, on="last_updated")["daily_cases"]
-        .mean()
-        .div(1000000)
-        .reset_index()
+def _get_new_rolling_1mi_avg(df,col,colname):
+    new_rolling_1mi_avg = (
+        df
+        .assign(new_rolling_1mi = lambda df: df[col] / (df["estimated_population_2019"]/1000000))
+        .assign(new_rolling_1mi_mavg = lambda df: df.sort_values(["city_id","last_updated"])
+                .groupby("city_id")
+                .rolling(7,window_period=7, on="last_updated")["new_rolling_1mi"]
+                .sum()
+                .round(1)
+                .reset_index(drop=True)
+        )
     )
-    new_cases_1M_mavg = new_cases_1M_mavg["daily_cases"]
-    df["new_cases_by_1M_mavg"] = new_cases_1M_mavg
+       
+    new_rolling_1mi_avg[["new_rolling_1mi_mavg"]] = new_rolling_1mi_avg[["new_rolling_1mi_mavg"]].fillna(0)
     
-    return df
-
-def _get_new_deaths_1M_mavg(df, cases_params):
-    # Média móvel de mortes nos últimos 7 dias
-    new_deaths_1M_mavg = (
-        df.sort_values(["city_id","last_updated"])
-        .groupby("city_id")
-        .rolling(7,window_period=7, on="last_updated")["new_deaths"]
-        .mean()
-        .div(1000000)
-        .reset_index()
-    )
-    new_deaths_1M_mavg = new_deaths_1M_mavg["new_deaths"]
-    df["new_deaths_by_1M_mavg"] = new_deaths_1M_mavg
+    df = df.merge(
+        new_rolling_1mi_avg[["new_rolling_1mi_mavg","city_id", "last_updated"]],on=["city_id", "last_updated"]
+    ).rename(columns={"new_rolling_1mi_mavg": colname})
     
     return df
 
@@ -149,16 +140,10 @@ def now(config, country="br"):
             .pipe(
                 _get_infectious_period_cases, infectious_period, config["br"]["cases"]
             )
-            .pipe(_get_new_cases_1M_mavg, config["br"]["cases"])
-            .pipe(_get_new_deaths_1M_mavg, config["br"]["cases"])
+            .pipe(_get_new_rolling_1mi_avg(df, "daily_cases","new_cases_1mi_mavg"))
+            .pipe(_get_new_rolling_1mi_avg(df, "new_deaths","new_deaths_1mi_mavg"))
             .rename(columns=config["br"]["cases"]["rename"])
         )
-
-        print(list(df.columns))
-        print(df["new_cases_by_1M_mavg"])
-        print(df["new_deaths_by_1M_mavg"])
-        #df = df.pipe() #_get_infectious_period_cases
-
 
         # Get notification rates & active cases on date
         df = df.merge(

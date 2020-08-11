@@ -5,7 +5,7 @@ import yaml
 
 from endpoints import (
     get_simulacovid_main,
-    get_cases,
+    get_city_cases,
     get_states_rt,
     get_inloco_states,
 )
@@ -37,7 +37,7 @@ def now(config):
     # Calcula indicadores, classificações e crescimento
     df = get_indicators_subnotification(
         df,
-        data=get_cases.now(config),
+        data=get_city_cases.now(config),
         place_id="state_num_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="subnotification_classification",

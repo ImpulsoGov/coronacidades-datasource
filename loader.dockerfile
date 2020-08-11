@@ -17,6 +17,17 @@ ADD ./requirements.txt /app/
 
 RUN pip install -r /app/requirements.txt
 
+# Remove R
+RUN apt autoremove
+RUN apt update
+
+RUN apt install -y ca-certificates
+RUN echo 'deb [trusted=yes] http://cloud.r-project.org/bin/linux/debian buster-cran40/' >> /etc/apt/sources.list
+RUN apt -y update
+RUN apt install -y -t buster-cran40 r-base
+
+RUN R -e 'install.packages(c("RCurl", "EpiEstim", "tidyverse", "vroom", "TTR"), repo="http://cran.rstudio.com/")'
+
 COPY ./src/loader /app/src/
 
 RUN chmod +x /app/src/entrypoint.sh

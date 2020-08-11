@@ -7,7 +7,7 @@ import datetime as dt
 from scipy import stats as sps
 from joblib import Parallel, delayed
 from utils import get_cases_series
-from endpoints import get_cases
+from endpoints import get_city_cases
 from loguru import logger
 
 from endpoints.helpers import allow_local
@@ -217,7 +217,7 @@ def sequential_run(df, config, place_type="city_id"):
 def now(config):
 
     # Import cases
-    df = get_cases.now(config, "br")
+    df = get_city_cases.now(config, "br")
     df["last_updated"] = pd.to_datetime(df["last_updated"])
 
     # Filter cities with deaths i.e. has subnotification!

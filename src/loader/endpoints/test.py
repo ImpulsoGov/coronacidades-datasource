@@ -1,23 +1,37 @@
-from utils import get_cases_series
-from endpoints import get_city_cases, get_cities_rt
+import subprocess
+import os
 import pandas as pd
-import numpy as np
-
+import time
+import os
+import subprocess
 from endpoints.helpers import allow_local
+import json
 
 
 @allow_local
-def now(config):
+def now(config=None):
 
-    # Import cases
-    df = get_city_cases.now(config, "br")
-    df["last_updated"] = pd.to_datetime(df["last_updated"])
+    # Write temp file
+    rscript = "Rscript /app/src/endpoints/scripts/test.R"
 
-    # Filter more than 14 days
-    df = get_cases_series(df, "state_num_id", config["br"]["rt_parameters"]["min_days"])
+    # TODO: fix config type
+    config = json.dumps(config).encode("utf8")
 
-    # Run in parallel
-    return get_cities_rt.sequential_run(df, config, place_type="state_num_id")
+    p = subprocess.Popen(
+        rscript,
+        shell=True,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        # encoding="utf-16",
+    )
+
+    df, err = p.communicate(input=(config))
+
+    df = [x.split(",") for x in df.decode("utf-8").split('"')[1].split("\\n")]
+    rc = p.returncode
+
+    return pd.DataFrame(df[1:][:-1], columns=df[0])
 
 
 TESTS = {

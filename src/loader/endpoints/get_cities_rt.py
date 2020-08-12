@@ -1,252 +1,104 @@
-# code originally from (only minor updates):
-# https://github.com/loft-br/realtime_r0_brazil/blob/master/realtime_r0_bettencourt_ribeiro.ipynb
-
-import numpy as np
 import pandas as pd
-import datetime as dt
-from scipy import stats as sps
-from joblib import Parallel, delayed
-from utils import get_cases_series
-from endpoints import get_cases
-from loguru import logger
-
+import numpy as np
 from endpoints.helpers import allow_local
+from endpoints import get_cases
+import rpy2.robjects as ro
+from rpy2.robjects.conversion import localconverter
+
+from rpy2.robjects import pandas2ri
+
+pandas2ri.activate()
+
+from rpy2.robjects.packages import importr
+
+eps = importr("EpiEstim")
+
+# TODO: passar para config
+dic = {
+    "replace": {
+        "Mean(R)": "Rt_most_likely",
+        "Quantile.0.05(R)": "Rt_low_95",
+        "Quantile.0.95(R)": "Rt_high_95",
+    },
+    "episestim_params": {"mean_si": 4.7, "std_si": 2.9, "mean_prior": 3},
+}
 
 
-def smooth_new_cases(new_cases, params):
+def run_epiestim(group):
 
-    """
-    Function to apply gaussian smoothing to cases
+    # Remove valores nulos
+    group = group.dropna(subset=["I"])
+    # Filtra > 14 dias para cálculo
+    if len(group) < 14:
+        return
+    # Filtra séries não negativas
+    if any(group["I"] < 0):
+        return
 
-    Arguments
-    ----------
-    new_cases: time series of new cases
+    # Converte para série em R
+    with localconverter(ro.default_converter + pandas2ri.converter):
+        infected_series = ro.conversion.py2rpy(group[["I"]])
 
-    Returns 
-    ----------
-    smoothed_cases: cases after gaussian smoothing
+    # Calcula Rt
+    rt = dict(
+        eps.estimate_R(
+            infected_series,
+            method="parametric_si",
+            config=eps.make_config(
+                mean_si=dic["episestim_params"]["mean_si"],
+                std_si=dic["episestim_params"]["std_si"],
+                mean_prior=dic["episestim_params"]["mean_prior"],
+            ),
+        ).items()
+    )["R"]
 
-    See also
-    ----------
-    This code is heavily based on Realtime R0
-    by Kevin Systrom
-    https://github.com/k-sys/covid-19/blob/master/Realtime%20R0.ipynb
-    """
+    # Recupera coluna de datas - começa depois de 7 dias
+    rt = (
+        rt.rename(columns=dic["replace"])[dic["replace"].values()]
+        .reset_index(drop=True)
+        .join(group.iloc[7:]["dates"].reset_index(drop=True))
+    )
+    return rt
 
-    smoothed_cases = (
-        new_cases.rolling(
-            params["window_size"], win_type="gaussian", min_periods=1, center=True
-        )
-        .mean(std=params["gaussian_kernel_std"])
-        .round()
+
+def get_rt(df, place_id):
+
+    # Agrega e filtra a série de casos: > 100 casos confirmados
+    df_cases = (
+        df[[place_id, "last_updated", "active_cases", "confirmed_cases"]]
+        .dropna(subset=["active_cases"])
+        .groupby([place_id, "last_updated"])
+        .agg({"active_cases": sum, "confirmed_cases": sum})
+        .reset_index()
+        .rename(columns={"last_updated": "dates"})
+        .assign(dates=lambda df: pd.to_datetime(df["dates"]))
+        .query("confirmed_cases >= 100")
     )
 
-    zeros = smoothed_cases.index[smoothed_cases.eq(0)]
-
-    if len(zeros) == 0:
-        idx_start = 0
-    else:
-        last_zero = zeros.max()
-        idx_start = smoothed_cases.index.get_loc(last_zero) + 1
-
-    smoothed_cases = smoothed_cases.iloc[idx_start:]
-
-    return smoothed_cases
-
-
-def calculate_posteriors(sr, params, serial_interval):
-
-    """
-    Function to calculate posteriors of Rt over time
-
-    Arguments
-    ----------
-    sr: smoothed time series of new cases
-
-    sigma: gaussian noise applied to prior so we can "forget" past observations
-           works like exponential weighting
-
-    Returns 
-    ----------
-    posteriors: posterior distributions
-    log_likelihood: log likelihood given data
-
-    See also
-    ----------
-    This code is heavily based on Realtime R0
-    by Kevin Systrom
-    https://github.com/k-sys/covid-19/blob/master/Realtime%20R0.ipynb
-    """
-
-    params["r_t_range"] = np.linspace(
-        0, int(params["r_t_range_max"]), int(params["r_t_range_max"]) * 100 + 1
+    # Calcula Rt com mavg de casos ativos
+    rt = (
+        df_cases.groupby(place_id)
+        .rolling(7, min_periods=7, on="dates")["active_cases"]
+        .mean()
+        .reset_index()
+        .rename(columns={"active_cases": "I"})
+        .groupby(place_id)
+        .apply(run_epiestim)
+        .reset_index(0)
     )
 
-    # (1) Calculate Lambda
-    lam = sr[:-1].values * np.exp((params["r_t_range"][:, None] - 1) / serial_interval)
-
-    # (2) Calculate each day's likelihood
-    likelihoods = pd.DataFrame(
-        data=sps.poisson.pmf(sr[1:].values, lam),
-        index=params["r_t_range"],
-        columns=sr.index[1:],
-    )
-
-    # (3) Create the Gaussian Matrix
-    process_matrix = sps.norm(
-        loc=params["r_t_range"], scale=params["optimal_sigma"]
-    ).pdf(params["r_t_range"][:, None])
-
-    # (3a) Normalize all rows to sum to 1
-    process_matrix /= process_matrix.sum(axis=0)
-
-    # (4) Get prior
-    prior0 = sps.gamma(a=params["gamma_alpha"]).pdf(params["r_t_range"])
-    prior0 /= prior0.sum()
-
-    # Create a DataFrame that will hold our posteriors for each day
-    posteriors = pd.DataFrame(
-        index=params["r_t_range"], columns=sr.index, data={sr.index[0]: prior0}
-    )
-
-    # (5) Iteratively apply Bayes' rule
-    for previous_day, current_day in zip(sr.index[:-1], sr.index[1:]):
-
-        # (5a) Calculate the new prior
-        current_prior = process_matrix @ posteriors[previous_day]
-
-        # (5b) Calculate the numerator of Bayes' Rule: P(k|R_t)P(R_t)
-        numerator = likelihoods[current_day] * current_prior
-
-        # (5c) Calcluate the denominator of Bayes' Rule P(k)
-        denominator = np.sum(numerator)
-
-        # Execute full Bayes' Rule
-        posteriors[current_day] = numerator / denominator
-
-    return posteriors
-
-
-def highest_density_interval(pmf, p=0.95):
-    """
-    Function to calculate highest density interval 
-    from posteriors of Rt over time
-
-    Arguments
-    ----------
-    pmf: posterior distribution of Rt
-
-    p: mass of high density interval
-
-    Returns 
-    ----------
-    interval: expected value and density interval
-
-    See also
-    ----------
-    This code is heavily based on Realtime R0
-    by Kevin Systrom
-    https://github.com/k-sys/covid-19/blob/master/Realtime%20R0.ipynb
-    """
-
-    # If we pass a DataFrame, just call this recursively on the columns
-    if isinstance(pmf, pd.DataFrame):
-        return pd.DataFrame(
-            [highest_density_interval(pmf[col], p=p) for col in pmf], index=pmf.columns
-        )
-
-    cumsum = np.cumsum(pmf.values)
-
-    # N x N matrix of total probability mass for each low, high
-    total_p = cumsum - cumsum[:, None]
-
-    # Return all indices with total_p > p
-    lows, highs = (total_p > p).nonzero()
-
-    # Find the smallest range (highest density)
-    best = (highs - lows).argmin()
-
-    low = pmf.index[lows[best]]
-    high = pmf.index[highs[best]]
-    most_likely = pmf.idxmax(axis=0)
-
-    interval = pd.Series(
-        [most_likely, low, high],
-        index=["Rt_most_likely", f"Rt_low_{p*100:.0f}", f"Rt_high_{p*100:.0f}"],
-    )
-    return interval
-
-
-def run_full_model(cases, config):
-
-    # smoothing series
-    smoothed = smooth_new_cases(cases, config["br"]["rt_parameters"],)
-
-    # calculating posteriors
-    posteriors = calculate_posteriors(
-        smoothed,
-        config["br"]["rt_parameters"],
-        config["br"]["seir_parameters"]["mild_duration"] * 0.5
-        + config["br"]["seir_parameters"]["incubation_period"],
-    )
-
-    # calculating HDI
-    result = highest_density_interval(posteriors, p=0.95)
-
-    return result
-
-
-def sequential_run(df, config, place_type="city_id"):
-
-    results = []
-    errors = 0
-    for gr in df.groupby(level=place_type):
-
-        try:
-            results.append(run_full_model(gr[1], config))
-        except:
-            errors += 1
-            pass
-
-    logger.info("PLACES NOT EVALUATED: {}", errors)
-
-    return pd.concat(results).reset_index()
+    return rt.rename(columns={"dates": "last_updated"})
 
 
 @allow_local
-def now(config):
-
-    # Import cases
-    df = get_cases.now(config, "br")
-    df["last_updated"] = pd.to_datetime(df["last_updated"])
-
-    # Filter cities with deaths i.e. has subnotification!
-    df = df[df["city_notification_place_type"] == "city"]
-
-    # Filter more than 14 days
-    df = get_cases_series(df, "city_id", config["br"]["rt_parameters"]["min_days"])
-
-    # subs cidades com 0 casos -> 0.1 caso no periodo
-    df = df.replace(0, 0.1)
-
-    # Run in parallel
-    return sequential_run(df, config, place_type="city_id")
+def now(config=None):
+    # TODO: mudar para get_[cities/region/states]_cases quando tiver as tabelas
+    return get_rt(get_cases.now(), place_id="city_id")
 
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "dataframe has null data": lambda df: all(df.isnull().any() == False),
-    "rt maximum and minimum values": lambda df: len(
-        df[
-            ~(
-                (df["Rt_low_95"] < df["Rt_most_likely"])
-                & (df["Rt_most_likely"] < df["Rt_high_95"])
-            )
-        ]
-    )
-    == 0,
-    "df upper limit size": lambda df: len(df["city_id"].unique())
-    <= 5570,  # & (len(df["city_id"].unique()) > 3110),
     "rt most likely outside confidence interval": lambda df: len(
         df[
             (df["Rt_most_likely"] >= df["Rt_high_95"])
@@ -254,7 +106,6 @@ TESTS = {
         ]
     )
     == 0,
-    # TODO: study ways to handle days with zero cases!
     # "city has rt with less than 14 days": lambda df: all(
     #     df.groupby("city_id")["last_updated"].count() > 14
     # )

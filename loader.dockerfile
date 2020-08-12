@@ -15,8 +15,6 @@ ENV OUTPUT_DIR="/output" \
 
 ADD ./requirements.txt /app/
 
-RUN pip install -r /app/requirements.txt
-
 # Remove R
 RUN apt autoremove
 RUN apt update
@@ -26,7 +24,12 @@ RUN echo 'deb [trusted=yes] http://cloud.r-project.org/bin/linux/debian buster-c
 RUN apt -y update
 RUN apt install -y -t buster-cran40 r-base
 
-RUN R -e 'install.packages(c("RCurl", "EpiEstim", "tidyverse", "vroom", "TTR", "reticulate"), repo="http://cran.rstudio.com/")'
+# RUN R -e 'install.packages(c("RCurl", "EpiEstim", "tidyverse", "vroom", "TTR"), repo="http://cran.rstudio.com/")'
+RUN R -e 'install.packages(c("EpiEstim"), repo="http://cran.rstudio.com/")'
+
+
+RUN pip install -r /app/requirements.txt
+
 
 COPY ./src/loader /app/src/
 

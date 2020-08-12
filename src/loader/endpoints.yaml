@@ -64,6 +64,6 @@
   python_file: get_states_farolcovid_main
   skip: True
 
-- endpoint: TEST
-  python_file: test
-  skip: False
+#- endpoint: TEST
+#  python_file: test
+#  skip: False

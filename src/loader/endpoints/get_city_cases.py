@@ -188,11 +188,7 @@ def now(config, country="br"):
         ).assign(
             active_cases=lambda x: np.where(
                 x["notification_rate"].isnull(),
-<<<<<<< HEAD:src/loader/endpoints/get_cases.py
-                np.nan,  # round(x["infectious_period_cases"], 0),
-=======
-                np.nan #round(x["infectious_period_cases"], 0),
->>>>>>> update-city-cases:src/loader/endpoints/get_city_cases.py
+                np.nan, #round(x["infectious_period_cases"], 0),
                 round(x["infectious_period_cases"] / x["notification_rate"], 0),
             ),
             city_id=lambda x: x["city_id"].astype(int),

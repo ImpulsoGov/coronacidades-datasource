@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 import yaml
 
-from endpoints import get_simulacovid_main, get_cases, get_states_rt, get_health
+from endpoints import get_cases, get_states_rt, get_health
 from endpoints.get_cities_farolcovid_main import (
     get_situation_indicators,
     get_control_indicators,

@@ -30,7 +30,7 @@ def _get_infectious_period_cases(df, window_period, cases_params):
 
     return df
 
-def _get_new_rolling_1mi_avg(df,col,colname):
+def _get_new_rolling_1mi_mavg(df,col,colname):
     new_rolling_1mi_avg = (
         df
         .assign(new_rolling_1mi = lambda df: df[col] / (df["estimated_population_2019"]/1000000))
@@ -42,15 +42,48 @@ def _get_new_rolling_1mi_avg(df,col,colname):
                 .reset_index(drop=True)
         )
     )
-       
-    new_rolling_1mi_avg[["new_rolling_1mi_mavg"]] = new_rolling_1mi_avg[["new_rolling_1mi_mavg"]].fillna(0)
-    
+           
     df = df.merge(
         new_rolling_1mi_avg[["new_rolling_1mi_mavg","city_id", "last_updated"]],on=["city_id", "last_updated"]
     ).rename(columns={"new_rolling_1mi_mavg": colname})
     
     return df
 
+def get_growth(group):
+    if group["diff_5_days"].values == 5: 
+        return "crescendo"
+    elif group["diff_14_days"].values == -14: 
+        return "decrescendo"
+    else: 
+        return "estabilizando"
+
+def _get_new_rolling_1mi_mavg_growth(df,col,colname):    
+    new_rolling_mavg_growth = (
+        df.sort_values(["city_id","last_updated"])
+        .assign(diff = lambda df: np.sign(df.groupby("city_id")[col].diff()))
+        .assign(diff_5_days = lambda df: df.groupby("city_id")
+                .rolling(5,window_period=5, on="last_updated")["diff"]
+                .sum()
+                .reset_index(drop=True)
+                )
+        .assign(diff_14_days = lambda df: df.groupby("city_id")
+                .rolling(14,window_period=14, on="last_updated")["diff"]
+                .sum()
+                .reset_index(drop=True)
+                )
+        .assign(growth = lambda df: df.sort_values(["city_id","last_updated"])
+                .groupby(["city_id","last_updated"])
+                .apply(get_growth)
+                .reset_index(drop=True)
+               )
+    )
+
+    
+    df = df.merge(
+        new_rolling_mavg_growth[["growth","city_id", "last_updated"]],on=["city_id", "last_updated"]
+    ).rename(columns={"growth": colname})
+    
+    return df
 
 def _correct_negatives(group):
 
@@ -129,10 +162,6 @@ def now(config, country="br"):
             )
         )
 
-        # colunas novos casos/mortes por 100k  e de tendências
-        new_columns = ["new_cases_by_1M_mavg","new_cases_1M_mavg_growth","new_deaths_by_1M_mavg","new_deaths_by_1M_mavg_growth"]
-        df = pd.concat([df,pd.DataFrame(columns = new_columns)])
-
         # Correct negative values, get infectious period cases and get median of new cases
         df = (
             df.groupby("city_id")
@@ -140,10 +169,16 @@ def now(config, country="br"):
             .pipe(
                 _get_infectious_period_cases, infectious_period, config["br"]["cases"]
             )
-            .pipe(_get_new_rolling_1mi_avg(df, "daily_cases","new_cases_1mi_mavg"))
-            .pipe(_get_new_rolling_1mi_avg(df, "new_deaths","new_deaths_1mi_mavg"))
             .rename(columns=config["br"]["cases"]["rename"])
         )
+
+        df = _get_new_rolling_1mi_mavg(df, "daily_cases","new_cases_1mi_mavg")
+        df = _get_new_rolling_1mi_mavg(df, "new_deaths","new_deaths_1mi_mavg")
+        df = _get_new_rolling_1mi_mavg_growth(df,"new_cases_1mi_mavg", "new_cases_1mi_mavg_growth")
+        df = _get_new_rolling_1mi_mavg_growth(df, "new_deaths_1mi_mavg", "new_deaths_1mi_mavg_growth")
+        print("antes")
+        print(df.columns)
+        
 
         # Get notification rates & active cases on date
         df = df.merge(
@@ -152,13 +187,16 @@ def now(config, country="br"):
         ).assign(
             active_cases=lambda x: np.where(
                 x["notification_rate"].isnull(),
-                round(x["infectious_period_cases"], 0),
+                np.nan #round(x["infectious_period_cases"], 0),
                 round(x["infectious_period_cases"] / x["notification_rate"], 0),
             ),
             city_id=lambda x: x["city_id"].astype(int),
         )
 
     return df
+
+    print("depois")
+    print(df.columns)
 
 
 TESTS = {

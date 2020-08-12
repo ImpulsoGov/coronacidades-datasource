@@ -5,7 +5,7 @@ import yaml
 
 from endpoints import (
     get_simulacovid_main,
-    get__city_cases,
+    get_city_cases,
     get_cities_rt,
     get_inloco_cities,
     get_health,

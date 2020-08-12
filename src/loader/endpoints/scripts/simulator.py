@@ -48,9 +48,9 @@ def run_simulation(user_input, config):
         dfs[bound] = res
 
     dday_beds = get_dday(dfs, "I2", user_input["n_beds"])
-    dday_ventilators = get_dday(dfs, "I3", user_input["n_ventilators"])
+    dday_icu_beds = get_dday(dfs, "I3", user_input["n_icu_beds"])
 
-    return dday_beds, dday_ventilators
+    return dday_beds, dday_icu_beds
 
 
 if __name__ == "__main__":

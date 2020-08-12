@@ -67,6 +67,11 @@ def get_population(place_id):
                 "endpoints/scripts/br_health_region_tabnet_age_dist_2019_treated.csv"
             ).resolve()
         )
+        .assign(
+            state_num_id=lambda df: df["health_region_id"].apply(
+                lambda x: int(str(x)[:2])
+            )
+        )
         .groupby(place_id)
         .sum()
     )

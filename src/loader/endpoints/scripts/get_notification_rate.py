@@ -94,7 +94,6 @@ def now(df, place_id="health_region_id", is_acum=False):
         Indica se os casos e mortes considerados são acumulados (False) ou novos diários (True). Default = False
     
     """
-    # TODO: add state_num_id col!!
     # Get region mortality prob weighted by age
     weighted_ifr_by_age = (
         get_population(place_id)

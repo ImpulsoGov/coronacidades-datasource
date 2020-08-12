@@ -127,7 +127,7 @@ def now(config, country="br"):
         ).assign(
             active_cases=lambda x: np.where(
                 x["notification_rate"].isnull(),
-                round(x["infectious_period_cases"], 0),
+                np.nan,  # round(x["infectious_period_cases"], 0),
                 round(x["infectious_period_cases"] / x["notification_rate"], 0),
             ),
             city_id=lambda x: x["city_id"].astype(int),
@@ -139,13 +139,11 @@ def now(config, country="br"):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    
     # TODO: corrigir teste! => ultima taxa calculada 14 dias antes
     # "notification_rate == NaN": lambda df: len(
     #     df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values
     # )
     # == 0,
-
     # "max(confirmed_cases) != max(date)": lambda df: all(
     # (df.groupby("city_id").max()["confirmed_cases"] \
     #  == df.query("is_last==True").set_index("city_id").sort_index()["confirmed_cases"]).values),

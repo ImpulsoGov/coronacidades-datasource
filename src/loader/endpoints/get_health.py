@@ -48,7 +48,6 @@ def now(config, country="br"):
     df["author_number_beds"] = config[country]["cnes"]["source"]
     df["author_number_ventilators"] = config[country]["cnes"]["source"]
     df["author_number_icu_beds"] = config[country]["cnes"]["source"]
-
     return df
 
 

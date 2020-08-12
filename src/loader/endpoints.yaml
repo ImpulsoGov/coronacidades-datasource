@@ -19,7 +19,7 @@
   skip: True
 
 - endpoint: br/cities/cases/full
-  python_file: get_cases
+  python_file: get_city_cases
   skip: False
 
 - endpoint: br/cities/simulacovid/main

@@ -75,6 +75,7 @@ def main(endpoint):
         runner = importlib.import_module("endpoints.{}".format(endpoint["python_file"]))
 
         data = runner.now(get_config(), force=True)
+        print(list(data.columns))
         data = data.reindex(sorted(data.columns), axis=1)
 
         if _test_data(data, runner.TESTS, endpoint):

@@ -30,7 +30,7 @@ simulation_params = {
 
 agg_params = {
     "mavg_window": 15,  # sizeOfSlidingWindow
-    "delay_days": 19,  # daysBefore
+    "delay_days": 14,  # daysBefore
 }
 
 
@@ -66,6 +66,11 @@ def get_population(place_id):
             Path(
                 "endpoints/scripts/br_health_region_tabnet_age_dist_2019_treated.csv"
             ).resolve()
+        )
+        .assign(
+            state_num_id=lambda df: df["health_region_id"].apply(
+                lambda x: int(str(x)[:2])
+            )
         )
         .groupby(place_id)
         .sum()
@@ -158,4 +163,4 @@ def now(df, place_id="health_region_id", is_acum=False):
 
     # df["notification_rate"] = df["confirmed_cases"] / df["estimated_cases"]
     # df["notification_rate"] = df["notification_rate"].clip(0, 1)
-    return df
+    return df.drop(columns=["new_deaths", "daily_cases"])

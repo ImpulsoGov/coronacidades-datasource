@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from endpoints.helpers import allow_local
-from endpoints import get_cases
+from endpoints import get_city_cases
 import rpy2.robjects as ro
 from rpy2.robjects.conversion import localconverter
 
@@ -93,7 +93,7 @@ def get_rt(df, place_id):
 @allow_local
 def now(config=None):
     # TODO: mudar para get_[cities/region/states]_cases quando tiver as tabelas
-    return get_rt(get_cases.now(), place_id="city_id")
+    return get_rt(get_city_cases.now(), place_id="city_id")
 
 
 TESTS = {

@@ -1,15 +1,13 @@
 import pandas as pd
 import numpy as np
 from endpoints.helpers import allow_local
-from endpoints import get_cases, get_cities_rt
+from endpoints import get_city_cases, get_cities_rt
 
 
 @allow_local
 def now(config=None):
     # TODO: mudar para get_[cities/region/states]_cases quando tiver as tabelas
-    return get_cities_rt.get_rt(
-        get_cases.now(), place_id="health_region_id"
-    )
+    return get_cities_rt.get_rt(get_city_cases.now(), place_id="health_region_id")
 
 
 # TODO: review tests

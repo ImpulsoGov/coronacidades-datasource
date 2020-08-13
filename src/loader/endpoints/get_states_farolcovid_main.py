@@ -45,7 +45,7 @@ def now(config):
     # TODO: get_cases => get_states_cases / mudar indicadores de situacao + add trust (notification_rate)!
     df = get_situation_indicators(
         df,
-        data=get_cases.now(config),
+        data=get_city_cases.now(config),
         place_id="state_num_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="situation_classification",

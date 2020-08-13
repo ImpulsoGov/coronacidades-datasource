@@ -30,60 +30,6 @@ def get_infectious_period_cases(df, window_period, cases_params, place_id):
 
     return df
 
-def _get_new_rolling_1mi_mavg(df,col,colname):
-    new_rolling_1mi_avg = (
-        df
-        .assign(new_rolling_1mi = lambda df: df[col] / (df["estimated_population_2019"]/1000000))
-        .assign(new_rolling_1mi_mavg = lambda df: df.sort_values(["city_id","last_updated"])
-                .groupby("city_id")
-                .rolling(7,window_period=7, on="last_updated")["new_rolling_1mi"]
-                .sum()
-                .round(1)
-                .reset_index(drop=True)
-        )
-    )
-           
-    df = df.merge(
-        new_rolling_1mi_avg[["new_rolling_1mi_mavg","city_id", "last_updated"]],on=["city_id", "last_updated"]
-    ).rename(columns={"new_rolling_1mi_mavg": colname})
-    
-    return df
-
-def get_growth(group):
-    if group["diff_5_days"].values == 5: 
-        return "crescendo"
-    elif group["diff_14_days"].values == -14: 
-        return "decrescendo"
-    else: 
-        return "estabilizando"
-
-def _get_new_rolling_1mi_mavg_growth(df,col,colname):    
-    new_rolling_mavg_growth = (
-        df.sort_values(["city_id","last_updated"])
-        .assign(diff = lambda df: np.sign(df.groupby("city_id")[col].diff()))
-        .assign(diff_5_days = lambda df: df.groupby("city_id")
-                .rolling(5,window_period=5, on="last_updated")["diff"]
-                .sum()
-                .reset_index(drop=True)
-                )
-        .assign(diff_14_days = lambda df: df.groupby("city_id")
-                .rolling(14,window_period=14, on="last_updated")["diff"]
-                .sum()
-                .reset_index(drop=True)
-                )
-        .assign(growth = lambda df: df.sort_values(["city_id","last_updated"])
-                .groupby(["city_id","last_updated"])
-                .apply(get_growth)
-                .reset_index(drop=True)
-               )
-    )
-
-    
-    df = df.merge(
-        new_rolling_mavg_growth[["growth","city_id", "last_updated"]],on=["city_id", "last_updated"]
-    ).rename(columns={"growth": colname})
-    
-    return df
 
 def _get_growth(group):
     if group["diff_5_days"].values == 5:
@@ -243,16 +189,13 @@ def now(config, country="br"):
         ).assign(
             active_cases=lambda x: np.where(
                 x["notification_rate"].isnull(),
-                np.nan, #round(x["infectious_period_cases"], 0),
+                np.nan,  # round(x["infectious_period_cases"], 0),
                 round(x["infectious_period_cases"] / x["notification_rate"], 0),
             ),
             city_id=lambda x: x["city_id"].astype(int),
         )
 
     return df
-
-    print("depois")
-    print(df.columns)
 
 
 TESTS = {

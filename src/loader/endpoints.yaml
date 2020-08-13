@@ -19,9 +19,8 @@
   skip: False
 
 - endpoint: br/cities/cases/full
-  python_file: get_cases
+  python_file: get_city_cases
   skip: False
-
 
 - endpoint: world/owid/heatmap
   python_file: get_owid_heatmap
@@ -57,6 +56,6 @@
   python_file: get_health_region_farolcovid_main
   skip: False
 
-  - endpoint: br/cities/farolcovid/main
+- endpoint: br/cities/farolcovid/main
   python_file: get_cities_farolcovid_main
   skip: False

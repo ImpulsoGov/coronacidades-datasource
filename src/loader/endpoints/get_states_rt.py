@@ -1,3 +1,5 @@
+from utils import get_cases_series
+from endpoints import get_city_cases, get_cities_rt
 import pandas as pd
 import numpy as np
 from endpoints.helpers import allow_local

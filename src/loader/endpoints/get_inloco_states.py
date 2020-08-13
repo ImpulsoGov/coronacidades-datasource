@@ -4,12 +4,15 @@ from endpoints.helpers import allow_local
 from endpoints import get_places_id
 import os
 import numpy as np
+import time
 
 
 @allow_local
 def now(config):
 
     df = get_googledrive_df(os.getenv("INLOCO_STATES_ID"))
+
+    time.sleep(2)
 
     states_table = (
         get_places_id.now(config)[["state_id", "state_name", "state_num_id"]]

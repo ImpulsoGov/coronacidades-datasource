@@ -16,3 +16,4 @@ psutil
 python-dotenv
 fuzzyset
 rpy2==3.2.2
+tqdm

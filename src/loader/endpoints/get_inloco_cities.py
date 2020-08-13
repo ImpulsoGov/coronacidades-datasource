@@ -7,6 +7,7 @@ from endpoints import get_places_id
 import os
 import fuzzyset
 from logger import logger
+import time
 
 
 @allow_local
@@ -19,6 +20,8 @@ def now(config):
     # Get places ids
     df_places_id = get_places_id.now(config)
     df = get_googledrive_df(os.getenv("INLOCO_CITIES_ID"))
+
+    time.sleep(2)
 
     # Get states closest matches
     states = fuzzyset.FuzzySet()

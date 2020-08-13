@@ -4,7 +4,7 @@ import datetime as dt
 import yaml
 
 from endpoints import (
-    get_cases,
+    get_city_cases,
     get_cities_rt,
     get_health_region_rt,
     get_states_rt,
@@ -36,13 +36,31 @@ def get_situation_indicators(df, data, place_id, rules, classify, growth=None):
     )
 
     df["last_updated_cases"] = data["last_updated"]
-    # TODO: mudar para new_cases_1m_mavg de data!
-    df["new_cases_1m_mavg"] = (
-        data["daily_cases"] / data["estimated_population_2019"]
-    ) * 10 ** 6
+
+    # Get indicators
+    df[
+        [
+            "daily_cases_mavg_1mi",
+            "daily_cases_growth",
+            "new_deaths_mavg_1mi",
+            "new_deaths_growth",
+        ]
+    ] = data[
+        [
+            "daily_cases_mavg_1mi",
+            "daily_cases_growth",
+            "new_deaths_mavg_1mi",
+            "new_deaths_growth",
+        ]
+    ]
 
     df[classify] = _get_levels(df, rules[classify])
-    # TODO: add if growth == 1, +1 level!
+    df[classify] = df.apply(
+        lambda row: row[classify] + 1
+        if row["daily_cases_growth"] == "crescendo"
+        else row[classify],
+        axis=1,
+    )
 
     return df
 
@@ -193,7 +211,7 @@ def now(config):
 
     # Get last cases data
     cases = (
-        get_cases.now(config, "br")
+        get_city_cases.now(config, "br")
         .dropna(subset=["active_cases"])
         .assign(last_updated=lambda df: pd.to_datetime(df["last_updated"]))
     )
@@ -217,7 +235,7 @@ def now(config):
     # TODO: mudar indicadores de situacao + add trust (notification_rate)!
     df = get_situation_indicators(
         df,
-        data=get_cases.now(config),
+        data=get_city_cases.now(config),
         place_id="city_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="situation_classification",
@@ -243,7 +261,7 @@ def now(config):
 
     df = get_trust_indicators(
         df,
-        data=get_cases.now(config),
+        data=get_city_cases.now(config),
         place_id="city_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="trust_classification",

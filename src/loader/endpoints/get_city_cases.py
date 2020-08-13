@@ -14,18 +14,18 @@ from endpoints.scripts import get_notification_rate
 from utils import download_from_drive
 
 
-def _get_infectious_period_cases(df, window_period, cases_params):
+def get_infectious_period_cases(df, window_period, cases_params, place_id):
 
     # Soma casos diários dos últimos dias de progressão da doença
     daily_active_cases = (
         df.set_index("last_updated")
-        .groupby("city_id")["daily_cases"]
+        .groupby(place_id)["daily_cases"]
         .rolling(min_periods=1, window=window_period)
         .sum()
         .reset_index()
     )
     df = df.merge(
-        daily_active_cases, on=["city_id", "last_updated"], suffixes=("", "_sum")
+        daily_active_cases, on=[place_id, "last_updated"], suffixes=("", "_sum")
     ).rename(columns=cases_params["rename"])
 
     return df
@@ -85,7 +85,63 @@ def _get_new_rolling_1mi_mavg_growth(df,col,colname):
     
     return df
 
-def _correct_negatives(group):
+def _get_growth(group):
+    if group["diff_5_days"].values == 5:
+        return "crescendo"
+    elif group["diff_14_days"].values == -14:
+        return "decrescendo"
+    else:
+        return "estabilizando"
+
+
+def get_mavg_indicators(df, col, place_id):
+
+    # Cria coluna mavg
+    df_mavg = (
+        df.sort_values([place_id, "last_updated"])
+        .assign(
+            rolling_1mi=lambda df: df[col] / (df["estimated_population_2019"] / 10 ** 6)
+        )
+        .assign(
+            mavg_1mi=lambda df: df.groupby(place_id)
+            .rolling(7, window_period=7, on="last_updated")["rolling_1mi"]
+            .sum()
+            .round(1)
+            .reset_index(drop=True)
+        )
+    )
+
+    # Cria colunas auxiliares para tendencia
+    df_mavg = (
+        df_mavg.assign(diff=lambda df: np.sign(df.groupby(place_id)["mavg_1mi"].diff()))
+        .assign(
+            diff_5_days=lambda df: df.groupby(place_id)
+            .rolling(5, window_period=5, on="last_updated")["diff"]
+            .sum()
+            .reset_index(drop=True)
+        )
+        .assign(
+            diff_14_days=lambda df: df.groupby(place_id)
+            .rolling(14, window_period=14, on="last_updated")["diff"]
+            .sum()
+            .reset_index(drop=True)
+        )
+    )
+
+    # Calcula tendência
+    df_mavg = df_mavg.assign(
+        growth=lambda df: df.groupby([place_id, "last_updated"])
+        .apply(_get_growth)
+        .reset_index(drop=True)
+    )
+
+    return df.merge(
+        df_mavg[["mavg_1mi", "growth", place_id, "last_updated"]],
+        on=[place_id, "last_updated"],
+    ).rename(columns={"mavg_1mi": col + "_mavg_1mi", "growth": col + "_growth",})
+
+
+def correct_negatives(group):
 
     # Identify days not filled
     group["is_zero"] = np.where(
@@ -113,7 +169,7 @@ def _correct_negatives(group):
     return group
 
 
-def _download_brasilio_table(url):
+def download_brasilio_table(url):
     response = urlopen(Request(url, headers={"User-Agent": "python-urllib"}))
     return pd.read_csv(io.StringIO(gzip.decompress(response.read()).decode("utf-8")))
 
@@ -130,7 +186,7 @@ def now(config, country="br"):
 
         # Get data & clean table
         df = (
-            _download_brasilio_table(config["br"]["cases"]["url"])
+            download_brasilio_table(config["br"]["cases"]["url"])
             .query("place_type == 'city'")
             .dropna(subset=["city_ibge_code"])
             .fillna(0)
@@ -165,20 +221,19 @@ def now(config, country="br"):
         # Correct negative values, get infectious period cases and get median of new cases
         df = (
             df.groupby("city_id")
-            .apply(_correct_negatives)
+            .apply(correct_negatives)
             .pipe(
-                _get_infectious_period_cases, infectious_period, config["br"]["cases"]
+                get_infectious_period_cases,
+                infectious_period,
+                config["br"]["cases"],
+                "city_id",
             )
             .rename(columns=config["br"]["cases"]["rename"])
         )
 
-        df = _get_new_rolling_1mi_mavg(df, "daily_cases","new_cases_1mi_mavg")
-        df = _get_new_rolling_1mi_mavg(df, "new_deaths","new_deaths_1mi_mavg")
-        df = _get_new_rolling_1mi_mavg_growth(df,"new_cases_1mi_mavg", "new_cases_1mi_mavg_growth")
-        df = _get_new_rolling_1mi_mavg_growth(df, "new_deaths_1mi_mavg", "new_deaths_1mi_mavg_growth")
-        print("antes")
-        print(df.columns)
-        
+        # Get indicators of mavg & growth
+        df = get_mavg_indicators(df, "daily_cases", place_id="city_id")
+        df = get_mavg_indicators(df, "new_deaths", place_id="city_id")
 
         # Get notification rates & active cases on date
         df = df.merge(

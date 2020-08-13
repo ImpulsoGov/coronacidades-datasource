@@ -7,7 +7,7 @@ from endpoints import get_city_cases
 from loguru import logger
 
 from endpoints.helpers import allow_local
-from endpoints import get_cases
+from endpoints import get_city_cases
 import rpy2.robjects as ro
 from rpy2.robjects.conversion import localconverter
 
@@ -97,23 +97,9 @@ def get_rt(df, place_id):
 
 
 @allow_local
-def now(config):
-
-    # Import cases
-    df = get_city_cases.now(config, "br")
-    df["last_updated"] = pd.to_datetime(df["last_updated"])
-
-    # Filter cities with deaths i.e. has subnotification!
-    df = df[df["city_notification_place_type"] == "city"]
-
-    # Filter more than 14 days
-    df = get_cases_series(df, "city_id", config["br"]["rt_parameters"]["min_days"])
-
-    # subs cidades com 0 casos -> 0.1 caso no periodo
-    df = df.replace(0, 0.1)
-
-    # Run in parallel
-    return sequential_run(df, config, place_type="city_id")
+def now(config=None):
+    # TODO: mudar para get_[cities/region/states]_cases quando tiver as tabelas
+    return get_rt(get_city_cases.now(), place_id="city_id")
 
 
 TESTS = {

@@ -3,7 +3,7 @@ import numpy as np
 import datetime as dt
 import yaml
 
-from endpoints import get_cases, get_health_region_rt, get_health
+from endpoints import get_health_region_cases, get_health_region_rt, get_health
 
 from endpoints.get_cities_farolcovid_main import (
     get_situation_indicators,
@@ -20,18 +20,18 @@ def now(config):
 
     # Get last cases data
     cases = (
-        get_cases.now(config, "br")
+        get_health_region_cases.now(config, "br")
         .dropna(subset=["active_cases"])
         .assign(last_updated=lambda df: pd.to_datetime(df["last_updated"]))
     )
-    cases = cases.loc[cases.groupby("city_id")["last_updated"].idxmax()].drop(
-        config["br"]["cases"]["drop"] + ["state_num_id", "health_region_id"], 1
-    )
+    # cases = cases.loc[cases.groupby("city_id")["last_updated"].idxmax()].drop(
+    #     config["br"]["cases"]["drop"] + ["state_num_id", "health_region_id"], 1
+    # )
 
     # Merge resource data
     df = get_health.now(config, "br")[
         config["br"]["simulacovid"]["columns"]["cnes"]
-    ].merge(cases, on="city_id", how="left")
+    ].merge(cases, on=["health_region_id", "state_num_id"], how="left")
 
     df = (
         df.sort_values("health_region_id")
@@ -56,11 +56,10 @@ def now(config):
     # TODO: get_cases => get_states_cases / mudar indicadores de situacao + add trust (notification_rate)!
     df = get_situation_indicators(
         df,
-        data=get_city_cases.now(config),
+        data=get_health_region_cases.now(config),
         place_id="health_region_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="situation_classification",
-        growth=None,  # -> "situation_growth" depois do update na tabela de casos
     )
 
     df = get_control_indicators(
@@ -69,7 +68,6 @@ def now(config):
         place_id="health_region_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="control_classification",
-        growth=None,  # "control_growth",
     )
 
     df = get_capacity_indicators(
@@ -82,11 +80,10 @@ def now(config):
 
     df = get_trust_indicators(
         df,
-        data=get_cases.now(config),
+        data=get_health_region_cases.now(config),
         place_id="health_region_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="trust_classification",
-        growth=None,  # "trust_growth",
     )
 
     cols = [col for col in df.columns if "classification" in col]

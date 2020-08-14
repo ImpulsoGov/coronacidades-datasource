@@ -40,7 +40,7 @@ def get_situation_indicators(df, data, place_id, rules, classify):
     df[classify] = _get_levels(df, rules[classify])
     df[classify] = df.apply(
         lambda row: row[classify] + 1
-        if row["daily_cases_growth"] == "crescendo"
+        if (row["daily_cases_growth"] == "crescendo" and row[classify] < 3)
         else row[classify],
         axis=1,
     )
@@ -56,9 +56,21 @@ def get_control_indicators(df, data, place_id, rules, classify):
 
     # Min-max do Rt de 14 dias (max data de taxa de notificacao)
     df[
-        ["last_updated_rt", "rt_low_95", "rt_high_95", "rt_most_likely", "rt_most_likely_growth"]
+        [
+            "last_updated_rt",
+            "rt_low_95",
+            "rt_high_95",
+            "rt_most_likely",
+            "rt_most_likely_growth",
+        ]
     ] = data.sort_values(place_id).set_index(place_id)[
-        ["last_updated", "Rt_low_95", "Rt_high_95", "Rt_most_likely", "Rt_most_likely_growth"]
+        [
+            "last_updated",
+            "Rt_low_95",
+            "Rt_high_95",
+            "Rt_most_likely",
+            "Rt_most_likely_growth",
+        ]
     ]
 
     # Classificação: melhor estimativa do Rt de 10 dias (rt_most_likely)
@@ -272,6 +284,9 @@ TESTS = {
     "doesnt have 5570 cities": lambda df: len(df["city_id"].unique()) == 5570,
     "doesnt have 27 states": lambda df: len(df["state_num_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "overall alert < 3": lambda df: all(
+        df[~df["overall_alert"].isnull()]["overall_alert"] < 3
+    ),
     # "city doesnt have both rt classified and growth": lambda df: df[
     #     "control_classification"
     # ].count()

@@ -24,7 +24,9 @@ def now(config):
         .dropna(subset=["active_cases"])
         .assign(last_updated=lambda df: pd.to_datetime(df["last_updated"]))
     )
-    # cases = cases.loc[cases.groupby("city_id")["last_updated"].idxmax()].drop(
+
+    cases = cases.loc[cases.groupby("health_region_id")["last_updated"].idxmax()]
+    #.drop(
     #     config["br"]["cases"]["drop"] + ["state_num_id", "health_region_id"], 1
     # )
 
@@ -96,6 +98,9 @@ def now(config):
 
 TESTS = {
     "doesnt have 27 states": lambda df: len(df["state_id"].unique()) == 27,
+    "overall alert < 3": lambda df: all(
+        df[~df["overall_alert"].isnull()]["overall_alert"] <= 3
+    ),
     # "doesnt have 450 regions": lambda df: len(df["health_region_id"].unique()) == 450,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     # "dataframe has null data": lambda df: all(df.isnull().any() == False),

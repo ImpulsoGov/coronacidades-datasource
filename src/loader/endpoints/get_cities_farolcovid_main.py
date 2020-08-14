@@ -32,10 +32,18 @@ def get_situation_indicators(df, data, place_id, rules, classify):
 
     df["last_updated_cases"] = data["last_updated"]
 
-    # Get indicators
-    df[["daily_cases_mavg_1mi", "daily_cases_growth",]] = data[
-        ["daily_cases_mavg_1mi", "daily_cases_growth",]
+    # Get indicators & update cases and deaths to current date
+    cols = [
+        "confirmed_cases",
+        "daily_cases",
+        "deaths",
+        "new_deaths",
+        "daily_cases_mavg_1mi",
+        "daily_cases_growth",
+        "new_deaths_mavg_1mi",
+        "new_deaths_growth",
     ]
+    df[cols] = data[cols]
 
     df[classify] = _get_levels(df, rules[classify])
     df[classify] = df.apply(
@@ -177,28 +185,15 @@ def get_capacity_indicators(df, place_id, config, rules, classify):
 def get_trust_indicators(df, data, place_id, rules, classify):
 
     data["last_updated"] = pd.to_datetime(data["last_updated"])
-    df["subnotification_rate"] = 1 - df["notification_rate"]
 
     # Última data com notificação: 14 dias atrás
-    df[
-        [
-            "last_updated_subnotification",
-            "notification_rate",
-            "new_deaths_mavg_1mi",
-            "new_deaths_growth",
-        ]
-    ] = (
+    df[["last_updated_subnotification", "notification_rate", "active_cases"]] = (
         data.dropna()
-        .groupby(place_id)[
-            [
-                "last_updated",
-                "notification_rate",
-                "new_deaths_mavg_1mi",
-                "new_deaths_growth",
-            ]
-        ]
+        .groupby(place_id)[["last_updated", "notification_rate", "active_cases"]]
         .last()
     )
+
+    df["subnotification_rate"] = 1 - df["notification_rate"]
 
     # Classificação: percentual de subnotificação
     df[classify] = _get_levels(df, rules[classify])
@@ -256,20 +251,20 @@ def now(config):
         classify="control_classification",
     )
 
-    df = get_capacity_indicators(
-        df,
-        place_id="city_id",
-        config=config,
-        rules=config["br"]["farolcovid"]["rules"],
-        classify="capacity_classification",
-    )
-
     df = get_trust_indicators(
         df,
         data=get_cities_cases.now(config),
         place_id="city_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="trust_classification",
+    )
+
+    df = get_capacity_indicators(
+        df,
+        place_id="city_id",
+        config=config,
+        rules=config["br"]["farolcovid"]["rules"],
+        classify="capacity_classification",
     )
 
     cols = [col for col in df.columns if "classification" in col]
@@ -284,8 +279,8 @@ TESTS = {
     "doesnt have 5570 cities": lambda df: len(df["city_id"].unique()) == 5570,
     "doesnt have 27 states": lambda df: len(df["state_num_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "overall alert < 3": lambda df: all(
-        df[~df["overall_alert"].isnull()]["overall_alert"] < 3
+    "overall alert > 3": lambda df: all(
+        df[~df["overall_alert"].isnull()]["overall_alert"] <= 3
     ),
     # "city doesnt have both rt classified and growth": lambda df: df[
     #     "control_classification"

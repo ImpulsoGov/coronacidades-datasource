@@ -42,19 +42,7 @@ from endpoints.helpers import allow_local
 @allow_local
 def now(config):
 
-    # Get last cases data
-    cases = (
-        get_states_cases.now(config, "br")
-        .dropna(subset=["active_cases"])
-        .assign(last_updated=lambda df: pd.to_datetime(df["last_updated"]))
-    )
-
-    cases = cases.loc[cases.groupby("state_num_id")["last_updated"].idxmax()]
-    # .drop(
-    #     config["br"]["cases"]["drop"] + ["state_num_id", "health_region_id"], 1
-    # )
-
-    # Merge resource data
+    # Get resource data
     df = (
         get_health.now(config, "br")
         .groupby(
@@ -72,18 +60,7 @@ def now(config):
         )
         .agg({"population": sum, "number_beds": sum, "number_icu_beds": sum})
         .reset_index()
-        .merge(
-            cases.drop(columns=["state_id", "state_name"]),
-            on="state_num_id",
-            how="left",
-        )
-    )
-
-    df = (
-        df.sort_values("state_num_id")
-        .assign(confirmed_cases=lambda x: x["confirmed_cases"].fillna(0))
-        .assign(deaths=lambda x: x["deaths"].fillna(0))
-        .reset_index()
+        .sort_values("state_num_id")
         .set_index("state_num_id")
     )
 
@@ -104,20 +81,20 @@ def now(config):
         classify="control_classification",
     )
 
-    df = get_capacity_indicators(
-        df,
-        place_id="state_num_id",
-        config=config,
-        rules=config["br"]["farolcovid"]["rules"],
-        classify="capacity_classification",
-    )
-
     df = get_trust_indicators(
         df,
         data=get_states_cases.now(config),
         place_id="state_num_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="trust_classification",
+    )
+
+    df = get_capacity_indicators(
+        df,
+        place_id="state_num_id",
+        config=config,
+        rules=config["br"]["farolcovid"]["rules"],
+        classify="capacity_classification",
     )
 
     cols = [col for col in df.columns if "classification" in col]
@@ -135,7 +112,7 @@ def now(config):
 TESTS = {
     "doesnt have 27 states": lambda df: len(df["state_num_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "overall alert < 3": lambda df: all(
+    "overall alert > 3": lambda df: all(
         df[~df["overall_alert"].isnull()]["overall_alert"] <= 3
     ),
     # "dataframe has null data": lambda df: all(df.isnull().any() == False),

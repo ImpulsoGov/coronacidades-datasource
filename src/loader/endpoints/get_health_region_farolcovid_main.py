@@ -18,19 +18,7 @@ from endpoints.helpers import allow_local
 @allow_local
 def now(config):
 
-    # Get last cases data
-    cases = (
-        get_health_region_cases.now(config, "br")
-        .dropna(subset=["active_cases"])
-        .assign(last_updated=lambda df: pd.to_datetime(df["last_updated"]))
-    )
-
-    cases = cases.loc[cases.groupby("health_region_id")["last_updated"].idxmax()]
-    # .drop(
-    #     config["br"]["cases"]["drop"] + ["state_num_id", "health_region_id"], 1
-    # )
-
-    # Merge resource data
+    # Get resource data
     df = (
         get_health.now(config, "br")
         .groupby(
@@ -50,20 +38,7 @@ def now(config):
         )
         .agg({"population": sum, "number_beds": sum, "number_icu_beds": sum})
         .reset_index()
-        .merge(
-            cases.drop(
-                columns=["health_region_name", "state_num_id", "state_name", "state_id"]
-            ),
-            on=["health_region_id"],
-            how="left",
-        )
-    )
-
-    df = (
-        df.sort_values("health_region_id")
-        .assign(confirmed_cases=lambda x: x["confirmed_cases"].fillna(0))
-        .assign(deaths=lambda x: x["deaths"].fillna(0))
-        .reset_index()
+        .sort_values("health_region_id")
         .set_index("health_region_id")
     )
 
@@ -84,20 +59,20 @@ def now(config):
         classify="control_classification",
     )
 
-    df = get_capacity_indicators(
-        df,
-        place_id="health_region_id",
-        config=config,
-        rules=config["br"]["farolcovid"]["rules"],
-        classify="capacity_classification",
-    )
-
     df = get_trust_indicators(
         df,
         data=get_health_region_cases.now(config),
         place_id="health_region_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="trust_classification",
+    )
+
+    df = get_capacity_indicators(
+        df,
+        place_id="health_region_id",
+        config=config,
+        rules=config["br"]["farolcovid"]["rules"],
+        classify="capacity_classification",
     )
 
     cols = [col for col in df.columns if "classification" in col]
@@ -110,7 +85,7 @@ def now(config):
 
 TESTS = {
     "doesnt have 27 states": lambda df: len(df["state_id"].unique()) == 27,
-    "overall alert < 3": lambda df: all(
+    "overall alert > 3": lambda df: all(
         df[~df["overall_alert"].isnull()]["overall_alert"] <= 3
     ),
     # "doesnt have 450 regions": lambda df: len(df["health_region_id"].unique()) == 450,

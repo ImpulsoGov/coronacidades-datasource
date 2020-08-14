@@ -15,7 +15,7 @@ import cufflinks as cf
 
 plotly.offline.init_notebook_mode(connected=True)
 # Getting helping data
-# from endpoints import get_states_farolcovid_main, get_cities_farolcovid_main
+from endpoints import get_states_farolcovid_main, get_cities_farolcovid_main
 import utils
 
 # Setting cufflinks
@@ -31,19 +31,15 @@ def iplottitle(title, width=40):
 
 
 # import geobr
-#%matplotlib inline
 import yaml
 from plotly.offline import download_plotlyjs, plot, iplot
 import random
 
-# import geopandas as gpd
-# import webbrowser
 from datawrapper import Datawrapper
 
 import os
 
 # INIT
-# config = utils.get_config()
 dictsDW = yaml.load(open("map_config.yaml", "r"), Loader=yaml.FullLoader)
 idStateCode = dictsDW["idStateCode"]
 idStatesMap = dictsDW["idStatesMap"]
@@ -54,73 +50,65 @@ if IS_DEV != True and IS_DEV != False:
 if None in idStatesMap.values():
     IS_DEV = True
     print("Generating new ids")
+
 states = idStatesMap.keys()
 ACCESS_TOKEN = os.getenv("MAP_ACCESS_TOKEN")
 if not IS_DEV:
     MAP_FOLDER_ID = dictsDW["MAP_FOLDER_ID"]
 else:
-    MAP_FOLDER_ID = "maps-coronacidades"
+    MAP_FOLDER_ID = 38060  # "maps-coronacidades"
 
 dw = Datawrapper(access_token=ACCESS_TOKEN)
 
 
 # CLASSES
 class StateMap:
-    def __init__(self, state_id, acess_token=None):
+    def __init__(self, state_id, config, acess_token=None):
         self.state_id = state_id
         self.dw = Datawrapper(acess_token)
+        self.config = config
 
         # __dadosFarol__
-        self.map_data, self.farolcovid_states = self.__dadosFarol__()
-        self.date = pd.to_datetime(self.farolcovid_states["last_updated_rt"][0]).strftime(
-            "%d/%m/%Y"
-        )
-
-        # __getCodes__
-        self.main_title, self.basemapCMD = self.__getCodes__()
-
-        # createMap
+        self.map_data = self.__dadosFarol__()
+        self.basemapCMD = self.__getCodes__()
 
     def __dadosFarol__(self):
         # Puxa os dados do Farol
-        farolcovid_cities = get_cities_farolcovid_main.now(config).sort_values(
-            ["state_id", "city_name"]
-        ).reset_index(drop=True)
-
-        farolcovid_states = get_cities_farolcovid_main.now(config).query(f"state_id == '{self.state_id}'")
-
-        map_data = farolcovid_states[
-            ["city_id", "city_name", "overall_alert", "deaths", "subnotification_rate"]
-        ]
-        map_data.columns = [
-            "ID",
-            "city_name",
-            "overall_alert",
-            "deaths",
-            "subnotification_rate",
-        ]
-        # TODO: fix colors
-        map_data["Value"] = map_data["overall_alert"].apply(
-            lambda x: 29
-            if x == "alto"
-            else (0 if x == "medio" else (-29 if x == "baixo" else np.nan))
+        return (
+            get_cities_farolcovid_main.now(self.config)
+            .query(f"state_id == '{self.state_id}'")[
+                [
+                    "city_id",
+                    "city_name",
+                    "overall_alert",
+                    "deaths",
+                    "subnotification_rate",
+                ]
+            ]
+            .rename(columns={"city_id": "ID"})
+            .assign(Value=lambda df: df["overall_alert"].fillna(-1).astype(int))
+            .assign(
+                overall_alert=lambda df: df["overall_alert"].map(
+                    self.config["br"]["farolcovid"]["categories"]
+                )
+            )
         )
-
-        return map_data, farolcovid_states
 
     def __getCodes__(self):
         # Pega o código do mapa para criar o Mapa por estado
-        state_name = self.farolcovid_states["state_name"][0]
-        main_title = f"{state_name}<br>Fonte: Impulso | {self.date}"
+        # state_name = self.farolcovid_states["state_name"][0]
+        # main_title = f"{state_name}<br>Fonte: Impulso | {self.date}"
         basemapcode = idStateCode[self.state_id]
         basemapCMD = f"brazil-{basemapcode}-municipalities"
-        return main_title, basemapCMD
+        return basemapCMD
 
     def createMap(self):
         # Cria o Mapa
+        # print(self.map_data.head())
         stateMap = self.dw.create_chart(
-            title=self.main_title,
+            title="",
             chart_type="d3-maps-choropleth",
+            data=self.map_data,
             folder_id=MAP_FOLDER_ID,
         )
         self.dw.add_data(stateMap["publicId"], self.map_data)
@@ -157,8 +145,8 @@ class StateMap:
             "visualize": {
                 "tooltip": {
                     "body": """<p>Risco: {{ overall_alert }}</p>
-            <p>Total de Mortes: {{ deaths }}</p>
-            <p>Subnotificação: {{ subnotification_rate }}</p>""",  # <a href={{ link }} target="_blank" rel="noreferrer nofollow">Mostrar Mais!</a>,
+                    <p>Total de Mortes: {{ deaths }}</p>
+                    <p>Subnotificação: {{ subnotification_rate }}</p>""",  # <a href={{ link }} target="_blank" rel="noreferrer nofollow">Mostrar Mais!</a>,
                     "title": "{{ city_name }}",
                     "fields": {
                         "ID": "ID",  # Alterar 'fields' se forem adicionadas outras colunas ao dataframe dentro dessa Classe
@@ -173,16 +161,16 @@ class StateMap:
                 "map-key-auto": False,
                 "map-type-set": "true",
                 "gradient": {
-                    "stops": [{"p": 0, "v": -30}, {"p": 1, "v": 30}],
+                    "stops": [{"p": 0, "v": -1}, {"p": 1, "v": 4}],
                     "colors": [
-                        {"c": "#0097A7", "p": 0},
-                        {"c": "#0097A7", "p": 0.33},
-                        {"c": "#F2C94C", "p": 0.33001},
-                        {"c": "#F2C94C", "p": 0.66},
-                        {"c": "#FF5F6B", "p": 0.66001},
-                        {"c": "#FF5F6B", "p": 1},
+                        {"c": "#0990A7", "p": 0},
+                        {"c": "#0990A7", "p": 0.25},
+                        {"c": "#F7B502", "p": 0.25001},
+                        {"c": "#F77800", "p": 0.50001},
+                        {"c": "#F22E3E", "p": 0.75001},
+                        {"c": "#F22E3E", "p": 1},
                     ],
-                    "domain": [0, 0.33001, 0.66001],
+                    "domain": [0, 0.25001, 0.50001, 0.75001],
                 },
             },
         }
@@ -195,62 +183,40 @@ class StateMap:
 
 
 class BrMap:
-    def __init__(self, acess_token=None):
+    def __init__(self, config, acess_token=None):
         self.dw = Datawrapper(acess_token)
+        self.config = config
 
         # __dadosFarol__
-        self.map_data, self.farolcovid_states = self.__dadosFarol__()
-        self.date = pd.to_datetime(
-            self.farolcovid_states["last_updated_rt"][0]
-        ).strftime("%d/%m/%Y")
-
-        # __getCodes__
-        self.main_title = self.__getCodes__()
-
-        # createMap
+        self.map_data = self.__dadosFarol__()
 
     def __dadosFarol__(self):
         # Puxa os dados do Farol
-        farolcovid_states = (get_states_farolcovid_main.now(config)
-        .sort_values("state_id")
-        .reset_index(
-            drop=True
-        ))
-
-        map_data = farolcovid_states[
-            [
-                "state_id",
-                "state_name",
-                "overall_alert",
-                "deaths",
-                "subnotification_rate",
+        return (
+            get_states_farolcovid_main.now(self.config)
+            .sort_values("state_id")
+            .reset_index(drop=True)[
+                [
+                    "state_id",
+                    "state_name",
+                    "overall_alert",
+                    "deaths",
+                    "subnotification_rate",
+                ]
             ]
-        ]
-        map_data.columns = [
-            "ID",
-            "state_name",
-            "overall_alert",
-            "deaths",
-            "subnotification_rate",
-        ]
-         # TODO: fix colors
-        map_data["Value"] = map_data["overall_alert"].apply(
-            lambda x: 29
-            if x == "alto"
-            else (0 if x == "medio" else (-29 if x == "baixo" else np.nan))
+            .rename(columns={"state_id": "ID"})
+            .assign(Value=lambda df: df["overall_alert"].fillna(-1).astype(int))
+            .assign(
+                overall_alert=lambda df: df["overall_alert"].map(
+                    self.config["br"]["farolcovid"]["categories"]
+                )
+            )
         )
-
-        return map_data, farolcovid_states
-
-    def __getCodes__(self):
-        # Pega o código do mapa para criar o Mapa por estado
-        main_title = f"FarolCovid - Estados da União<br>Fonte: Impulso | {self.date}"
-        return main_title
 
     def createMap(self):
         # Cria o Mapa
         stateMap = self.dw.create_chart(
-            title=self.main_title,
+            title="",
             chart_type="d3-maps-choropleth",
             data=self.map_data,
             folder_id=MAP_FOLDER_ID,
@@ -287,10 +253,9 @@ class BrMap:
             },
             "visualize": {
                 "tooltip": {
-                    "body": """
-   <p>Risco: {{ overall_alert }}</p>
-   <p>Total de Mortes: {{ deaths }}</p>
-   <p>Subnotificação: {{ subnotification_rate }}</p>""",
+                    "body": """<p>Risco: {{ overall_alert }}</p>
+                    <p>Total de Mortes: {{ deaths }}</p>
+                    <p>Subnotificação: {{ subnotification_rate }}</p>""",
                     "title": "{{ state_name }}",
                     "fields": {
                         "ID": "ID",  # Alterar 'fields' se forem adicionadas outras colunas ao dataframe dentro dessa Classe
@@ -305,16 +270,16 @@ class BrMap:
                 "map-key-auto": False,
                 "map-type-set": "true",
                 "gradient": {
-                    "stops": [{"p": 0, "v": -30}, {"p": 1, "v": 30}],
+                    "stops": [{"p": 0, "v": -1}, {"p": 1, "v": 4}],
                     "colors": [
-                        {"c": "#0097A7", "p": 0},
-                        {"c": "#0097A7", "p": 0.33},
-                        {"c": "#F2C94C", "p": 0.33001},
-                        {"c": "#F2C94C", "p": 0.66},
-                        {"c": "#FF5F6B", "p": 0.66001},
-                        {"c": "#FF5F6B", "p": 1},
+                        {"c": "#0990A7", "p": 0},
+                        {"c": "#0990A7", "p": 0.2},
+                        {"c": "#F7B502", "p": 0.4},
+                        {"c": "#F77800", "p": 0.6},
+                        {"c": "#F22E3E", "p": 0.8},
+                        {"c": "#F22E3E", "p": 1},
                     ],
-                    "domain": [0, 0.33001, 0.66001],
+                    "domain": [0, 0.4, 0.6, 0.8],
                 },
             },
         }
@@ -340,39 +305,53 @@ def now(config):
     if IS_DEV:
         # Gen states
         for state in states:
-            dictsDW["idStatesMap"][state] = StateMap(state, ACCESS_TOKEN).createMap()
+            dictsDW["idStatesMap"][state] = StateMap(
+                state, config, ACCESS_TOKEN
+            ).createMap()
+
             StateMap(state, ACCESS_TOKEN).applyDefaultLayout(
                 dictsDW["idStatesMap"][state]
             )
+
             dw.publish_chart(dictsDW["idStatesMap"][state])
             print(state + ": " + dictsDW["idStatesMap"][state])
+
         # Gen country
         dictsDW["BR_ID"] = BrMap(ACCESS_TOKEN).createMap()
+
         BrMap(ACCESS_TOKEN).applyDefaultLayout(dictsDW["BR_ID"])
-        dw.publish_chart(dictsDW["BR_ID"])
-        print("BR : " + dictsDW["BR_ID"])
-    else:
-        # Gen states
-        for state in states:
-            StateMap(state, ACCESS_TOKEN).updateMap(dictsDW["idStatesMap"][state])
-            dw.publish_chart(dictsDW["idStatesMap"][state])
-            print(state + ": " + dictsDW["idStatesMap"][state])
-        # Gen country
-        BrMap(ACCESS_TOKEN).updateMap(dictsDW["BR_ID"])
+
         dw.publish_chart(dictsDW["BR_ID"])
         print("BR : " + dictsDW["BR_ID"])
 
-    out_frame = pd.DataFrame(
-        {
-            "place_id": list(dictsDW["idStatesMap"].keys()),
-            "map_id": list(dictsDW["idStatesMap"].values()),
-        }
+    else:
+        # Gen states
+        for state in states:
+            StateMap(state, config, ACCESS_TOKEN).updateMap(
+                dictsDW["idStatesMap"][state]
+            )
+
+            dw.publish_chart(dictsDW["idStatesMap"][state])
+            print(state + ": " + dictsDW["idStatesMap"][state])
+
+        # Gen country
+        BrMap(config, ACCESS_TOKEN).updateMap(dictsDW["BR_ID"])
+
+        dw.publish_chart(dictsDW["BR_ID"])
+        print("BR : " + dictsDW["BR_ID"])
+
+    out_frame = (
+        pd.DataFrame(
+            {
+                "place_id": list(dictsDW["idStatesMap"].keys()),
+                "map_id": list(dictsDW["idStatesMap"].values()),
+            }
+        )
+        .append(pd.DataFrame({"place_id": "BR", "map_id": [dictsDW["BR_ID"]]}))
+        .reset_index()
     )
-    out_frame = out_frame.append(
-        pd.DataFrame({"place_id": "BR", "map_id": [dictsDW["BR_ID"]]})
-    )
-    out_frame.reset_index()
-    # gens the hashes for version control
+
+    # Gens the hashes for version control
     out_frame["hashes"] = [
         "".join(random.choice("0123456789ABCDEF") for i in range(16))
         for i in range(out_frame.shape[0])

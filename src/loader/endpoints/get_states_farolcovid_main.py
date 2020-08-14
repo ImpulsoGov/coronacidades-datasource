@@ -55,14 +55,26 @@ def now(config):
     # )
 
     # Merge resource data
-    df = get_health.now(config, "br")[
-        config["br"]["simulacovid"]["columns"]["cnes"]
-    ].merge(cases, on="state_num_id", how="left")
+    df = (
+        get_health.now(config, "br")
+        .groupby(
+            [
+                "country_iso",
+                "country_name",
+                "state_num_id",
+                "last_updated_number_beds",
+                "author_number_beds",
+                "last_updated_number_icu_beds",
+                "author_number_icu_beds",
+            ]
+        )
+        .agg({"population": sum, "number_beds": sum, "number_icu_beds": sum})
+        .reset_index()
+        .merge(cases, on="state_num_id", how="left")
+    )
 
     df = (
         df.sort_values("state_num_id")
-        .groupby(["state_num_id", "state_id", "state_name"])
-        .agg(config["br"]["farolcovid"]["simulacovid"]["state_agg"])
         .assign(confirmed_cases=lambda x: x["confirmed_cases"].fillna(0))
         .assign(deaths=lambda x: x["deaths"].fillna(0))
         .reset_index()

@@ -4,7 +4,7 @@ import datetime as dt
 import yaml
 
 from endpoints import (
-    get_city_cases,
+    get_cities_cases,
     get_cities_rt,
     get_health_region_rt,
     get_states_rt,
@@ -12,9 +12,6 @@ from endpoints import (
 )
 from endpoints.helpers import allow_local
 from endpoints.scripts.simulator import run_simulation
-from tqdm import tqdm
-
-tqdm.pandas()
 
 
 def _get_levels(df, rules):
@@ -28,30 +25,16 @@ def _get_levels(df, rules):
 
 
 # SITUATION: New cases
-def get_situation_indicators(df, data, place_id, rules, classify, growth=None):
+def get_situation_indicators(df, data, place_id, rules, classify):
 
     data["last_updated"] = pd.to_datetime(data["last_updated"])
-    data = data.loc[data.groupby("city_id")["last_updated"].idxmax()].set_index(
-        "city_id"
-    )
+    data = data.loc[data.groupby(place_id)["last_updated"].idxmax()].set_index(place_id)
 
     df["last_updated_cases"] = data["last_updated"]
 
     # Get indicators
-    df[
-        [
-            "daily_cases_mavg_1mi",
-            "daily_cases_growth",
-            "new_deaths_mavg_1mi",
-            "new_deaths_growth",
-        ]
-    ] = data[
-        [
-            "daily_cases_mavg_1mi",
-            "daily_cases_growth",
-            "new_deaths_mavg_1mi",
-            "new_deaths_growth",
-        ]
+    df[["daily_cases_mavg_1mi", "daily_cases_growth",]] = data[
+        ["daily_cases_mavg_1mi", "daily_cases_growth",]
     ]
 
     df[classify] = _get_levels(df, rules[classify])
@@ -66,24 +49,20 @@ def get_situation_indicators(df, data, place_id, rules, classify, growth=None):
 
 
 # CONTROL: - (no testing data!)
-def get_control_indicators(df, data, place_id, rules, classify, growth=None):
+def get_control_indicators(df, data, place_id, rules, classify):
 
     data = data.assign(last_updated=lambda df: pd.to_datetime(df["last_updated"]))
     data = data.loc[data.groupby(place_id)["last_updated"].idxmax()]
 
     # Min-max do Rt de 14 dias (max data de taxa de notificacao)
     df[
-        ["last_updated_rt", "rt_low_95", "rt_high_95", "rt_most_likely"]
+        ["last_updated_rt", "rt_low_95", "rt_high_95", "rt_most_likely", "rt_most_likely_growth"]
     ] = data.sort_values(place_id).set_index(place_id)[
-        ["last_updated", "Rt_low_95", "Rt_high_95", "Rt_most_likely"]
+        ["last_updated", "Rt_low_95", "Rt_high_95", "Rt_most_likely", "Rt_most_likely_growth"]
     ]
 
     # Classificação: melhor estimativa do Rt de 10 dias (rt_most_likely)
     df[classify] = _get_levels(df, rules[classify])
-
-    # TODO: trend on rt table!
-    if growth:
-        df[growth] = _get_levels(df, rules[growth])
 
     return df
 
@@ -166,7 +145,7 @@ def get_capacity_indicators(df, place_id, config, rules, classify):
         rt_upper = None
 
     df["dday_icu_beds_best"], df["dday_icu_beds_worst"] = zip(
-        *df.progress_apply(
+        *df.apply(
             lambda row: _prepare_simulation(row, place_id, config, rt_upper=rt_upper),
             axis=1,
         )
@@ -183,14 +162,30 @@ def get_capacity_indicators(df, place_id, config, rules, classify):
 
 # TRUST
 # TODO: add here after update on cases df
-def get_trust_indicators(df, data, place_id, rules, classify, growth=None):
+def get_trust_indicators(df, data, place_id, rules, classify):
 
     data["last_updated"] = pd.to_datetime(data["last_updated"])
     df["subnotification_rate"] = 1 - df["notification_rate"]
 
     # Última data com notificação: 14 dias atrás
-    df[["last_updated_subnotification", "notification_rate"]] = (
-        data.dropna().groupby("city_id")[["last_updated", "notification_rate"]].last()
+    df[
+        [
+            "last_updated_subnotification",
+            "notification_rate",
+            "new_deaths_mavg_1mi",
+            "new_deaths_growth",
+        ]
+    ] = (
+        data.dropna()
+        .groupby(place_id)[
+            [
+                "last_updated",
+                "notification_rate",
+                "new_deaths_mavg_1mi",
+                "new_deaths_growth",
+            ]
+        ]
+        .last()
     )
 
     # Classificação: percentual de subnotificação
@@ -211,7 +206,7 @@ def now(config):
 
     # Get last cases data
     cases = (
-        get_city_cases.now(config, "br")
+        get_cities_cases.now(config, "br")
         .dropna(subset=["active_cases"])
         .assign(last_updated=lambda df: pd.to_datetime(df["last_updated"]))
     )
@@ -235,11 +230,10 @@ def now(config):
     # TODO: mudar indicadores de situacao + add trust (notification_rate)!
     df = get_situation_indicators(
         df,
-        data=get_city_cases.now(config),
+        data=get_cities_cases.now(config),
         place_id="city_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="situation_classification",
-        growth=None,  # -> "situation_growth" depois do update na tabela de casos
     )
 
     df = get_control_indicators(
@@ -248,7 +242,6 @@ def now(config):
         place_id="city_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="control_classification",
-        growth=None,  # "control_growth",
     )
 
     df = get_capacity_indicators(
@@ -261,11 +254,10 @@ def now(config):
 
     df = get_trust_indicators(
         df,
-        data=get_city_cases.now(config),
+        data=get_cities_cases.now(config),
         place_id="city_id",
         rules=config["br"]["farolcovid"]["rules"],
         classify="trust_classification",
-        growth=None,  # "trust_growth",
     )
 
     cols = [col for col in df.columns if "classification" in col]

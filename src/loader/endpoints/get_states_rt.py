@@ -1,41 +1,34 @@
-from utils import get_cases_series
-from endpoints import get_cases, get_cities_rt
 import pandas as pd
 import numpy as np
-
 from endpoints.helpers import allow_local
+from endpoints import get_states_cases, get_cities_rt
 
 
 @allow_local
-def now(config):
-
-    # Import cases
-    df = get_cases.now(config, "br")
-    df["last_updated"] = pd.to_datetime(df["last_updated"])
-
-    # Filter more than 14 days
-    df = get_cases_series(df, "state_num_id", config["br"]["rt_parameters"]["min_days"])
-
-    # Run in parallel
-    return get_cities_rt.sequential_run(df, config, place_type="state_num_id")
+def now(config=None):
+    # TODO: mudar para get_[cities/region/states]_cases quando tiver as tabelas
+    return get_cities_rt.get_rt(get_states_cases.now(), place_id="state_num_id")
 
 
+# TODO: review tests
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "dataframe has null data": lambda df: all(df.isnull().any() == False),
-    "not all 27 states with updated rt": lambda df: len(
-        df.drop_duplicates("state_num_id", keep="last")
-    )
-    == 27,
+    "dataframe has null data": lambda df: all(
+        df[["Rt_most_likely", "Rt_high_95", "Rt_low_95"]].isnull().any() == False
+    ),
+    # "not all 27 states with updated rt": lambda df: len(
+    #     df.drop_duplicates("state_num_id", keep="last")
+    # )
+    # == 27,
     "rt most likely outside confidence interval": lambda df: len(
         df[
-            (df["Rt_most_likely"] >= df["Rt_high_95"])
-            & (df["Rt_most_likely"] <= df["Rt_high_95"])
+            (df["Rt_most_likely"] <= df["Rt_high_95"])
+            & (df["Rt_most_likely"] >= df["Rt_low_95"])
         ]
     )
-    == 0,
-    "state has rt with less than 14 days": lambda df: all(
-        df.groupby("state_num_id")["last_updated"].count() > 14
-    )
-    == True,
+    == len(df),
+    # "state has rt with less than 14 days": lambda df: all(
+    #     df.groupby("state_num_id")["last_updated"].count() > 14
+    # )
+    # == True,
 }

@@ -4,6 +4,7 @@ pytest
 requests
 jupyter
 plotly
+seaborn
 cufflinks
 matplotlib
 scipy

@@ -6,7 +6,6 @@ from numpy import dtype
 
 @allow_local
 def now(config, country="br"):
-    # TODO: add health_region_id
     return (
         download_from_drive(
             config[country]["drive_paths"]["br_health_region_reopening_data"]

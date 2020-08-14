@@ -62,6 +62,8 @@ def now(config):
                 "country_iso",
                 "country_name",
                 "state_num_id",
+                "state_id",
+                "state_name",
                 "last_updated_number_beds",
                 "author_number_beds",
                 "last_updated_number_icu_beds",
@@ -70,7 +72,11 @@ def now(config):
         )
         .agg({"population": sum, "number_beds": sum, "number_icu_beds": sum})
         .reset_index()
-        .merge(cases, on="state_num_id", how="left")
+        .merge(
+            cases.drop(columns=["state_id", "state_name"]),
+            on="state_num_id",
+            how="left",
+        )
     )
 
     df = (

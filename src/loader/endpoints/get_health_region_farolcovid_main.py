@@ -26,29 +26,41 @@ def now(config):
     )
 
     cases = cases.loc[cases.groupby("health_region_id")["last_updated"].idxmax()]
-    #.drop(
+    # .drop(
     #     config["br"]["cases"]["drop"] + ["state_num_id", "health_region_id"], 1
     # )
 
     # Merge resource data
-    df = get_health.now(config, "br")[
-        config["br"]["simulacovid"]["columns"]["cnes"]
-    ].merge(cases, on=["health_region_id", "state_num_id"], how="left")
-
     df = (
-        df.sort_values("health_region_id")
+        get_health.now(config, "br")
         .groupby(
             [
+                "country_iso",
+                "country_name",
                 "state_num_id",
                 "state_id",
                 "state_name",
-                "health_region_name",
                 "health_region_id",
-                # "health_region_notification_place_type",
+                "health_region_name",
+                "last_updated_number_beds",
+                "author_number_beds",
+                "last_updated_number_icu_beds",
+                "author_number_icu_beds",
             ]
         )
-        .agg(config["br"]["farolcovid"]["simulacovid"]["health_region_agg"])
-        # .rename(columns={"health_region_notification_rate": "notification_rate"})
+        .agg({"population": sum, "number_beds": sum, "number_icu_beds": sum})
+        .reset_index()
+        .merge(
+            cases.drop(
+                columns=["health_region_name", "state_num_id", "state_name", "state_id"]
+            ),
+            on=["health_region_id"],
+            how="left",
+        )
+    )
+
+    df = (
+        df.sort_values("health_region_id")
         .assign(confirmed_cases=lambda x: x["confirmed_cases"].fillna(0))
         .assign(deaths=lambda x: x["deaths"].fillna(0))
         .reset_index()

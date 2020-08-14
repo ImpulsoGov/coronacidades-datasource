@@ -5,12 +5,12 @@ from urllib.request import Request, urlopen
 import json
 import time
 
-from endpoints.get_city_cases import(
+from endpoints.get_cities_cases import (
     get_infectious_period_cases,
     _get_growth,
     get_mavg_indicators,
     correct_negatives,
-    download_brasilio_table
+    download_brasilio_table,
 )
 from endpoints import get_places_id
 from endpoints.scripts import get_notification_rate
@@ -19,7 +19,7 @@ from endpoints.helpers import allow_local
 
 @allow_local
 def now(config, country="br"):
-    
+
     if country == "br":
         infectious_period = (
             config["br"]["seir_parameters"]["severe_duration"]
@@ -59,15 +59,15 @@ def now(config, country="br"):
             )
         )
 
-        # Aggregation by health region and last_updated 
+        # Aggregation by health region and last_updated
         df = (
-            df.groupby(["health_region_id","last_updated"])
+            df.groupby(["health_region_id", "last_updated"])
             .agg(
-                estimated_population_2019 = ('estimated_population_2019', sum),
-                confirmed_cases = ("confirmed_cases", sum),
-                deaths = ("deaths", sum),
-                daily_cases = ("daily_cases", sum),
-                new_deaths = ("new_deaths", sum)
+                estimated_population_2019=("estimated_population_2019", sum),
+                confirmed_cases=("confirmed_cases", sum),
+                deaths=("deaths", sum),
+                daily_cases=("daily_cases", sum),
+                new_deaths=("new_deaths", sum),
             )
             .reset_index()
         )
@@ -97,7 +97,7 @@ def now(config, country="br"):
         ).assign(
             active_cases=lambda x: np.where(
                 x["notification_rate"].isnull(),
-                np.nan, #round(x["infectious_period_cases"], 0),
+                np.nan,  # round(x["infectious_period_cases"], 0),
                 round(x["infectious_period_cases"] / x["notification_rate"], 0),
             ),
             state_id=lambda x: x["state_id"].astype(int),
@@ -112,5 +112,4 @@ TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "more than 27 states": lambda df: len(df["state_id"].unique()) <= 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-
 }

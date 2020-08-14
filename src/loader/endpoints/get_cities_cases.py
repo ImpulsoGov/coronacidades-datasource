@@ -40,21 +40,22 @@ def _get_growth(group):
         return "estabilizando"
 
 
-def get_mavg_indicators(df, col, place_id):
+def get_mavg_indicators(df, col, place_id, weighted=True):
+
+    df = df.sort_values([place_id, "last_updated"])
+
+    if weighted:
+        divide = df["estimated_population_2019"] / 10 ** 6
+    else:
+        divide = 1
 
     # Cria coluna mavg
-    df_mavg = (
-        df.sort_values([place_id, "last_updated"])
-        .assign(
-            rolling_1mi=lambda df: df[col] / (df["estimated_population_2019"] / 10 ** 6)
-        )
-        .assign(
-            mavg_1mi=lambda df: df.groupby(place_id)
-            .rolling(7, window_period=7, on="last_updated")["rolling_1mi"]
-            .sum()
-            .round(1)
-            .reset_index(drop=True)
-        )
+    df_mavg = df.assign(rolling_1mi=lambda df: df[col] / divide).assign(
+        mavg_1mi=lambda df: df.groupby(place_id)
+        .rolling(7, window_period=7, on="last_updated")["rolling_1mi"]
+        .sum()
+        .round(1)
+        .reset_index(drop=True)
     )
 
     # Cria colunas auxiliares para tendencia

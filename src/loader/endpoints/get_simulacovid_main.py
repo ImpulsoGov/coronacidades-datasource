@@ -1,5 +1,5 @@
 # from endpoints import get_embaixadores
-from endpoints import get_city_cases, get_health
+from endpoints import get_cities_cases, get_health
 import pandas as pd
 import numpy as np
 from copy import deepcopy
@@ -10,7 +10,7 @@ from endpoints.helpers import allow_local
 
 def _recover_notification_rate(row, rates):
     """
-    Recupera a taxa de notificação da regional para cidades sem casos i.e. que não vêm de get_city_cases
+    Recupera a taxa de notificação da regional para cidades sem casos i.e. que não vêm de get_cities_cases
     """
 
     if np.isnan(row["health_region_notification_rate"]):
@@ -25,7 +25,7 @@ def now(config):
     df = get_health.now(config, "br")[config["br"]["simulacovid"]["columns"]["cnes"]]
 
     # merge cases
-    cases = get_city_cases.now(config, "br")
+    cases = get_cities_cases.now(config, "br")
     cases = cases[cases["is_last"] == True].drop(config["br"]["cases"]["drop"], 1)
 
     df = df.merge(cases, on="city_id", how="left", suffixes=("", "_y"))

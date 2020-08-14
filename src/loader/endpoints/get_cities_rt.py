@@ -1,13 +1,8 @@
 import pandas as pd
 import datetime as dt
-from scipy import stats as sps
-from joblib import Parallel, delayed
-from utils import get_cases_series
-from endpoints import get_city_cases
-from loguru import logger
 
 from endpoints.helpers import allow_local
-from endpoints import get_city_cases
+from endpoints import get_cities_cases
 import rpy2.robjects as ro
 from rpy2.robjects.conversion import localconverter
 
@@ -34,8 +29,8 @@ def run_epiestim(group):
 
     # Remove valores nulos
     group = group.dropna(subset=["I"])
-    # Filtra > 14 dias para cálculo
-    if len(group) < 14:
+    # Filtra > 15 dias para cálculo
+    if len(group) < 15:
         return
     # Filtra séries não negativas
     if any(group["I"] < 0):
@@ -91,28 +86,34 @@ def get_rt(df, place_id):
         .groupby(place_id)
         .apply(run_epiestim)
         .reset_index(0)
+        .rename(columns={"dates": "last_updated"})
     )
 
-    return rt.rename(columns={"dates": "last_updated"})
+    # Calcula crescimento
+    rt = get_cities_cases.get_mavg_indicators(
+        rt, "Rt_most_likely", place_id, weighted=False
+    )
+    return rt
 
 
 @allow_local
 def now(config=None):
-    # TODO: mudar para get_[cities/region/states]_cases quando tiver as tabelas
-    return get_rt(get_city_cases.now(), place_id="city_id")
+    return get_rt(get_cities_cases.now(), place_id="city_id")
 
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "dataframe has null data": lambda df: all(df.isnull().any() == False),
+    "dataframe has null data": lambda df: all(
+        df[["Rt_most_likely", "Rt_high_95", "Rt_low_95"]].isnull().any() == False
+    ),
     "rt most likely outside confidence interval": lambda df: len(
         df[
-            (df["Rt_most_likely"] >= df["Rt_high_95"])
-            & (df["Rt_most_likely"] <= df["Rt_high_95"])
+            (df["Rt_most_likely"] <= df["Rt_high_95"])
+            & (df["Rt_most_likely"] >= df["Rt_low_95"])
         ]
     )
-    == 0,
-    # "city has rt with less than 14 days": lambda df: all(
+    == len(df),
+    # "less than 14 days": lambda df: all(
     #     df.groupby("city_id")["last_updated"].count() > 14
     # )
     # == True,

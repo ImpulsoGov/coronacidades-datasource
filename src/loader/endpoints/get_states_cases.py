@@ -5,12 +5,12 @@ from urllib.request import Request, urlopen
 import json
 import time
 
-from endpoints.get_city_cases import(
+from endpoints.get_cities_cases import (
     get_infectious_period_cases,
     _get_growth,
     get_mavg_indicators,
     correct_negatives,
-    download_brasilio_table
+    download_brasilio_table,
 )
 from endpoints import get_places_id
 from endpoints.scripts import get_notification_rate
@@ -19,7 +19,7 @@ from endpoints.helpers import allow_local
 
 @allow_local
 def now(config, country="br"):
-    
+
     if country == "br":
         infectious_period = (
             config["br"]["seir_parameters"]["severe_duration"]
@@ -34,66 +34,61 @@ def now(config, country="br"):
             .fillna(0)
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
-            .groupby(["state_id","last_updated"])
+            .sort_values(["city_id", "state_id", "last_updated"])
+        )
+        # Group cases by states
+        df = (
+            df.groupby(["state_id", "last_updated"])
             .agg(
-                estimated_population_2019 = ('estimated_population_2019', sum),
-                confirmed_cases = ("confirmed_cases", sum),
-                deaths = ("deaths", sum),
-                daily_cases = ("daily_cases", sum),
-                new_deaths = ("new_deaths", sum)
+                estimated_population_2019=("estimated_population_2019", sum),
+                confirmed_cases=("confirmed_cases", sum),
+                deaths=("deaths", sum),
+                daily_cases=("daily_cases", sum),
+                new_deaths=("new_deaths", sum),
             )
             .reset_index()
-            .sort_values(["state_id", "last_updated"])
+        )  # group cases by state
+
+        # Fix places_ids by city_id => Get state_num_id
+        places_ids = get_places_id.now(config).assign(
+            city_id=lambda df: df["city_id"].astype(int),
+            state_num_id=lambda df: df["state_num_id"].astype(int),
         )
 
-        # Fix places_ids
-        places_ids = get_places_id.now(config)
+        df = df.merge(
+            places_ids[["state_id", "state_name", "state_num_id",]].drop_duplicates(),
+            on="state_id",
+        )
 
+        # Transform cases data
         df = (
-            df.merge(
-                places_ids[
-                    [
-                        "state_name",
-                        "state_num_id",
-                        "state_id"
-                    ]
-                ],
-                left_on="state_id"
-            )
+            df.groupby(["state_num_id", "state_id", "state_name",])
+            .apply(correct_negatives)  # correct negative values
+            .pipe(
+                get_infectious_period_cases,
+                infectious_period,
+                config["br"]["cases"],
+                "state_num_id",
+            )  # get infectious period cases
+            .rename(columns=config["br"]["cases"]["rename"])
         )
-        print(df.info())
-        
-        # Correct negative values, get infectious period cases and get median of new cases
-        #df = (
-        #    df.groupby("state_id")
-        #    .apply(correct_negatives)
-        #    .pipe(
-        #        get_infectious_period_cases,
-        #        infectious_period,
-        #        config["br"]["cases"],
-        #        "state_id",
-        #    )
-        #    .rename(columns=config["br"]["cases"]["rename"])
-        #)
-
 
         # Get indicators of mavg & growth
-        #df = get_mavg_indicators(df, "daily_cases", place_id="state_id")
-        #df = get_mavg_indicators(df, "new_deaths", place_id="state_id")
+        df = get_mavg_indicators(df, "daily_cases", place_id="state_num_id")
+        df = get_mavg_indicators(df, "new_deaths", place_id="state_num_id")
 
         # Get notification rates & active cases on date
-        #df = df.merge(
-        #    get_notification_rate.now(df, "state_num_id"),
-        #    on=["state_num_id", "last_updated"],
-        #    how="left",
-        #).assign(
-        #    active_cases=lambda x: np.where(
-        #        x["notification_rate"].isnull(),
-        #        np.nan, #round(x["infectious_period_cases"], 0),
-        #        round(x["infectious_period_cases"] / x["notification_rate"], 0),
-        #    ),
-        #    state_id=lambda x: x["state_id"].astype(int),
-        #)
+        df = df.merge(
+            get_notification_rate.now(df, "state_num_id"),
+            on=["state_num_id", "last_updated"],
+            how="left",
+        ).assign(
+            active_cases=lambda x: np.where(
+                x["notification_rate"].isnull(),
+                np.nan,  # round(x["infectious_period_cases"], 0),
+                round(x["infectious_period_cases"] / x["notification_rate"], 0),
+            )
+        )
 
     return df
 
@@ -101,8 +96,6 @@ def now(config, country="br"):
 # Output dataframe tests to check data integrity. This is also going to be called
 # by main.py
 TESTS = {
-    "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
-    "more than 27 states": lambda df: len(df["state_id"].unique()) <= 27,
+    "not 27 states": lambda df: len(df["state_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-
 }

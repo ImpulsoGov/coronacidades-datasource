@@ -43,11 +43,12 @@ from datawrapper import Datawrapper
 import os
 
 # INIT
-config = utils.get_config()
+# config = utils.get_config()
 dictsDW = yaml.load(open("map_config.yaml", "r"), Loader=yaml.FullLoader)
 idStateCode = dictsDW["idStateCode"]
 idStatesMap = dictsDW["idStatesMap"]
 IS_DEV = os.getenv("IS_MAP_DEV") == "True"
+
 if IS_DEV != True and IS_DEV != False:
     IS_DEV = True
 if None in idStatesMap.values():
@@ -59,7 +60,10 @@ if not IS_DEV:
     MAP_FOLDER_ID = dictsDW["MAP_FOLDER_ID"]
 else:
     MAP_FOLDER_ID = "maps-coronacidades"
+
 dw = Datawrapper(access_token=ACCESS_TOKEN)
+
+
 # CLASSES
 class StateMap:
     def __init__(self, state_id, acess_token=None):
@@ -67,8 +71,8 @@ class StateMap:
         self.dw = Datawrapper(acess_token)
 
         # __dadosFarol__
-        self.mapData, self.farolcovidState = self.__dadosFarol__()
-        self.date = pd.to_datetime(self.farolcovidState["last_updated_rt"][0]).strftime(
+        self.map_data, self.farolcovid_states = self.__dadosFarol__()
+        self.date = pd.to_datetime(self.farolcovid_states["last_updated_rt"][0]).strftime(
             "%d/%m/%Y"
         )
 
@@ -79,41 +83,34 @@ class StateMap:
 
     def __dadosFarol__(self):
         # Puxa os dados do Farol
-        # farolcovid_cities = get_cities_farolcovid_main.now(config)
-        farolcovid_cities = pd.read_csv(
-            "http://datasource.coronacidades.org/br/cities/farolcovid/main"
-        )
-        farolcovid_cities = farolcovid_cities.sort_values(
+        farolcovid_cities = get_cities_farolcovid_main.now(config).sort_values(
             ["state_id", "city_name"]
         ).reset_index(drop=True)
 
-        farolcovidState = (
-            farolcovid_cities.query(f"state_id == '{self.state_id}'")
-            .sort_values("city_id")
-            .reset_index(drop=True)
-        )
+        farolcovid_states = get_cities_farolcovid_main.now(config).query(f"state_id == '{self.state_id}'")
 
-        mapData = farolcovidState[
+        map_data = farolcovid_states[
             ["city_id", "city_name", "overall_alert", "deaths", "subnotification_rate"]
         ]
-        mapData.columns = [
+        map_data.columns = [
             "ID",
             "city_name",
             "overall_alert",
             "deaths",
             "subnotification_rate",
         ]
-        mapData["Value"] = mapData["overall_alert"].apply(
+        # TODO: fix colors
+        map_data["Value"] = map_data["overall_alert"].apply(
             lambda x: 29
             if x == "alto"
             else (0 if x == "medio" else (-29 if x == "baixo" else np.nan))
         )
 
-        return mapData, farolcovidState
+        return map_data, farolcovid_states
 
     def __getCodes__(self):
         # Pega o código do mapa para criar o Mapa por estado
-        state_name = self.farolcovidState["state_name"][0]
+        state_name = self.farolcovid_states["state_name"][0]
         main_title = f"{state_name}<br>Fonte: Impulso | {self.date}"
         basemapcode = idStateCode[self.state_id]
         basemapCMD = f"brazil-{basemapcode}-municipalities"
@@ -126,7 +123,7 @@ class StateMap:
             chart_type="d3-maps-choropleth",
             folder_id=MAP_FOLDER_ID,
         )
-        self.dw.add_data(stateMap["publicId"], self.mapData)
+        self.dw.add_data(stateMap["publicId"], self.map_data)
         mapContour = {
             "axes": {"keys": "ID", "values": "Value"},
             "publish": {
@@ -192,7 +189,7 @@ class StateMap:
         self.dw.update_metadata(mapID, DEFAULT_LAYOUT)
 
     def updateMap(self, mapID):
-        self.dw.add_data(mapID, self.mapData)
+        self.dw.add_data(mapID, self.map_data)
         self.applyDefaultLayout(mapID)
         self.dw.update_chart(mapID, title=self.main_title)
 
@@ -202,7 +199,7 @@ class BrMap:
         self.dw = Datawrapper(acess_token)
 
         # __dadosFarol__
-        self.mapData, self.farolcovid_states = self.__dadosFarol__()
+        self.map_data, self.farolcovid_states = self.__dadosFarol__()
         self.date = pd.to_datetime(
             self.farolcovid_states["last_updated_rt"][0]
         ).strftime("%d/%m/%Y")
@@ -214,15 +211,13 @@ class BrMap:
 
     def __dadosFarol__(self):
         # Puxa os dados do Farol
-        # farolcovid_states = get_states_farolcovid_main.now(config)
-        farolcovid_states = pd.read_csv(
-            "http://datasource.coronacidades.org/br/states/farolcovid/main"
-        )
-        farolcovid_states = farolcovid_states.sort_values("state_id").reset_index(
+        farolcovid_states = (get_states_farolcovid_main.now(config)
+        .sort_values("state_id")
+        .reset_index(
             drop=True
-        )
+        ))
 
-        mapData = farolcovid_states[
+        map_data = farolcovid_states[
             [
                 "state_id",
                 "state_name",
@@ -231,20 +226,21 @@ class BrMap:
                 "subnotification_rate",
             ]
         ]
-        mapData.columns = [
+        map_data.columns = [
             "ID",
             "state_name",
             "overall_alert",
             "deaths",
             "subnotification_rate",
         ]
-        mapData["Value"] = mapData["overall_alert"].apply(
+         # TODO: fix colors
+        map_data["Value"] = map_data["overall_alert"].apply(
             lambda x: 29
             if x == "alto"
             else (0 if x == "medio" else (-29 if x == "baixo" else np.nan))
         )
 
-        return mapData, farolcovid_states
+        return map_data, farolcovid_states
 
     def __getCodes__(self):
         # Pega o código do mapa para criar o Mapa por estado
@@ -256,7 +252,7 @@ class BrMap:
         stateMap = self.dw.create_chart(
             title=self.main_title,
             chart_type="d3-maps-choropleth",
-            data=self.mapData,
+            data=self.map_data,
             folder_id=MAP_FOLDER_ID,
         )
         mapContour = {
@@ -326,7 +322,7 @@ class BrMap:
         self.dw.update_metadata(mapID, DEFAULT_LAYOUT)
 
     def updateMap(self, mapID):
-        self.dw.add_data(mapID, self.mapData)
+        self.dw.add_data(mapID, self.map_data)
         self.applyDefaultLayout(mapID)
         self.dw.update_chart(mapID, title=self.main_title)
 
@@ -340,7 +336,7 @@ def now(config):
     ----------
     config : dict
     """
-    pass
+
     if IS_DEV:
         # Gen states
         for state in states:

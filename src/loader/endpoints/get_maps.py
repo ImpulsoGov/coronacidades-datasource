@@ -15,7 +15,7 @@ import cufflinks as cf
 
 plotly.offline.init_notebook_mode(connected=True)
 # Getting helping data
-from endpoints import get_states_farolcovid_main, get_cities_farolcovid_main
+# from endpoints import get_states_farolcovid_main, get_cities_farolcovid_main
 import utils
 
 # Setting cufflinks
@@ -45,8 +45,7 @@ idStateCode = dictsDW["idStateCode"]
 idStatesMap = dictsDW["idStatesMap"]
 IS_DEV = os.getenv("IS_MAP_DEV") == "True"
 
-if IS_DEV != True and IS_DEV != False:
-    IS_DEV = True
+
 if None in idStatesMap.values():
     IS_DEV = True
     print("Generating new ids")
@@ -67,7 +66,6 @@ class StateMap:
         self.state_id = state_id
         self.dw = Datawrapper(acess_token)
         self.config = config
-
         # __dadosFarol__
         self.map_data = self.__dadosFarol__()
         self.basemapCMD = self.__getCodes__()
@@ -75,7 +73,8 @@ class StateMap:
     def __dadosFarol__(self):
         # Puxa os dados do Farol
         return (
-            get_cities_farolcovid_main.now(self.config)
+            # get_cities_farolcovid_main.now(self.config)
+            pd.read_csv("http://45.55.43.231:7000/br/cities/farolcovid/main")
             .query(f"state_id == '{self.state_id}'")[
                 [
                     "city_id",
@@ -98,6 +97,7 @@ class StateMap:
         # Pega o código do mapa para criar o Mapa por estado
         # state_name = self.farolcovid_states["state_name"][0]
         # main_title = f"{state_name}<br>Fonte: Impulso | {self.date}"
+        self.main_title = " "
         basemapcode = idStateCode[self.state_id]
         basemapCMD = f"brazil-{basemapcode}-municipalities"
         return basemapCMD
@@ -106,7 +106,7 @@ class StateMap:
         # Cria o Mapa
         # print(self.map_data.head())
         stateMap = self.dw.create_chart(
-            title="",
+            title=" ",
             chart_type="d3-maps-choropleth",
             data=self.map_data,
             folder_id=MAP_FOLDER_ID,
@@ -193,7 +193,8 @@ class BrMap:
     def __dadosFarol__(self):
         # Puxa os dados do Farol
         return (
-            get_states_farolcovid_main.now(self.config)
+            # get_states_farolcovid_main.now(self.config)
+            pd.read_csv("http://45.55.43.231:7000/br/states/farolcovid/main")
             .sort_values("state_id")
             .reset_index(drop=True)[
                 [
@@ -216,7 +217,7 @@ class BrMap:
     def createMap(self):
         # Cria o Mapa
         stateMap = self.dw.create_chart(
-            title="",
+            title="_",
             chart_type="d3-maps-choropleth",
             data=self.map_data,
             folder_id=MAP_FOLDER_ID,
@@ -289,6 +290,7 @@ class BrMap:
     def updateMap(self, mapID):
         self.dw.add_data(mapID, self.map_data)
         self.applyDefaultLayout(mapID)
+        self.main_title = " "
         self.dw.update_chart(mapID, title=self.main_title)
 
 
@@ -309,7 +311,7 @@ def now(config):
                 state, config, ACCESS_TOKEN
             ).createMap()
 
-            StateMap(state, ACCESS_TOKEN).applyDefaultLayout(
+            StateMap(state, config, ACCESS_TOKEN).applyDefaultLayout(
                 dictsDW["idStatesMap"][state]
             )
 

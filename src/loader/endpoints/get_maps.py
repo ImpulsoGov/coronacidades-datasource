@@ -321,7 +321,7 @@ def now(config):
         # Gen country
         dictsDW["BR_ID"] = BrMap(ACCESS_TOKEN).createMap()
 
-        BrMap(ACCESS_TOKEN).applyDefaultLayout(dictsDW["BR_ID"])
+        BrMap(config, ACCESS_TOKEN).applyDefaultLayout(dictsDW["BR_ID"])
 
         dw.publish_chart(dictsDW["BR_ID"])
         print("BR : " + dictsDW["BR_ID"])

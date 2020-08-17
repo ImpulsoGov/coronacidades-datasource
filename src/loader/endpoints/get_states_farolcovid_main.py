@@ -163,19 +163,19 @@ TESTS = {
         .apply(lambda x: any(x), axis=1)
         == True
     ),
-    "state without classification got an alert": lambda df: all(
-        df[
-            df[
-                [
-                    "capacity_classification",
-                    "control_classification",
-                    "situation_classification",
-                    "trust_classification",
-                ]
-            ]
-            .isnull()
-            .any(axis=1)
-        ]["overall_alert"].isnull()
-        == True
-    ),
+    # "state without classification got an alert": lambda df: all(
+    #     df[
+    #         df[
+    #             [
+    #                 "capacity_classification",
+    #                 "control_classification",
+    #                 "situation_classification",
+    #                 "trust_classification",
+    #             ]
+    #         ]
+    #         .isnull()
+    #         .any(axis=1)
+    #     ]["overall_alert"].isnull()
+    #     == True
+    # ),
 }

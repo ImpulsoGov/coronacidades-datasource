@@ -20,23 +20,40 @@ from endpoints.get_cities_farolcovid_main import (
 from endpoints.helpers import allow_local
 
 
-# TODO: alert by regions
-# def _get_population_alert(group, mean_pop):
-#     # group["population"].cumsum().searchsorted(mean_pop[group.index[1]]).reset()
-#     # .query(f"population < {mean_pop}")
-#     # .drop_duplicated(["state_num_id"], keep="first"))
+def _get_weighted_level(df_regions):
 
+    # Get max alert of at least half regions
+    max_regions_alert = (
+        df_regions.dropna(subset=["overall_alert"])
+        .groupby("state_num_id")["overall_alert"]
+        .apply(lambda x: ceil(np.quantile(x, 0.5)))
+    )
 
-# def get_weighted_level(regions):
+    # Get state cumulative population by alert
+    max_pop_alert = (
+        df_regions.groupby(["state_num_id", "overall_alert"])["population"]
+        .sum()
+        .groupby(level=0)
+        .cumsum()
+        .reset_index()
+    )
 
-#     mean_pop = regions.groubpy("state_num_id")['population'].sum()/2
+    # Compare to state population mean and get max alert of at least half population
+    max_pop_alert = (
+        max_pop_alert.merge(
+            max_pop_alert.groupby("state_num_id")["population"].apply(
+                lambda x: max(x) / 2
+            ),
+            on="state_num_id",
+            suffixes=("", "_mean"),
+        )
+        .query("population >= population_mean")
+        .drop_duplicates(subset=["state_num_id"], keep="first")
+        .set_index("state_num_id")["overall_alert"]
+    )
 
-#     max_regions_alert = regions.groubpy("state_num_id")["overall_alert"].apply(lambda x: ceil(np.quantile(x, 0.5)))
-
-#     max_population_alert = (regions.sort_values(["overall_alert", "state_num_id"])
-#     .groubpy(["overall_alert", "state_num_id"]).apply(lambda group: _get_population_alert(group, mean_pop), axis=1)
-
-#     return pd.concat([max_regions_alert, max_population_alert])["overall_alert"].max(level=0)
+    # Get max overall alert between population and regions POV
+    return pd.concat([max_pop_alert, max_regions_alert], axis=1).max(axis=1)
 
 
 @allow_local
@@ -64,7 +81,6 @@ def now(config):
         .set_index("state_num_id")
     )
 
-    # TODO: get_cases => get_states_cases / mudar indicadores de situacao + add trust (notification_rate)!
     df = get_situation_indicators(
         df,
         data=get_states_cases.now(config),
@@ -100,11 +116,13 @@ def now(config):
     cols = [col for col in df.columns if "classification" in col]
 
     # TODO: Overall alert - max of cumulative regions in level
-    # regions = get_weighted_level(get_health_region_farolcovid_main.now(config))
+    df["overall_alert"] = _get_weighted_level(
+        get_health_region_farolcovid_main.now(config)
+    )
 
-    df["overall_alert"] = df.apply(
-        lambda row: get_overall_alert(row[cols]), axis=1
-    )  # .replace(config["br"]["farolcovid"]["categories"])
+    # df["overall_alert"] = df.apply(
+    #     lambda row: get_overall_alert(row[cols]), axis=1
+    # ) # .replace(config["br"]["farolcovid"]["categories"])
 
     return df.reset_index()
 

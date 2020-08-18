@@ -138,10 +138,6 @@ TESTS = {
     #     "control_classification"
     # ].count()
     # == df["control_growth"].count(),
-    "dday worst greater than best": lambda df: len(
-        df[df["dday_icu_beds_best"] < df["dday_icu_beds_worst"]]
-    )
-    == 0,
     "rt 10 days maximum and minimum values": lambda df: all(
         df[
             ~(

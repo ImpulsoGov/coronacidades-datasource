@@ -190,38 +190,38 @@ def _prepare_simulation(row, place_id, config, rt_upper=None):
         "n_beds": row["number_beds"]
         * config["br"]["simulacovid"]["resources_available_proportion"],
         "n_icu_beds": row["number_icu_beds"],
-        "R0": {"best": row["rt_low_95"], "worst": row["rt_high_95"]},
+        "R0": {
+            "best": row["rt_most_likely"],  # só usamos o "best" neste caso
+            "worst": row["rt_high_95"],
+        },
     }
 
     # TODO: checar esses casos no calculo da subnotificacao!
     if row["notification_rate"] != row["notification_rate"]:
-        return np.nan, np.nan
+        return np.nan
 
     if row["notification_rate"] == 0:
-        return np.nan, np.nan
+        return np.nan
 
     # TODO: precisa? Seleciona rt de 1 nivel acima caso não tenha
-    if row["rt_low_95"] != row["rt_low_95"]:
-
-        # if place_id == "city_id":
-        #     rt = rt_upper.query(f"health_region_id == {row['health_region_id']}")
+    if row["rt_most_likely"] != row["rt_most_likely"]:
         if place_id == "health_region_id":
             rt = rt_upper.query(f"state_num_id == {row['state_num_id']}")
         else:
-            return np.nan, np.nan
+            return np.nan
 
         if len(rt) > 0:
             rt = rt.assign(
                 last_updated=lambda df: pd.to_datetime(df["last_updated"])
             ).query("last_updated == last_updated.max()")
-            params["R0"] = {"best": rt["Rt_low_95"], "worst": rt["Rt_high_95"]}
+            params["R0"] = {"best": rt["Rt_most_likely"], "worst": rt["Rt_high_95"]}
         else:
-            return np.nan, np.nan
+            return np.nan
 
     params = _calculate_recovered(row, params)
     _, dday_icu_beds = run_simulation(params, config)
 
-    return dday_icu_beds["best"], dday_icu_beds["worst"]
+    return dday_icu_beds["best"]
 
 
 def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
@@ -239,8 +239,7 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
             .merge(
                 data[
                     [
-                        "dday_icu_beds_best",
-                        "dday_icu_beds_worst",
+                        "dday_icu_beds",
                         "number_beds",
                         "number_icu_beds",
                         "health_region_id",
@@ -256,15 +255,11 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
         return df.drop(columns=[col for col in df if "_drop" in col])
 
     else:
-        df["dday_icu_beds_best"], df["dday_icu_beds_worst"] = zip(
-            *df.apply(
-                lambda row: _prepare_simulation(row, place_id, config, rt_upper),
-                axis=1,
-            )
+        df["dday_icu_beds"] = df.apply(
+            lambda row: _prepare_simulation(row, place_id, config, rt_upper), axis=1,
         )
 
-    df["dday_icu_beds_best"] = df["dday_icu_beds_best"].replace(-1, 91)
-    df["dday_icu_beds_worst"] = df["dday_icu_beds_worst"].replace(-1, 91)
+    df["dday_icu_beds"] = df["dday_icu_beds"].replace(-1, 91)
 
     # Classificação: numero de dias para acabar a capacidade
     df[classify] = _get_levels(df, rules[classify])
@@ -380,18 +375,6 @@ TESTS = {
         "control_classification"
     ].count()
     == df["rt_most_likely_growth"].count(),
-    "dday worst greater than best": lambda df: len(
-        df[df["dday_icu_beds_best"] < df["dday_icu_beds_worst"]]
-    )
-    == 0,
-    "rt 10 days maximum and minimum values": lambda df: all(
-        df[
-            ~(
-                (df["rt_low_95"] < df["rt_most_likely"])
-                & (df["rt_most_likely"] < df["rt_high_95"])
-            )
-        ]["rt_most_likely"].isnull()
-    ),
     "region with all classifications got null alert": lambda df: all(
         df[df["overall_alert"].isnull()][
             [

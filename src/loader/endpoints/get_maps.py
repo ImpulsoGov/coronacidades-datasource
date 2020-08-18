@@ -15,7 +15,7 @@ import cufflinks as cf
 
 plotly.offline.init_notebook_mode(connected=True)
 # Getting helping data
-# from endpoints import get_states_farolcovid_main, get_cities_farolcovid_main
+from endpoints import get_states_farolcovid_main, get_cities_farolcovid_main
 import utils
 
 # Setting cufflinks
@@ -73,8 +73,7 @@ class StateMap:
     def __dadosFarol__(self):
         # Puxa os dados do Farol
         return (
-            # get_cities_farolcovid_main.now(self.config)
-            pd.read_csv("http://45.55.43.231:7000/br/cities/farolcovid/main")
+            get_cities_farolcovid_main.now(self.config)
             .query(f"state_id == '{self.state_id}'")[
                 [
                     "city_id",
@@ -85,7 +84,7 @@ class StateMap:
                 ]
             ]
             .rename(columns={"city_id": "ID"})
-            .assign(Value=lambda df: df["overall_alert"].fillna(-1).astype(int))
+            .assign(Value=lambda df: df["overall_alert"])
             .assign(
                 overall_alert=lambda df: df["overall_alert"].map(
                     self.config["br"]["farolcovid"]["categories"]
@@ -193,8 +192,7 @@ class BrMap:
     def __dadosFarol__(self):
         # Puxa os dados do Farol
         return (
-            # get_states_farolcovid_main.now(self.config)
-            pd.read_csv("http://45.55.43.231:7000/br/states/farolcovid/main")
+            get_states_farolcovid_main.now(self.config)
             .sort_values("state_id")
             .reset_index(drop=True)[
                 [
@@ -206,7 +204,7 @@ class BrMap:
                 ]
             ]
             .rename(columns={"state_id": "ID"})
-            .assign(Value=lambda df: df["overall_alert"].fillna(-1).astype(int))
+            .assign(Value=lambda df: df["overall_alert"])
             .assign(
                 overall_alert=lambda df: df["overall_alert"].map(
                     self.config["br"]["farolcovid"]["categories"]
@@ -319,7 +317,7 @@ def now(config):
             print(state + ": " + dictsDW["idStatesMap"][state])
 
         # Gen country
-        dictsDW["BR_ID"] = BrMap(ACCESS_TOKEN).createMap()
+        dictsDW["BR_ID"] = BrMap(config, ACCESS_TOKEN).createMap()
 
         BrMap(config, ACCESS_TOKEN).applyDefaultLayout(dictsDW["BR_ID"])
 

@@ -19,41 +19,35 @@ from endpoints.get_health_region_farolcovid_main import (
     get_overall_alert,
 )
 
-
 from endpoints.helpers import allow_local
-
-# from endpoints.scripts.simulator import run_simulation
 
 
 @allow_local
 def now(config):
 
-    # Get last cases data
-    cases = (
-        get_cities_cases.now(config, "br")
-        .dropna(subset=["active_cases"])
-        .assign(last_updated=lambda df: pd.to_datetime(df["last_updated"]))
-    )
-    cases = cases.loc[cases.groupby("city_id")["last_updated"].idxmax()].drop(
-        config["br"]["cases"]["drop"] + ["state_num_id", "health_region_id"], 1
-    )
-
-    # Merge resource data
-    df = get_health.now(config, "br")[
-        config["br"]["simulacovid"]["columns"]["cnes"]
-    ].merge(cases, on="city_id", how="left")
-
+    # Get resource data
     df = (
-        df[config["br"]["farolcovid"]["simulacovid"]["columns"]]
+        get_health.now(config, "br")[
+            [
+                "country_iso",
+                "country_name",
+                "state_num_id",
+                "state_id",
+                "state_name",
+                "health_region_id",
+                "health_region_name",
+                "city_name",
+                "city_id",
+                "last_updated_number_beds",
+                "author_number_beds",
+                "last_updated_number_icu_beds",
+                "author_number_icu_beds",
+            ]
+        ]
         .sort_values("city_id")
         .set_index("city_id")
-        .assign(
-            confirmed_cases=lambda x: x["confirmed_cases"].fillna(0),
-            deaths=lambda x: x["deaths"].fillna(0),
-        )
     )
 
-    # TODO: add ndays
     df = get_situation_indicators(
         df,
         data=get_cities_cases.now(config),
@@ -104,10 +98,10 @@ TESTS = {
     "overall alert > 3": lambda df: all(
         df[~df["overall_alert"].isnull()]["overall_alert"] <= 3
     ),
-    # "city doesnt have both rt classified and growth": lambda df: df[
+    # "doesnt have both rt classified and growth": lambda df: df[
     #     "control_classification"
     # ].count()
-    # == df["control_growth"].count(),
+    # == df["rt_most_likely_growth"].count(),
     "rt 10 days maximum and minimum values": lambda df: all(
         df[
             ~(

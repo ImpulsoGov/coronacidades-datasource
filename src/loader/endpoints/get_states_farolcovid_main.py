@@ -134,10 +134,10 @@ TESTS = {
         df[~df["overall_alert"].isnull()]["overall_alert"] <= 3
     ),
     # "dataframe has null data": lambda df: all(df.isnull().any() == False),
-    # "state doesnt have both rt classified and growth": lambda df: df[
-    #     "control_classification"
-    # ].count()
-    # == df["control_growth"].count(),
+    "doesnt have both rt classified and growth": lambda df: df[
+        "control_classification"
+    ].count()
+    == df["rt_most_likely_growth"].count(),
     "rt 10 days maximum and minimum values": lambda df: all(
         df[
             ~(

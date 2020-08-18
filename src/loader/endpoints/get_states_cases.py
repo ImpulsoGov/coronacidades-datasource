@@ -11,6 +11,7 @@ from endpoints.get_cities_cases import (
     get_mavg_indicators,
     correct_negatives,
     download_brasilio_table,
+    get_until_last,
 )
 from endpoints import get_places_id
 from endpoints.scripts import get_notification_rate
@@ -35,6 +36,9 @@ def now(config, country="br"):
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
             .sort_values(["city_id", "state_id", "last_updated"])
+            .groupby("city_id")
+            .apply(lambda group: get_until_last(group))
+            .reset_index(drop=True)
         )
         # Group cases by states
         df = (

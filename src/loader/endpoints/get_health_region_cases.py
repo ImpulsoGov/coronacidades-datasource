@@ -18,6 +18,7 @@ from endpoints.get_cities_cases import (
     correct_negatives,
     get_infectious_period_cases,
     get_mavg_indicators,
+    get_until_last
 )
 
 
@@ -40,6 +41,9 @@ def now(config, country="br"):
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
             .sort_values(["city_id", "state_id", "last_updated"])
+            .groupby("city_id")
+            .apply(lambda group: get_until_last(group))
+            .reset_index(drop=True)
         )
 
         # Fix places_ids by city_id => Get health_region_id
@@ -58,7 +62,7 @@ def now(config, country="br"):
                         "health_region_name",
                         "health_region_id",
                         "state_name",
-                        "state_id"
+                        "state_id",
                         "state_num_id",
                     ]
                 ].drop_duplicates(),

@@ -9,7 +9,7 @@ import io
 from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
-from endpoints import get_places_id
+from endpoints import get_health
 from endpoints.scripts import get_notification_rate
 from utils import download_from_drive
 
@@ -45,7 +45,7 @@ def get_mavg_indicators(df, col, place_id, weighted=True):
     df = df.sort_values([place_id, "last_updated"])
 
     if weighted:
-        divide = df["estimated_population_2019"] / 10 ** 5
+        divide = df["population"] / 10 ** 5
     else:
         divide = 1
 
@@ -162,17 +162,17 @@ def now(config, country="br"):
             .groupby("city_id")
             .apply(lambda group: get_until_last(group))
             .reset_index(drop=True)
+            .drop(["city_name", "estimated_population_2019"], 1)
+            .assign(city_id=lambda df: df["city_id"].astype(int))
         )
 
-        # Fix places name and ID
-        places_ids = get_places_id.now(config).assign(
+        # Fix places name & ID + Get total population
+        places_ids = get_health.now(config).assign(
             city_id=lambda df: df["city_id"].astype(int)
         )
 
         df = (
-            df.drop(["city_name"], 1)
-            .assign(city_id=lambda df: df["city_id"].astype(int))
-            .merge(
+            df.merge(
                 places_ids[
                     [
                         "city_id",
@@ -181,6 +181,7 @@ def now(config, country="br"):
                         "health_region_id",
                         "state_name",
                         "state_num_id",
+                        "population",
                     ]
                 ],
                 on="city_id",

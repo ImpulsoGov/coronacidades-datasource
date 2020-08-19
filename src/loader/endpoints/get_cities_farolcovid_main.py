@@ -42,6 +42,7 @@ def now(config):
                 "author_number_beds",
                 "last_updated_number_icu_beds",
                 "author_number_icu_beds",
+                "population",
             ]
         ]
         .sort_values("city_id")

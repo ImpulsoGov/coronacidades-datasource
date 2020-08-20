@@ -64,10 +64,7 @@ def gen_googledrive_token(credentials_path, out_token_path):
 
 def build_file_path(endpoint):
 
-    if (
-        endpoint["endpoint"] == "INLOCO_CITIES_ROUTE"
-        or endpoint["endpoint"] == "INLOCO_STATES_ROUTE"
-    ):
+    if "_ROUTE" in endpoint["endpoint"]:
         route = os.getenv(endpoint["endpoint"])
     else:
         route = endpoint["endpoint"]

@@ -39,36 +39,16 @@ from datawrapper import Datawrapper
 
 import os
 
-# INIT
-dictsDW = yaml.load(open("map_config.yaml", "r"), Loader=yaml.FullLoader)
-idStateCode = dictsDW["idStateCode"]
-idStatesMap = dictsDW["idStatesMap"]
-IS_DEV = os.getenv("IS_MAP_DEV") == "True"
-
-
-if None in idStatesMap.values():
-    IS_DEV = True
-    print("Generating new ids")
-
-states = idStatesMap.keys()
-ACCESS_TOKEN = os.getenv("MAP_ACCESS_TOKEN")
-if not IS_DEV:
-    MAP_FOLDER_ID = dictsDW["MAP_FOLDER_ID"]
-else:
-    MAP_FOLDER_ID = 38060  # "maps-coronacidades"
-
-dw = Datawrapper(access_token=ACCESS_TOKEN)
-
-
 # CLASSES
 class StateMap:
-    def __init__(self, state_id, config, acess_token=None):
+    def __init__(self, state_id, config, map_folder_id, basemapCMD, access_token=None):
         self.state_id = state_id
-        self.dw = Datawrapper(acess_token)
+        self.dw = Datawrapper(access_token)
         self.config = config
+        self.map_folder_id = map_folder_id
+        self.basemapCMD = basemapCMD
         # __dadosFarol__
         self.map_data = self.__dadosFarol__()
-        self.basemapCMD = self.__getCodes__()
 
     def __dadosFarol__(self):
         # Puxa os dados do Farol
@@ -92,23 +72,15 @@ class StateMap:
             )
         )
 
-    def __getCodes__(self):
-        # Pega o código do mapa para criar o Mapa por estado
-        # state_name = self.farolcovid_states["state_name"][0]
-        # main_title = f"{state_name}<br>Fonte: Impulso | {self.date}"
-        self.main_title = " "
-        basemapcode = idStateCode[self.state_id]
-        basemapCMD = f"brazil-{basemapcode}-municipalities"
-        return basemapCMD
-
     def createMap(self):
         # Cria o Mapa
         # print(self.map_data.head())
+
         stateMap = self.dw.create_chart(
             title=" ",
             chart_type="d3-maps-choropleth",
             data=self.map_data,
-            folder_id=MAP_FOLDER_ID,
+            folder_id=self.map_folder_id,
         )
         self.dw.add_data(stateMap["publicId"], self.map_data)
         mapContour = {
@@ -178,13 +150,14 @@ class StateMap:
     def updateMap(self, mapID):
         self.dw.add_data(mapID, self.map_data)
         self.applyDefaultLayout(mapID)
-        self.dw.update_chart(mapID, title=self.main_title)
+        self.dw.update_chart(mapID, title="")
 
 
 class BrMap:
-    def __init__(self, config, acess_token=None):
-        self.dw = Datawrapper(acess_token)
+    def __init__(self, config, map_folder_id, access_token=None):
+        self.dw = Datawrapper(access_token)
         self.config = config
+        self.map_folder_id = map_folder_id
 
         # __dadosFarol__
         self.map_data = self.__dadosFarol__()
@@ -218,7 +191,7 @@ class BrMap:
             title="_",
             chart_type="d3-maps-choropleth",
             data=self.map_data,
-            folder_id=MAP_FOLDER_ID,
+            folder_id=self.map_folder_id,
         )
         mapContour = {
             "axes": {"keys": "ID", "values": "Value"},
@@ -302,52 +275,83 @@ def now(config):
     config : dict
     """
 
+    # INIT
+    idStateCode = config["br"]["maps"]["idStateCode"]
+    idStatesMap = config["br"]["maps"]["idStatesMap"]
+    states = idStatesMap.keys()
+    ACCESS_TOKEN = os.getenv("MAP_ACCESS_TOKEN")
+
+    if None in idStatesMap.values():
+        IS_DEV = True
+        print("Generating new ids")
+    else:
+        IS_DEV = os.getenv("IS_MAP_DEV") == "True"
+
+    if not IS_DEV:
+        map_folder_id = config["br"]["maps"]["MAP_FOLDER_ID"]
+    else:
+        map_folder_id = 38060  # "maps-coronacidades"
+
+    dw = Datawrapper(access_token=ACCESS_TOKEN)
+
     if IS_DEV:
         # Gen states
-        for state in states:
-            dictsDW["idStatesMap"][state] = StateMap(
-                state, config, ACCESS_TOKEN
+        for state_id in states:
+            basemapCMD = f"brazil-{idStateCode[state_id]}-municipalities"
+
+            config["br"]["maps"]["idStatesMap"][state_id] = StateMap(
+                state_id, config, map_folder_id, basemapCMD, ACCESS_TOKEN
             ).createMap()
 
-            StateMap(state, config, ACCESS_TOKEN).applyDefaultLayout(
-                dictsDW["idStatesMap"][state]
-            )
+            StateMap(
+                state_id, config, map_folder_id, basemapCMD, ACCESS_TOKEN
+            ).applyDefaultLayout(config["br"]["maps"]["idStatesMap"][state_id])
 
-            dw.publish_chart(dictsDW["idStatesMap"][state])
-            print(state + ": " + dictsDW["idStatesMap"][state])
+            dw.publish_chart(config["br"]["maps"]["idStatesMap"][state_id])
+            print(state_id + ": " + config["br"]["maps"]["idStatesMap"][state_id])
 
         # Gen country
-        dictsDW["BR_ID"] = BrMap(config, ACCESS_TOKEN).createMap()
+        config["br"]["maps"]["BR_ID"] = BrMap(
+            config, map_folder_id, ACCESS_TOKEN
+        ).createMap()
 
-        BrMap(config, ACCESS_TOKEN).applyDefaultLayout(dictsDW["BR_ID"])
+        BrMap(config, map_folder_id, ACCESS_TOKEN).applyDefaultLayout(
+            config["br"]["maps"]["BR_ID"]
+        )
 
-        dw.publish_chart(dictsDW["BR_ID"])
-        print("BR : " + dictsDW["BR_ID"])
+        dw.publish_chart(config["br"]["maps"]["BR_ID"])
+        print("BR : " + config["br"]["maps"]["BR_ID"])
 
     else:
         # Gen states
-        for state in states:
-            StateMap(state, config, ACCESS_TOKEN).updateMap(
-                dictsDW["idStatesMap"][state]
-            )
+        for state_id in states:
+            basemapCMD = f"brazil-{idStateCode[state_id]}-municipalities"
 
-            dw.publish_chart(dictsDW["idStatesMap"][state])
-            print(state + ": " + dictsDW["idStatesMap"][state])
+            StateMap(
+                state_id, config, map_folder_id, basemapCMD, ACCESS_TOKEN
+            ).updateMap(config["br"]["maps"]["idStatesMap"][state_id])
+
+            dw.publish_chart(config["br"]["maps"]["idStatesMap"][state_id])
+            print(state_id + ": " + config["br"]["maps"]["idStatesMap"][state_id])
 
         # Gen country
-        BrMap(config, ACCESS_TOKEN).updateMap(dictsDW["BR_ID"])
+        BrMap(config, map_folder_id, ACCESS_TOKEN).updateMap(
+            config["br"]["maps"]["BR_ID"]
+        )
 
-        dw.publish_chart(dictsDW["BR_ID"])
-        print("BR : " + dictsDW["BR_ID"])
+        dw.publish_chart(config["br"]["maps"]["BR_ID"])
+        print("BR : " + config["br"]["maps"]["BR_ID"])
 
     out_frame = (
         pd.DataFrame(
             {
-                "place_id": list(dictsDW["idStatesMap"].keys()),
-                "map_id": list(dictsDW["idStatesMap"].values()),
+                "place_id": list(config["br"]["maps"]["idStatesMap"].keys()),
+                "map_id": list(config["br"]["maps"]["idStatesMap"].values()),
             }
         )
-        .append(pd.DataFrame({"place_id": "BR", "map_id": [dictsDW["BR_ID"]]}))
+        .append(
+            pd.DataFrame({"place_id": "BR", "map_id": [config["br"]["maps"]["BR_ID"]]})
+        )
         .reset_index()
     )
 
@@ -364,3 +368,14 @@ def now(config):
 TESTS = {
     "dataframe has null data": lambda df: all(df.isnull().any() == False),
 }
+
+
+# def __getCodes__(self):
+#     # Pega o código do mapa para criar o Mapa por estado
+#     # state_name = self.farolcovid_states["state_name"][0]
+#     # main_title = f"{state_name}<br>Fonte: Impulso | {self.date}"
+#     self.main_title = " "
+#     basemapcode = idStateCode[self.state_id]
+#     basemapCMD = f"brazil-{basemapcode}-municipalities"
+#     return basemapCMD
+

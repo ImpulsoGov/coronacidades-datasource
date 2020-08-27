@@ -13,7 +13,7 @@ from endpoints.get_cities_cases import (
     download_brasilio_table,
     get_until_last,
 )
-from endpoints import get_health
+from endpoints import get_health, get_places_id
 from endpoints.scripts import get_notification_rate
 from endpoints.helpers import allow_local
 
@@ -42,30 +42,36 @@ def now(config, country="br"):
             .drop(columns="estimated_population_2019")
         )
 
-        # Fix places_ids by city_id => Get state_num_id
-        places_ids = get_health.now(config).assign(
-            city_id=lambda df: df["city_id"].astype(int),
-            state_num_id=lambda df: df["state_num_id"].astype(int),
-        )
-
+        # Fix places_ids by city_id => Get health_region_id
         df = df.merge(
-            places_ids[
-                ["state_name", "state_num_id", "population", "city_id"]
-            ].drop_duplicates(),
-            on="city_id",
+            get_places_id.now(config)
+            .assign(state_num_id=lambda df: df["state_num_id"].astype(int),)[
+                ["state_name", "state_id", "state_num_id",]
+            ]
+            .drop_duplicates(),
+            on="state_id",
         )
 
         # Group cases by states
         df = (
-            df.groupby(["state_name", "state_num_id", "state_id", "last_updated"])
+            df.groupby(["state_num_id", "state_id", "state_name", "last_updated",])
             .agg(
-                population=("population", sum),
                 confirmed_cases=("confirmed_cases", sum),
                 deaths=("deaths", sum),
                 daily_cases=("daily_cases", sum),
                 new_deaths=("new_deaths", sum),
             )
             .reset_index()
+        )
+
+        # Add population data from CNES
+        df = df.merge(
+            get_health.now(config)
+            .assign(state_num_id=lambda df: df["state_num_id"].astype(int),)
+            .groupby("state_num_id")["population"]
+            .sum()
+            .reset_index(),
+            on="state_num_id",
         )
 
         # Transform cases data
@@ -106,4 +112,8 @@ def now(config, country="br"):
 TESTS = {
     "not 27 states": lambda df: len(df["state_id"].unique()) == 27,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "population not fixed by state": lambda df: len(
+        df[["population", "state_id"]].drop_duplicates()
+    )
+    == len(df["state_id"].drop_duplicates()),
 }

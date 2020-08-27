@@ -9,7 +9,7 @@ import io
 from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
-from endpoints import get_places_id
+from endpoints import get_health
 from endpoints.scripts import get_notification_rate
 from utils import download_from_drive
 
@@ -45,22 +45,26 @@ def get_mavg_indicators(df, col, place_id, weighted=True):
     df = df.sort_values([place_id, "last_updated"])
 
     if weighted:
-        divide = df["estimated_population_2019"] / 10 ** 6
+        divide = df["population"] / 10 ** 5
     else:
         divide = 1
 
     # Cria coluna mavg
-    df_mavg = df.assign(rolling_1mi=lambda df: df[col] / divide).assign(
-        mavg_1mi=lambda df: df.groupby(place_id)
-        .rolling(7, window_period=7, on="last_updated")["rolling_1mi"]
-        .sum()
+    df_mavg = df.assign(
+        mavg=lambda df: df.groupby(place_id)
+        .rolling(7, window_period=7, on="last_updated")[col]
+        .mean()
         .round(1)
         .reset_index(drop=True)
     )
 
+    df_mavg = df_mavg.assign(mavg_100k=lambda df: df["mavg"] / divide)
+
     # Cria colunas auxiliares para tendencia
     df_mavg = (
-        df_mavg.assign(diff=lambda df: np.sign(df.groupby(place_id)["mavg_1mi"].diff()))
+        df_mavg.assign(
+            diff=lambda df: np.sign(df.groupby(place_id)["mavg_100k"].diff())
+        )
         .assign(
             diff_5_days=lambda df: df.groupby(place_id)
             .rolling(5, window_period=5, on="last_updated")["diff"]
@@ -83,9 +87,15 @@ def get_mavg_indicators(df, col, place_id, weighted=True):
     )
 
     return df.merge(
-        df_mavg[["mavg_1mi", "growth", place_id, "last_updated"]],
+        df_mavg[["mavg", "mavg_100k", "growth", place_id, "last_updated"]],
         on=[place_id, "last_updated"],
-    ).rename(columns={"mavg_1mi": col + "_mavg_1mi", "growth": col + "_growth",})
+    ).rename(
+        columns={
+            "mavg": col + "_mavg",
+            "mavg_100k": col + "_mavg_100k",
+            "growth": col + "_growth",
+        }
+    )
 
 
 def correct_negatives(group):
@@ -116,6 +126,15 @@ def correct_negatives(group):
     return group
 
 
+def get_until_last(group):
+    """Filter data until last date collected by group
+    """
+    group = group.sort_values("last_updated").reset_index()
+    last = group[group["is_last"] == True]
+
+    return group[group["last_updated"] <= last["last_updated"].values[0]]
+
+
 def download_brasilio_table(url):
     response = urlopen(Request(url, headers={"User-Agent": "python-urllib"}))
     return pd.read_csv(io.StringIO(gzip.decompress(response.read()).decode("utf-8")))
@@ -131,7 +150,7 @@ def now(config, country="br"):
             + config["br"]["seir_parameters"]["critical_duration"]
         )
 
-        # Get data & clean table
+        # Filter and rename columns
         df = (
             download_brasilio_table(config["br"]["cases"]["url"])
             .query("place_type == 'city'")
@@ -140,17 +159,20 @@ def now(config, country="br"):
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
             .sort_values(["city_id", "state_id", "last_updated"])
+            .groupby("city_id")
+            .apply(lambda group: get_until_last(group))
+            .reset_index(drop=True)
+            .drop(["city_name", "estimated_population_2019"], 1)
+            .assign(city_id=lambda df: df["city_id"].astype(int))
         )
 
-        # Fix places_ids
-        places_ids = get_places_id.now(config).assign(
+        # Fix places name & ID + Get total population
+        places_ids = get_health.now(config).assign(
             city_id=lambda df: df["city_id"].astype(int)
         )
 
         df = (
-            df.drop(["city_name"], 1)
-            .assign(city_id=lambda df: df["city_id"].astype(int))
-            .merge(
+            df.merge(
                 places_ids[
                     [
                         "city_id",
@@ -159,6 +181,7 @@ def now(config, country="br"):
                         "health_region_id",
                         "state_name",
                         "state_num_id",
+                        "population",
                     ]
                 ],
                 on="city_id",
@@ -202,6 +225,12 @@ def now(config, country="br"):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["city_id"].unique()) <= 5570,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "last date is repeated": lambda df: all(
+        df.loc[df.groupby("city_id")["last_updated"].idxmax()][
+            ["last_updated", "city_id"]
+        ]
+        == df[df["is_last"] == True][["last_updated", "city_id"]]
+    )
     # TODO: corrigir teste! => ultima taxa calculada 14 dias antes
     # "notification_rate == NaN": lambda df: len(
     #     df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values

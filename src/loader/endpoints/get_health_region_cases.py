@@ -9,7 +9,7 @@ import io
 from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
-from endpoints import get_places_id
+from endpoints import get_health
 from endpoints.scripts import get_notification_rate
 from utils import download_from_drive
 
@@ -18,6 +18,7 @@ from endpoints.get_cities_cases import (
     correct_negatives,
     get_infectious_period_cases,
     get_mavg_indicators,
+    get_until_last,
 )
 
 
@@ -40,30 +41,32 @@ def now(config, country="br"):
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
             .sort_values(["city_id", "state_id", "last_updated"])
+            .groupby("city_id")
+            .apply(lambda group: get_until_last(group))
+            .reset_index(drop=True)
+            .drop(["city_name", "state_id", "estimated_population_2019"], 1)
+            .assign(city_id=lambda df: df["city_id"].astype(int))
         )
 
         # Fix places_ids by city_id => Get health_region_id
-        places_ids = get_places_id.now(config).assign(
+        places_ids = get_health.now(config).assign(
             city_id=lambda df: df["city_id"].astype(int),
             health_region_id=lambda df: df["health_region_id"].astype(int),
         )
 
-        df = (
-            df.drop(["city_name", "state_id"], 1)
-            .assign(city_id=lambda df: df["city_id"].astype(int))
-            .merge(
-                places_ids[
-                    [
-                        "city_id",
-                        "health_region_name",
-                        "health_region_id",
-                        "state_name",
-                        "state_id"
-                        "state_num_id",
-                    ]
-                ].drop_duplicates(),
-                on="city_id",
-            )
+        df = df.merge(
+            places_ids[
+                [
+                    "city_id",
+                    "health_region_name",
+                    "health_region_id",
+                    "state_name",
+                    "state_id",
+                    "state_num_id",
+                    "population",
+                ]
+            ].drop_duplicates(),
+            on="city_id",
         )
 
         # Group cases by health region
@@ -79,7 +82,7 @@ def now(config, country="br"):
                 ]
             )
             .agg(
-                estimated_population_2019=("estimated_population_2019", sum),
+                population=("population", sum),
                 confirmed_cases=("confirmed_cases", sum),
                 deaths=("deaths", sum),
                 daily_cases=("daily_cases", sum),

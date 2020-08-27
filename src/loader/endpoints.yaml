@@ -56,14 +56,18 @@
   python_file: get_cities_rt
   skip: False
 
-- endpoint: br/cities/farolcovid/main
-  python_file: get_cities_farolcovid_main
-  skip: False
-
 - endpoint: br/health_region/farolcovid/main
   python_file: get_health_region_farolcovid_main
   skip: False
 
+- endpoint: br/cities/farolcovid/main
+  python_file: get_cities_farolcovid_main
+  skip: False
+
 - endpoint: br/states/farolcovid/main
   python_file: get_states_farolcovid_main
+  skip: False
+
+- endpoint: br/maps
+  python_file: get_maps
   skip: False

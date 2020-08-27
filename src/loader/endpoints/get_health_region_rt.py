@@ -19,11 +19,11 @@ TESTS = {
     ),
     "rt most likely outside confidence interval": lambda df: len(
         df[
-            (df["Rt_most_likely"] > df["Rt_high_95"])
-            or (df["Rt_most_likely"] < df["Rt_low_95"])
+            (df["Rt_most_likely"] <= df["Rt_high_95"])
+            & (df["Rt_most_likely"] >= df["Rt_low_95"])
         ]
     )
-    == 0,
+    == len(df),
     # "region has rt with less than 14 days": lambda df: all(
     #     df.groupby("health_region_id")["last_updated"].count() > 14
     # )

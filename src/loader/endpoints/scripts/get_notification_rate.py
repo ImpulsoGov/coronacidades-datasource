@@ -155,11 +155,13 @@ def now(df, place_id="health_region_id", is_acum=False):
             ].cumsum()
         )
 
-    # Get notification rate
+    # Get notification rate & fill zero with last value
     df = df.assign(
         notification_rate=lambda df: (df[cases] / df["estimated_cases"]).clip(0, 1)
+    ).assign(
+        notification_rate=lambda df: df["notification_rate"].replace(
+            to_replace=0, method="ffill"
+        )
     )
 
-    # df["notification_rate"] = df["confirmed_cases"] / df["estimated_cases"]
-    # df["notification_rate"] = df["notification_rate"].clip(0, 1)
     return df.drop(columns=["new_deaths", "daily_cases"])

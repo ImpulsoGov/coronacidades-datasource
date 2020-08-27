@@ -11,8 +11,9 @@ from endpoints.get_cities_cases import (
     get_mavg_indicators,
     correct_negatives,
     download_brasilio_table,
+    get_until_last,
 )
-from endpoints import get_places_id
+from endpoints import get_health
 from endpoints.scripts import get_notification_rate
 from endpoints.helpers import allow_local
 
@@ -35,29 +36,36 @@ def now(config, country="br"):
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
             .sort_values(["city_id", "state_id", "last_updated"])
+            .groupby("city_id")
+            .apply(lambda group: get_until_last(group))
+            .reset_index(drop=True)
+            .drop(columns="estimated_population_2019")
         )
+
+        # Fix places_ids by city_id => Get state_num_id
+        places_ids = get_health.now(config).assign(
+            city_id=lambda df: df["city_id"].astype(int),
+            state_num_id=lambda df: df["state_num_id"].astype(int),
+        )
+
+        df = df.merge(
+            places_ids[
+                ["state_name", "state_num_id", "population", "city_id"]
+            ].drop_duplicates(),
+            on="city_id",
+        )
+
         # Group cases by states
         df = (
-            df.groupby(["state_id", "last_updated"])
+            df.groupby(["state_name", "state_num_id", "state_id", "last_updated"])
             .agg(
-                estimated_population_2019=("estimated_population_2019", sum),
+                population=("population", sum),
                 confirmed_cases=("confirmed_cases", sum),
                 deaths=("deaths", sum),
                 daily_cases=("daily_cases", sum),
                 new_deaths=("new_deaths", sum),
             )
             .reset_index()
-        )  # group cases by state
-
-        # Fix places_ids by city_id => Get state_num_id
-        places_ids = get_places_id.now(config).assign(
-            city_id=lambda df: df["city_id"].astype(int),
-            state_num_id=lambda df: df["state_num_id"].astype(int),
-        )
-
-        df = df.merge(
-            places_ids[["state_id", "state_name", "state_num_id",]].drop_duplicates(),
-            on="state_id",
         )
 
         # Transform cases data

@@ -4,7 +4,7 @@ import yaml
 from scipy.integrate import odeint
 
 
-def prepare_states(population_params, model_params):
+def prepare_states(population_params, hospitalization_params, model_params):
     """
     Estimate non explicity population initial states
 
@@ -30,7 +30,14 @@ def prepare_states(population_params, model_params):
     e_perc = (model_params["doubling_rate"] - 1) * model_params[
         "incubation_period"
     ]  # 0.26 * 6 = 1.56
-    exposed = population_params["I"] * model_params["i1_percentage"] * e_perc
+    i1_percentage = (
+        1
+        - hospitalization_params["i2_percentage"]
+        - hospitalization_params["i3_percentage"]
+    )
+    exposed = (
+        population_params["I"] * i1_percentage * e_perc
+    )  # model_params["i1_percentage"] * e_perc
 
     initial_pop_params = {
         "S": population_params["N"]
@@ -39,9 +46,16 @@ def prepare_states(population_params, model_params):
         - population_params["I"]
         - exposed,
         "E": exposed,
-        "I1": population_params["I"] * model_params["i1_percentage"],  # 85.5%
-        "I2": population_params["I"] * model_params["i2_percentage"],  # 12.5%
-        "I3": population_params["I"] * model_params["i3_percentage"],  # 2.5%
+        "I1": population_params["I"]
+        * i1_percentage,  # model_params["i1_percentage"],  # 85.5%
+        "I2": population_params["I"]
+        * hospitalization_params[
+            "i2_percentage"
+        ],  # model_params["i2_percentage"],  # 12.5%
+        "I3": population_params["I"]
+        * hospitalization_params[
+            "i3_percentage"
+        ],  # model_params["i3_percentage"],  # 2.5%
         "R": population_params["R"],
         "D": population_params["D"],
     }
@@ -172,7 +186,9 @@ def SEIR(y, t, model_params, initial=False):
     return dSdt, dEdt, dI1dt, dI2dt, dI3dt, dRdt, dDdt
 
 
-def entrypoint(population_params, model_params, phase, initial=False):
+def entrypoint(
+    population_params, hospitalization_params, model_params, phase, initial=False
+):
     """
     Function to receive user input and run model.
     
@@ -205,7 +221,7 @@ def entrypoint(population_params, model_params, phase, initial=False):
 
     if initial:  # Get I1, I2, I3 & E
         population_params, model_params = (
-            prepare_states(population_params, model_params),
+            prepare_states(population_params, hospitalization_params, model_params),
             prepare_params(population_params, model_params, phase["R0"]),
         )
     else:

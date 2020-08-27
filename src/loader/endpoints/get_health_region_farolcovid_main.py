@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import yaml
+from pathlib import Path
 
 from endpoints import (
     get_health_region_cases,
@@ -179,13 +180,22 @@ def _calculate_recovered(df, params):
     return params
 
 
-def _prepare_simulation(row, place_id, config, rt_upper=None):
+def _prepare_simulation(row, place_id, config, hospitalization_params, rt_upper=None):
+
+    # based on Alison Hill: 30% asymptomatic
+    symtomatic = [
+        int(row["active_cases"] * 0.7) if not np.isnan(row["active_cases"]) else 1
+    ][0]
 
     params = {
         "population_params": {
-            "N": row["population"],
-            "I": [row["active_cases"] if not np.isnan(row["active_cases"]) else 1][0],
-            "D": [row["deaths"] if not np.isnan(row["deaths"]) else 0][0],
+            "N": int(row["population"]),
+            "I": symtomatic,
+            "D": [int(row["deaths"]) if not np.isnan(row["deaths"]) else 0][0],
+        },
+        "hospitalization_params": {
+            "i2_percentage": hospitalization_params["i2_percentage"].loc[int(row.name)],
+            "i3_percentage": hospitalization_params["i3_percentage"].loc[int(row.name)],
         },
         "n_beds": row["number_beds"]
         * config["br"]["simulacovid"]["resources_available_proportion"],
@@ -224,6 +234,44 @@ def _prepare_simulation(row, place_id, config, rt_upper=None):
     return dday_icu_beds["best"]
 
 
+def _get_infectious_hospitalized(place_id, config):
+    # Get stratified pop data
+    pop = (
+        pd.read_csv(
+            Path(
+                "endpoints/scripts/br_health_region_tabnet_age_dist_2019_treated.csv"
+            ).resolve()
+        )
+        .assign(
+            state_num_id=lambda df: df["health_region_id"].apply(
+                lambda x: int(str(x)[:2])
+            )
+        )
+        .groupby(place_id)
+        .sum()
+    )
+
+    # Get total perc of hospitalized weighted by age
+    df = pd.DataFrame(
+        (
+            pop.drop(columns=[col for col in pop.columns if "_id" in col])
+            .apply(lambda row: row / row["total"], axis=1)
+            .drop(columns=["total"])
+            .dot(pd.Series(config["br"]["seir_parameters"]["hospitalized_by_age_perc"]))
+        ),
+        columns=["hospitalized_by_age_perc"],
+    )
+
+    i3_perc = config["br"]["seir_parameters"]["i3_percentage"]
+    i2_perc = config["br"]["seir_parameters"]["i2_percentage"]
+
+    # Get total perc of I2 (severe) & I3 (critical) hospitalized weighted by age
+    df["i2_percentage"] = i2_perc * df["hospitalized_by_age_perc"] / (i2_perc + i3_perc)
+    df["i3_percentage"] = i3_perc * df["hospitalized_by_age_perc"] / (i2_perc + i3_perc)
+
+    return df
+
+
 def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
 
     if place_id == "health_region_id":
@@ -255,8 +303,12 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
         return df.drop(columns=[col for col in df if "_drop" in col])
 
     else:
+        hospitalization_params = _get_infectious_hospitalized(place_id, config)
         df["dday_icu_beds"] = df.apply(
-            lambda row: _prepare_simulation(row, place_id, config, rt_upper), axis=1,
+            lambda row: _prepare_simulation(
+                row, place_id, config, hospitalization_params, rt_upper
+            ),
+            axis=1,
         )
 
     df["dday_icu_beds"] = df["dday_icu_beds"].replace(-1, 91)

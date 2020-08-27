@@ -9,7 +9,7 @@ import io
 from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
-from endpoints import get_health
+from endpoints import get_health, get_places_id
 from endpoints.scripts import get_notification_rate
 from utils import download_from_drive
 
@@ -49,7 +49,7 @@ def now(config, country="br"):
         )
 
         # Fix places_ids by city_id => Get health_region_id
-        places_ids = get_health.now(config).assign(
+        places_ids = get_places_id.now(config).assign(
             city_id=lambda df: df["city_id"].astype(int),
             health_region_id=lambda df: df["health_region_id"].astype(int),
         )
@@ -63,7 +63,6 @@ def now(config, country="br"):
                     "state_name",
                     "state_id",
                     "state_num_id",
-                    "population",
                 ]
             ].drop_duplicates(),
             on="city_id",
@@ -82,13 +81,22 @@ def now(config, country="br"):
                 ]
             )
             .agg(
-                population=("population", sum),
                 confirmed_cases=("confirmed_cases", sum),
                 deaths=("deaths", sum),
                 daily_cases=("daily_cases", sum),
                 new_deaths=("new_deaths", sum),
             )
             .reset_index()
+        )
+
+        # Add population data from CNES
+        df = df.merge(
+            get_health.now(config)
+            .assign(health_region_id=lambda df: df["health_region_id"].astype(int),)
+            .groupby("health_region_id")["population"]
+            .sum()
+            .reset_index(),
+            on="health_region_id",
         )
 
         # Transform cases data
@@ -135,6 +143,10 @@ def now(config, country="br"):
 TESTS = {
     "more than 5570 cities": lambda df: len(df["health_region_id"].unique()) <= 450,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
+    "population not fixed by region": lambda df: len(
+        df[["population", "health_region_id"]].drop_duplicates()
+    )
+    == len(df["health_region_id"].drop_duplicates())
     # TODO: corrigir teste! => ultima taxa calculada 14 dias antes
     # "notification_rate == NaN": lambda df: len(
     #     df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values

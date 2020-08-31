@@ -116,13 +116,13 @@ def now(config):
     cols = [col for col in df.columns if "classification" in col]
 
     # TODO: Overall alert - max of cumulative regions in level
-    df["overall_alert"] = _get_weighted_level(
-        get_health_region_farolcovid_main.now(config)
-    )
+    # df["overall_alert"] = _get_weighted_level(
+    #     get_health_region_farolcovid_main.now(config)
+    # )
 
-    # df["overall_alert"] = df.apply(
-    #     lambda row: get_overall_alert(row[cols]), axis=1
-    # ) # .replace(config["br"]["farolcovid"]["categories"])
+    df["overall_alert"] = df.apply(
+        lambda row: get_overall_alert(row[cols]), axis=1
+    ) # .replace(config["br"]["farolcovid"]["categories"])
 
     return df.reset_index()
 

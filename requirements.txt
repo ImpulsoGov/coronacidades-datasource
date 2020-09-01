@@ -15,3 +15,7 @@ python-Levenshtein
 psutil
 python-dotenv
 fuzzyset
+datawrapper
+plotly
+cufflinks
+rpy2==3.2.2

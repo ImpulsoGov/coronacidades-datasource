@@ -22,7 +22,7 @@ def get_dday(dfs, col, resource_number):
     return dday
 
 
-def run_simulation(user_input, config):
+def run_simulation(params, config):
 
     dfs = {"worst": np.nan, "best": np.nan}
 
@@ -31,11 +31,12 @@ def run_simulation(user_input, config):
 
         # Run model projection
         res = entrypoint(
-            user_input["population_params"],
+            params["population_params"],
+            params["hospitalization_params"],
             config["br"]["seir_parameters"],
             phase={
                 "scenario": "projection_current_rt",
-                "R0": user_input["R0"][bound],
+                "R0": params["R0"][bound],
                 "n_days": 90,
             },
             initial=True,
@@ -47,10 +48,10 @@ def run_simulation(user_input, config):
 
         dfs[bound] = res
 
-    dday_beds = get_dday(dfs, "I2", user_input["n_beds"])
-    dday_ventilators = get_dday(dfs, "I3", user_input["n_ventilators"])
+    dday_beds = get_dday(dfs, "I2", params["n_beds"])
+    dday_icu_beds = get_dday(dfs, "I3", params["n_icu_beds"])
 
-    return dday_beds, dday_ventilators
+    return dday_beds, dday_icu_beds
 
 
 if __name__ == "__main__":

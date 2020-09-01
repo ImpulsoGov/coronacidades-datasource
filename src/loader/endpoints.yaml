@@ -43,6 +43,11 @@
   secret_path: [inloco, cities]
   python_file: get_inloco_cities
   skip: False
+  
+ - endpoint: INLOCO_RS_CITIES_ROUTE
+  secret_path: [inloco, rs_cities]
+  python_file: get_inloco_rs_cities
+  skip: False
 
 - endpoint: br/states/rt
   python_file: get_states_rt

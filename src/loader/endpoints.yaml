@@ -19,19 +19,15 @@
   skip: False
 
 - endpoint: br/cities/cases/full
-  python_file: get_cases
+  python_file: get_cities_cases
   skip: False
 
-- endpoint: br/cities/simulacovid/main
-  python_file: get_simulacovid_main
+- endpoint: br/health_region/cases/full
+  python_file: get_health_region_cases
   skip: False
 
-- endpoint: br/states/rt
-  python_file: get_states_rt
-  skip: False
-
-- endpoint: br/health_region/rt
-  python_file: get_health_region_rt
+- endpoint: br/states/cases/full
+  python_file: get_states_cases
   skip: False
 
 - endpoint: world/owid/heatmap
@@ -48,18 +44,30 @@
   python_file: get_inloco_cities
   skip: False
 
-- endpoint: br/cities/rt
-  python_file: get_cities_rt
+- endpoint: br/states/rt
+  python_file: get_states_rt
   skip: False
 
-- endpoint: br/cities/farolcovid/main
-  python_file: get_cities_farolcovid_main
+- endpoint: br/health_region/rt
+  python_file: get_health_region_rt
+  skip: False
+
+- endpoint: br/cities/rt
+  python_file: get_cities_rt
   skip: False
 
 - endpoint: br/health_region/farolcovid/main
   python_file: get_health_region_farolcovid_main
   skip: False
 
+- endpoint: br/cities/farolcovid/main
+  python_file: get_cities_farolcovid_main
+  skip: False
+
 - endpoint: br/states/farolcovid/main
   python_file: get_states_farolcovid_main
+  skip: False
+
+- endpoint: br/maps
+  python_file: get_maps
   skip: False

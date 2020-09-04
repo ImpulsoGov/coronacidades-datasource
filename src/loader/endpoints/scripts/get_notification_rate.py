@@ -30,7 +30,7 @@ simulation_params = {
 
 agg_params = {
     "mavg_window": 15,  # sizeOfSlidingWindow
-    "delay_days": 14,  # daysBefore
+    "delay_days": 19,  # daysBefore
 }
 
 

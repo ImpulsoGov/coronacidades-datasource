@@ -22,7 +22,13 @@ def _recover_notification_rate(row, rates):
 @allow_local
 def now(config):
 
-    df = get_health.now(config, "br")[config["br"]["simulacovid"]["columns"]["cnes"]]
+    # Ajuste com o config: coluna faltante
+    cols = [
+        i
+        for i in config["br"]["simulacovid"]["columns"]["cnes"]
+        if i != "author_number_icu_beds"
+    ]
+    df = get_health.now(config, "br")[cols]
 
     # merge cases
     cases = get_cases.now(config, "br")

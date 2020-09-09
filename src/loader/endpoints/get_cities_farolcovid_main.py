@@ -281,7 +281,11 @@ def now(config):
 
     df = (
         get_simulacovid_main.now(config)[
-            config["br"]["farolcovid"]["simulacovid"]["columns"]
+            [
+                i
+                for i in config["br"]["farolcovid"]["simulacovid"]["columns"]
+                if i != "author_number_icu_beds"
+            ]
             + ["city_notification_place_type"]
         ]
         .sort_values("city_id")

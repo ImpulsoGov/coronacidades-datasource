@@ -16,10 +16,20 @@ from endpoints.helpers import allow_local
 
 def get_cases_series(df, place_id, min_days):
 
+    # get total daily cases for place
     df = (
         df[[place_id, "last_updated", "daily_cases"]]
         .groupby([place_id, "last_updated"])["daily_cases"]
         .sum()
+        .reset_index()
+    )
+
+    # get cases mavg
+    df = (
+        df.groupby([place_id])
+        .rolling(7, window_period=7, on="last_updated")["daily_cases"]
+        .mean()
+        .dropna()
         .round(0)
     )
 
@@ -225,7 +235,7 @@ def get_rt(df, place_id, config):
     # Filter 10 days ago (KEVIN & COVIDACTNOW)
     df = df[df["last_updated"] <= (df["last_updated"].max() - dt.timedelta(10))]
 
-    # Filter more than 14 days
+    # Filter more than 14 days & get cases mavg
     df = get_cases_series(df, place_id, config["br"]["rt_parameters"]["min_days"])
 
     # subs cidades com 0 casos -> 0.1 caso no periodo

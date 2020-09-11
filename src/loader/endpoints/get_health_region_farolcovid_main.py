@@ -165,7 +165,7 @@ def _prepare_simulation(row, place_id, config, place_specific_params, rt_upper=N
     symtomatic = [
         int(
             row["active_cases"]
-            * config["br"]["seir_parameters"]["asymptomatic_proportion"]
+            * (1 - config["br"]["seir_parameters"]["asymptomatic_proportion"])
         )
         if not np.isnan(row["active_cases"])
         else 1

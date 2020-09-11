@@ -242,7 +242,7 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
             .merge(
                 data[
                     [
-                        "dday_beds",
+                        "dday_icu_beds",
                         "number_beds",
                         "number_icu_beds",
                         "health_region_id",
@@ -258,14 +258,14 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
         return df.drop(columns=[col for col in df if "_drop" in col])
 
     else:
-        df["dday_beds"] = df.apply(
+        df["dday_icu_beds"] = df.apply(
             lambda row: _prepare_simulation(
                 row, place_id, config, place_specific_params, rt_upper
             ),
             axis=1,
         )
 
-    df["dday_beds"] = df["dday_beds"].replace(-1, 91)
+    df["dday_icu_beds"] = df["dday_icu_beds"].replace(-1, 91)
 
     rules[classify]
     # Classificação: numero de dias para acabar a capacidade

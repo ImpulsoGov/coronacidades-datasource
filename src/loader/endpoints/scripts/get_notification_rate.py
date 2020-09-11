@@ -118,6 +118,7 @@ def now(df, place_id="health_region_id", is_acum=False):
         .agg({cases: "sum", deaths: "sum"})
         .reset_index(level=1)
         .assign(deaths_mavg=lambda df: get_rolling(df, deaths))
+        .assign(cases_mavg=lambda df: get_rolling(df, cases))
         .dropna()
         .join(weighted_ifr_by_age)
         .reset_index()
@@ -157,11 +158,13 @@ def now(df, place_id="health_region_id", is_acum=False):
 
     # Get notification rate & fill zero with last value
     df = df.assign(
-        notification_rate=lambda df: (df[cases] / df["estimated_cases"]).clip(0, 1)
+        notification_rate=lambda df: (df["cases_mavg"] / df["estimated_cases"]).clip(
+            0, 1
+        )
     ).assign(
         notification_rate=lambda df: df["notification_rate"].replace(
             to_replace=0, method="ffill"
         )
     )
 
-    return df.drop(columns=["new_deaths", "daily_cases"])
+    return df.drop(columns=[deaths, cases])

@@ -32,7 +32,7 @@ def run_simulation(params, config):
         # Run model projection
         res = entrypoint(
             params["population_params"],
-            params["hospitalization_params"],
+            params["place_specific_params"],
             config["br"]["seir_parameters"],
             phase={
                 "scenario": "projection_current_rt",
@@ -48,10 +48,11 @@ def run_simulation(params, config):
 
         dfs[bound] = res
 
-    dday_beds = get_dday(dfs, "I2", params["n_beds"])
-    dday_icu_beds = get_dday(dfs, "I3", params["n_icu_beds"])
+    dday = dict()
+    dday["beds"] = get_dday(dfs, "I2", params["n_beds"])
+    dday["icu_beds"] = get_dday(dfs, "I3", params["n_icu_beds"])
 
-    return dday_beds, dday_icu_beds
+    return dday
 
 
 if __name__ == "__main__":

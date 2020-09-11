@@ -9,6 +9,8 @@ from endpoints import (
     get_health_region_rt,
     get_states_rt,
     get_health,
+    get_health_region_parameters,
+    get_states_parameters,
 )
 
 from endpoints.helpers import allow_local
@@ -85,27 +87,19 @@ def get_situation_indicators(df, data, place_id, rules, classify):
 def get_control_indicators(
     df, data, place_id, rules, classify, config=None, region_data=None
 ):
-
     data = data.assign(last_updated=lambda df: pd.to_datetime(df["last_updated"]))
+
+    # Min-max do Rt de 14 dias (max data de taxa de notificacao) -> 10 dias atrás (KEVIN & COVIDACTNOW)
     data = data.loc[data.groupby(place_id)["last_updated"].idxmax()]
 
-    # Min-max do Rt de 14 dias (max data de taxa de notificacao)
-    df[
-        [
-            "last_updated_rt",
-            "rt_low_95",
-            "rt_high_95",
-            "rt_most_likely",
-            "rt_most_likely_growth",
-        ]
-    ] = data.sort_values(place_id).set_index(place_id)[
-        [
-            "last_updated",
-            "Rt_low_95",
-            "Rt_high_95",
-            "Rt_most_likely",
-            "Rt_most_likely_growth",
-        ]
+    rename = {
+        i: i.lower()
+        for i in ["Rt_low_95", "Rt_high_95", "Rt_most_likely", "Rt_most_likely_growth"]
+    }
+    rename["last_updated"] = "last_updated_rt"
+
+    df[list(rename.values())] = data.sort_values(place_id).set_index(place_id)[
+        list(rename.keys())
     ]
 
     # Completa com Rt da regional
@@ -117,30 +111,12 @@ def get_control_indicators(
             .map({True: "health_region_id", False: "city_id"})
         )
 
-        cols = [
-            "last_updated_rt",
-            "health_region_id",
-            "rt_low_95",
-            "rt_high_95",
-            "rt_most_likely",
-            "rt_most_likely_growth",
-        ]
-
         data = region_data.assign(
             last_updated=lambda df: pd.to_datetime(df["last_updated"])
         )
 
-        data = data.loc[data.groupby("health_region_id")["last_updated"].idxmax()][
-            [
-                "last_updated",
-                "health_region_id",
-                "Rt_low_95",
-                "Rt_high_95",
-                "Rt_most_likely",
-                "Rt_most_likely_growth",
-            ]
-        ]
-        data.columns = cols
+        # Min-max do Rt de 14 dias (max data de taxa de notificacao) -> 10 dias atrás (KEVIN & COVIDACTNOW)
+        data = data.loc[data.groupby("health_region_id")["last_updated"].idxmax()]
 
         # add city_id
         data = (
@@ -149,7 +125,9 @@ def get_control_indicators(
             .merge(data, on="health_region_id")
             .set_index("city_id")
         )
-        df.loc[:, cols] = df[cols].fillna(data)
+
+        rename["health_region_id"] = "health_region_id"
+        df.loc[:, list(rename.values())] = df[list(rename.values())].fillna(data)
 
     # Classificação: melhor estimativa do Rt de 10 dias (rt_most_likely)
     df[classify] = _get_levels(df, rules[classify])
@@ -180,11 +158,17 @@ def _calculate_recovered(df, params):
     return params
 
 
-def _prepare_simulation(row, place_id, config, hospitalization_params, rt_upper=None):
+# TODO: rever para colocar num script a parte!
+def _prepare_simulation(row, place_id, config, place_specific_params, rt_upper=None):
 
-    # based on Alison Hill: 30% asymptomatic
+    # based on Alison Hill: 40% asymptomatic
     symtomatic = [
-        int(row["active_cases"] * 0.7) if not np.isnan(row["active_cases"]) else 1
+        int(
+            row["active_cases"]
+            * config["br"]["seir_parameters"]["asymptomatic_proportion"]
+        )
+        if not np.isnan(row["active_cases"])
+        else 1
     ][0]
 
     params = {
@@ -193,9 +177,13 @@ def _prepare_simulation(row, place_id, config, hospitalization_params, rt_upper=
             "I": symtomatic,
             "D": [int(row["deaths"]) if not np.isnan(row["deaths"]) else 0][0],
         },
-        "hospitalization_params": {
-            "i2_percentage": hospitalization_params["i2_percentage"].loc[int(row.name)],
-            "i3_percentage": hospitalization_params["i3_percentage"].loc[int(row.name)],
+        "place_specific_params": {
+            "fatality_ratio": place_specific_params["fatality_ratio"].loc[
+                int(row.name)
+            ],
+            "i1_percentage": place_specific_params["i1_percentage"].loc[int(row.name)],
+            "i2_percentage": place_specific_params["i2_percentage"].loc[int(row.name)],
+            "i3_percentage": place_specific_params["i3_percentage"].loc[int(row.name)],
         },
         "n_beds": row["number_beds"]
         * config["br"]["simulacovid"]["resources_available_proportion"],
@@ -229,56 +217,23 @@ def _prepare_simulation(row, place_id, config, hospitalization_params, rt_upper=
             return np.nan
 
     params = _calculate_recovered(row, params)
-    _, dday_icu_beds = run_simulation(params, config)
 
-    return dday_icu_beds["best"]
-
-
-def _get_infectious_hospitalized(place_id, config):
-    # Get stratified pop data
-    pop = (
-        pd.read_csv(
-            Path(
-                "endpoints/scripts/br_health_region_tabnet_age_dist_2019_treated.csv"
-            ).resolve()
-        )
-        .assign(
-            state_num_id=lambda df: df["health_region_id"].apply(
-                lambda x: int(str(x)[:2])
-            )
-        )
-        .groupby(place_id)
-        .sum()
-    )
-
-    # Get total perc of hospitalized weighted by age
-    df = pd.DataFrame(
-        (
-            pop.drop(columns=[col for col in pop.columns if "_id" in col])
-            .apply(lambda row: row / row["total"], axis=1)
-            .drop(columns=["total"])
-            .dot(pd.Series(config["br"]["seir_parameters"]["hospitalized_by_age_perc"]))
-        ),
-        columns=["hospitalized_by_age_perc"],
-    )
-
-    i3_perc = config["br"]["seir_parameters"]["i3_percentage"]
-    i2_perc = config["br"]["seir_parameters"]["i2_percentage"]
-
-    # Get total perc of I2 (severe) & I3 (critical) hospitalized weighted by age
-    df["i2_percentage"] = i2_perc * df["hospitalized_by_age_perc"] / (i2_perc + i3_perc)
-    df["i3_percentage"] = i3_perc * df["hospitalized_by_age_perc"] / (i2_perc + i3_perc)
-
-    return df
+    # Run simulation
+    dday = run_simulation(params, config)
+    return dday["beds"]["best"]
 
 
 def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
 
     if place_id == "health_region_id":
         rt_upper = get_states_rt.now(config)
+        place_specific_params = get_health_region_parameters.now(config).set_index(
+            place_id
+        )
 
     if place_id == "state_num_id":
         rt_upper = None
+        place_specific_params = get_states_parameters.now(config).set_index(place_id)
 
     # Pega valores calculados para regional e soma total de leitos
     if place_id == "city_id":
@@ -303,16 +258,16 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
         return df.drop(columns=[col for col in df if "_drop" in col])
 
     else:
-        hospitalization_params = _get_infectious_hospitalized(place_id, config)
         df["dday_icu_beds"] = df.apply(
             lambda row: _prepare_simulation(
-                row, place_id, config, hospitalization_params, rt_upper
+                row, place_id, config, place_specific_params, rt_upper
             ),
             axis=1,
         )
 
     df["dday_icu_beds"] = df["dday_icu_beds"].replace(-1, 91)
 
+    rules[classify]
     # Classificação: numero de dias para acabar a capacidade
     df[classify] = _get_levels(df, rules[classify])
 

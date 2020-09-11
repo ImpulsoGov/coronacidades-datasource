@@ -1,22 +1,27 @@
 import pandas as pd
 import numpy as np
 from endpoints.helpers import allow_local
-from endpoints import get_health_region_cases, get_cities_rt
+from endpoints import get_health_region_cases, get_cities_cases
+from endpoints.get_cities_rt import get_rt
 
 
 @allow_local
 def now(config=None):
-    return get_cities_rt.get_rt(
-        get_health_region_cases.now(), place_id="health_region_id"
-    )
+
+    # Import cases
+    df = get_health_region_cases.now(config, "br")
+    df["last_updated"] = pd.to_datetime(df["last_updated"])
+
+    return get_rt(df, "health_region_id", config)
 
 
-# TODO: review tests
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
-    "dataframe has null data": lambda df: all(
-        df[["Rt_most_likely", "Rt_high_95", "Rt_low_95"]].isnull().any() == False
-    ),
+    # "dataframe has null data": lambda df: all(df.isnull().any() == False),
+    # "not all 27 states with updated rt": lambda df: len(
+    #     df.drop_duplicates("health_region_id", keep="last")
+    # )
+    # == 27,
     "rt most likely outside confidence interval": lambda df: len(
         df[
             (df["Rt_most_likely"] <= df["Rt_high_95"])

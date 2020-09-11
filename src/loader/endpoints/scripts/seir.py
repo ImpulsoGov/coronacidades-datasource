@@ -4,7 +4,7 @@ import yaml
 from scipy.integrate import odeint
 
 
-def prepare_states(population_params, hospitalization_params, model_params):
+def prepare_states(population_params, place_specific_params, disease_params):
     """
     Estimate non explicity population initial states
 
@@ -27,17 +27,11 @@ def prepare_states(population_params, hospitalization_params, model_params):
            Explicit and implicit population parameters ready to be applied in the `model` function
     """
 
-    e_perc = (model_params["doubling_rate"] - 1) * model_params[
+    e_perc = (disease_params["doubling_rate"] - 1) * disease_params[
         "incubation_period"
     ]  # 0.26 * 6 = 1.56
-    i1_percentage = (
-        1
-        - hospitalization_params["i2_percentage"]
-        - hospitalization_params["i3_percentage"]
-    )
-    exposed = (
-        population_params["I"] * i1_percentage * e_perc
-    )  # model_params["i1_percentage"] * e_perc
+
+    exposed = population_params["I"] * place_specific_params["i1_percentage"] * e_perc
 
     initial_pop_params = {
         "S": population_params["N"]
@@ -47,15 +41,17 @@ def prepare_states(population_params, hospitalization_params, model_params):
         - exposed,
         "E": exposed,
         "I1": population_params["I"]
-        * i1_percentage,  # model_params["i1_percentage"],  # 85.5%
+        * place_specific_params[
+            "i1_percentage"
+        ],  # disease_params["i2_percentage"],  # 12.5%
         "I2": population_params["I"]
-        * hospitalization_params[
+        * place_specific_params[
             "i2_percentage"
-        ],  # model_params["i2_percentage"],  # 12.5%
+        ],  # disease_params["i2_percentage"],  # 12.5%
         "I3": population_params["I"]
-        * hospitalization_params[
+        * place_specific_params[
             "i3_percentage"
-        ],  # model_params["i3_percentage"],  # 2.5%
+        ],  # disease_params["i3_percentage"],  # 2.5%
         "R": population_params["R"],
         "D": population_params["D"],
     }
@@ -63,16 +59,17 @@ def prepare_states(population_params, hospitalization_params, model_params):
     return initial_pop_params
 
 
-def prepare_params(population_params, disease_params, reproduction_rate):
+def prepare_disease_params(
+    population_params, place_specific_params, disease_params, reproduction_rate
+):
     """
-    Estimate non explicity disease parameters
+    Estimate non explicity SEIR model parameters
 
     Params
     --------
-
+    population_params: dict
     disease_params: dict
-        Diseases parameters:
-                   - ...
+    reproduction_rate: int
 
     Returns
     --------
@@ -80,17 +77,19 @@ def prepare_params(population_params, disease_params, reproduction_rate):
            Explicit and implicit disease parameters ready to be applied in the `model` function
     """
 
-    frac_severe_to_critical = disease_params["i3_percentage"] / (
-        disease_params["i2_percentage"] + disease_params["i3_percentage"]
+    frac_severe_to_critical = place_specific_params["i3_percentage"] / (
+        place_specific_params["i2_percentage"] + place_specific_params["i3_percentage"]
     )
     frac_critical_to_death = (
-        disease_params["fatality_ratio"] / disease_params["i3_percentage"]
+        place_specific_params["fatality_ratio"] / place_specific_params["i3_percentage"]
     )
 
     parameters = {
         "sigma": 1 / disease_params["incubation_period"],
-        "gamma1": disease_params["i1_percentage"] / disease_params["mild_duration"],
-        "p1": (1 - disease_params["i1_percentage"]) / disease_params["mild_duration"],
+        "gamma1": place_specific_params["i1_percentage"]
+        / disease_params["mild_duration"],
+        "p1": (1 - place_specific_params["i1_percentage"])
+        / disease_params["mild_duration"],
         "gamma2": (1 - frac_severe_to_critical) / disease_params["severe_duration"],
         "p2": frac_severe_to_critical / disease_params["severe_duration"],
         "mu": frac_critical_to_death / disease_params["critical_duration"],
@@ -187,7 +186,7 @@ def SEIR(y, t, model_params, initial=False):
 
 
 def entrypoint(
-    population_params, hospitalization_params, model_params, phase, initial=False
+    population_params, place_specific_params, disease_params, phase, initial=False
 ):
     """
     Function to receive user input and run model.
@@ -204,7 +203,10 @@ def entrypoint(
               - R: recovered
               - D: deaths
 
-    model_params: dict
+    place_specific_params: pd.DataFrame
+        Parameters for specific places (for now: fatality ratio and infection proportions)
+
+    disease_params: dict
         Parameters of model dynamic (transmission, progression, recovery and death rates)
                                  
     phase: dict
@@ -220,20 +222,23 @@ def entrypoint(
     """
 
     if initial:  # Get I1, I2, I3 & E
-        population_params, model_params = (
-            prepare_states(population_params, hospitalization_params, model_params),
-            prepare_params(population_params, model_params, phase["R0"]),
+        population_params, disease_params = (
+            prepare_states(population_params, place_specific_params, disease_params),
+            prepare_disease_params(
+                population_params, place_specific_params, disease_params, phase["R0"]
+            ),
         )
     else:
-        model_params = prepare_params(population_params, model_params, phase["R0"])
+        disease_params = prepare_disease_params(
+            population_params, place_specific_params, disease_params, phase["R0"]
+        )
         del population_params["N"]
-        # population_params = population_params[:-1]
 
     # Run model
     params = {
         "y0": list(population_params.values()),
         "t": np.linspace(0, phase["n_days"], phase["n_days"] + 1),
-        "args": (model_params, initial),
+        "args": (disease_params, initial),
     }
 
     result = pd.DataFrame(

@@ -2,6 +2,14 @@
   python_file: get_places_id
   skip: False
 
+- endpoint: br/health_region/parameters
+  python_file: get_health_region_parameters
+  skip: False
+
+- endpoint: br/states/parameters
+  python_file: get_states_parameters
+  skip: False
+
 - endpoint: br/cities/cnes
   python_file: get_health
   skip: False
@@ -44,7 +52,7 @@
   python_file: get_inloco_cities
   skip: False
   
- - endpoint: INLOCO_RS_CITIES_ROUTE
+- endpoint: INLOCO_RS_CITIES_ROUTE
   secret_path: [inloco, rs_cities]
   python_file: get_inloco_rs_cities
   skip: False

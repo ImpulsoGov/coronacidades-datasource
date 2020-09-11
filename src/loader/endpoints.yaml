@@ -6,6 +6,10 @@
   python_file: get_health_region_parameters
   skip: False
 
+- endpoint: br/cities/parameters
+  python_file: get_cities_parameters
+  skip: False
+
 - endpoint: br/states/parameters
   python_file: get_states_parameters
   skip: False

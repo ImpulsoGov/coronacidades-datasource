@@ -261,12 +261,7 @@ def now(config=None):
     df = get_cities_cases.now(config, "br")
     df["last_updated"] = pd.to_datetime(df["last_updated"])
 
-    rt = get_rt(df, "city_id", config)
-
-    # Calcula crescimento
-    return get_cities_cases.get_mavg_indicators(
-        rt, "Rt_most_likely", "city_id", weighted=False
-    )
+    return get_rt(df, "city_id", config)
 
 
 TESTS = {

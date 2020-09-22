@@ -111,23 +111,20 @@ def get_control_indicators(
             .map({True: "health_region_id", False: "city_id"})
         )
 
-        data = region_data.assign(
-            last_updated=lambda df: pd.to_datetime(df["last_updated"])
-        )
-
-        # Min-max do Rt de 14 dias (max data de taxa de notificacao) -> 10 dias atrás (KEVIN & COVIDACTNOW)
-        data = data.loc[data.groupby("health_region_id")["last_updated"].idxmax()]
-
         # add city_id
         data = (
             df[["health_region_id"]]
             .reset_index()
-            .merge(data, on="health_region_id")
+            .merge(region_data, on="health_region_id")
             .set_index("city_id")
         )
 
         rename["health_region_id"] = "health_region_id"
-        df.loc[:, list(rename.values())] = df[list(rename.values())].fillna(data)
+
+        df.loc[df["rt_place_type"] == "health_region_id", list(rename.values())] = data[
+            list(rename.values())
+        ]
+        df["last_updated_rt"] = pd.to_datetime(df["last_updated_rt"])
 
     # Classificação: melhor estimativa do Rt de 10 dias (rt_most_likely)
     df[classify] = _get_levels(df, rules[classify])
@@ -187,7 +184,8 @@ def _prepare_simulation(row, place_id, config, place_specific_params, rt_upper=N
         },
         "n_beds": row["number_beds"]
         * config["br"]["simulacovid"]["resources_available_proportion"],
-        "n_icu_beds": row["number_icu_beds"],
+        "n_icu_beds": row["number_icu_beds"]
+        * config["br"]["simulacovid"]["resources_available_proportion"],
         "R0": {
             "best": row["rt_most_likely"],  # só usamos o "best" neste caso
             "worst": row["rt_high_95"],

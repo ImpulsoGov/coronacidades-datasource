@@ -160,7 +160,7 @@ class Map:
             },
             "visualize": {
                 "tooltip": {
-                    "body": """<p>Risco: {{ overall_alert }}</p>
+                    "body": """<p>Alerta: {{ overall_alert }}</p>
                     <p>Total de Mortes: {{ deaths }}</p>
                     <p>Subnotificação: {{ subnotification_rate }}</p>""",
                     "title": title,

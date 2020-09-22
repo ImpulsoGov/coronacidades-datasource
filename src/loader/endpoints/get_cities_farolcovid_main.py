@@ -64,7 +64,7 @@ def now(config):
         rules=config["br"]["farolcovid"]["rules"],
         classify="control_classification",
         config=config,
-        region_data=get_health_region_rt.now(config),
+        region_data=get_health_region_farolcovid_main.now(config),
     )
 
     df = get_trust_indicators(

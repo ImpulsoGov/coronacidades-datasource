@@ -4,8 +4,19 @@ import numpy as np
 
 from endpoints.helpers import allow_local
 
-
 def gen_fatality_ratio(pop, place_id, config):
+    """ Calculates Regional Fatality by Age Range
+    
+    Args:
+        pop (pd.DataFrame): Dataframe with population by health region.
+        place_id (int): Index of the health region.
+        config (pd.DataFrame): SEIR model parameters, including the
+            Infection Fatality Rates (IFR) used.
+    
+    Returns:
+        pd.DataFrame: Dataframe with fatality rate by health region.
+    """
+
     # Add fatality ratio
     config["br"]["seir_parameters"]["ifr_by_age_perc"] = {
         "from_0_to_9": 0.00002,
@@ -28,6 +39,23 @@ def gen_fatality_ratio(pop, place_id, config):
 
 
 def gen_infection_proportion(df, pop, place_id, config):
+    """ 
+    Calculates the total percentage of the population 
+    hospitalized, taking into account age groups.
+    
+    Args:
+        df (dataframe): Dataframe to for data to be added.
+        pop (pd.DataFrame): Dataframe with total population of health region.
+        place_id: Index of the health region.
+        config (pd.DataFrame): SEIR model parameters, including
+            I2 and I3 infection percentages.
+    
+    Returns:
+        df (pd.Dataframe): Dataframe with total percentage of population
+            hospitalized as well as percentages of population at I1, I2, 
+            and I3 infection stages.
+    
+    """
 
     # Get total perc of hospitalized weighted by age
     df["hospitalized_by_age_perc"] = (
@@ -49,6 +77,19 @@ def gen_infection_proportion(df, pop, place_id, config):
 
 
 def gen_stratified_parameters(config, place_id):
+    """ Calculates Regional Fatality Ratio by Age Groups
+    
+    Args:
+        place_id: Index of the health region.
+        config (pd.DataFrame): SEIR model parameters, including the
+            Infection Fatality Rates as well as I2 and I3 percentages.
+    
+    Returns:
+        (pd.DataFrame): Dataframe with fatalities per health region
+            by age-group.
+    
+    """
+
     # Get stratified pop data
     pop = (
         pd.read_csv(

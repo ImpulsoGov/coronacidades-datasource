@@ -9,9 +9,8 @@ def gen_fatality_ratio(pop, place_id, config):
     
     Args:
         pop (pd.DataFrame): Dataframe with population by health region.
-        place_id (int): Index of the health region.
-        config (pd.DataFrame): SEIR model parameters, including the
-            Infection Fatality Rates (IFR) used.
+        place_id (string): Geographical identification column.
+        config (pd.DataFrame): General model parameters.
     
     Returns:
         pd.DataFrame: Dataframe with fatality rate by health region.
@@ -44,11 +43,10 @@ def gen_infection_proportion(df, pop, place_id, config):
     hospitalized, taking into account age groups.
     
     Args:
-        df (dataframe): Dataframe to for data to be added.
+        df (dataframe): Dataframe for data to be added.
         pop (pd.DataFrame): Dataframe with total population of health region.
-        place_id: Index of the health region.
-        config (pd.DataFrame): SEIR model parameters, including
-            I2 and I3 infection percentages.
+        place_id (string): Geographical identification column.
+        config (pd.DataFrame): General model parameters.
     
     Returns:
         df (pd.Dataframe): Dataframe with total percentage of population
@@ -80,12 +78,11 @@ def gen_stratified_parameters(config, place_id):
     """ Calculates Regional Fatality Ratio by Age Groups
     
     Args:
-        place_id: Index of the health region.
-        config (pd.DataFrame): SEIR model parameters, including the
-            Infection Fatality Rates as well as I2 and I3 percentages.
+        place_id (string): Geographical identification column.
+        config (pd.DataFrame): General model parameters.
     
     Returns:
-        (pd.DataFrame): Dataframe with fatalities per health region
+        (pd.DataFrame): Dataframe with fatality ratio per health region
             by age-group.
     
     """

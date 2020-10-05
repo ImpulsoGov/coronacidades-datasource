@@ -5,15 +5,22 @@ import numpy as np
 from endpoints.helpers import allow_local
 
 def gen_fatality_ratio(pop, place_id, config):
-    """ Calculates Regional Fatality by Age Range
+    """ 
+    Calculates Regional Fatality weighted by Age Group
     
-    Args:
-        pop (pd.DataFrame): Dataframe with population by health region.
-        place_id (string): Geographical identification column.
-        config (pd.DataFrame): General model parameters.
+    Parameters
+    ----------
+        pop : pd.DataFrame
+            Dataframe with population by health region.
+        place_id : String
+            Geographical identification column (e.g state_num_id, health_region_id).
+        config : dict
+            General model parameters.
     
-    Returns:
-        pd.DataFrame: Dataframe with fatality rate by health region.
+    Returns
+    -------
+        pd.DataFrame
+            Dataframe with fatality rate by health region.
     """
 
     # Add fatality ratio
@@ -39,20 +46,25 @@ def gen_fatality_ratio(pop, place_id, config):
 
 def gen_infection_proportion(df, pop, place_id, config):
     """ 
-    Calculates the total percentage of the population 
-    hospitalized, taking into account age groups.
+    Calculates Regional Hospitalization Rate weighted by Age Groups
     
-    Args:
-        df (dataframe): Dataframe for data to be added.
-        pop (pd.DataFrame): Dataframe with total population of health region.
-        place_id (string): Geographical identification column.
-        config (pd.DataFrame): General model parameters.
+    Parameters
+    ----------
+        df : pd.Dataframe
+            Dataframe for data to be added.
+        pop : pd.DataFrame
+            Dataframe with total population of health region.
+        place_id : String
+            Geographical identification column (e.g state_num_id, health_region_id).
+        config : dict
+            General model parameters.
     
-    Returns:
-        df (pd.Dataframe): Dataframe with total percentage of population
-            hospitalized as well as percentages of population at I1, I2, 
+    Returns
+    -------
+        pd.Dataframe
+            Dataframe with total percentage of population hospitalized 
+            as well as percentages of population at I1, I2, 
             and I3 infection stages.
-    
     """
 
     # Get total perc of hospitalized weighted by age
@@ -75,16 +87,21 @@ def gen_infection_proportion(df, pop, place_id, config):
 
 
 def gen_stratified_parameters(config, place_id):
-    """ Calculates Regional Fatality Ratio by Age Groups
+    """ 
+    Calculates Regional Fatality Ratio by Age Groups
     
-    Args:
-        place_id (string): Geographical identification column.
-        config (pd.DataFrame): General model parameters.
+    Parameters
+    ----------
+        place_id : String
+            Geographical identification column.
+        config : pd.DataFrame
+            General model parameters.
     
-    Returns:
-        (pd.DataFrame): Dataframe with fatality ratio per health region
+    Returns
+    -------
+        pd.DataFrame
+            Dataframe with fatality ratio per health region
             by age-group.
-    
     """
 
     # Get stratified pop data

@@ -4,8 +4,25 @@ import numpy as np
 
 from endpoints.helpers import allow_local
 
-
 def gen_fatality_ratio(pop, place_id, config):
+    """ 
+    Calculates Regional Fatality weighted by Age Group
+    
+    Parameters
+    ----------
+        pop : pd.DataFrame
+            Dataframe with population by health region.
+        place_id : String
+            Geographical identification column (e.g state_num_id, health_region_id).
+        config : dict
+            General model parameters.
+    
+    Returns
+    -------
+        pd.DataFrame
+            Dataframe with fatality rate by health region.
+    """
+
     # Add fatality ratio
     config["br"]["seir_parameters"]["ifr_by_age_perc"] = {
         "from_0_to_9": 0.00002,
@@ -28,6 +45,27 @@ def gen_fatality_ratio(pop, place_id, config):
 
 
 def gen_infection_proportion(df, pop, place_id, config):
+    """ 
+    Calculates Regional Hospitalization Rate weighted by Age Groups
+    
+    Parameters
+    ----------
+        df : pd.Dataframe
+            Dataframe for data to be added.
+        pop : pd.DataFrame
+            Dataframe with total population of health region.
+        place_id : String
+            Geographical identification column (e.g state_num_id, health_region_id).
+        config : dict
+            General model parameters.
+    
+    Returns
+    -------
+        pd.Dataframe
+            Dataframe with total percentage of population hospitalized 
+            as well as percentages of population at I1, I2, 
+            and I3 infection stages.
+    """
 
     # Get total perc of hospitalized weighted by age
     df["hospitalized_by_age_perc"] = (
@@ -49,6 +87,23 @@ def gen_infection_proportion(df, pop, place_id, config):
 
 
 def gen_stratified_parameters(config, place_id):
+    """ 
+    Calculates Regional Fatality Ratio by Age Groups
+    
+    Parameters
+    ----------
+        place_id : String
+            Geographical identification column.
+        config : pd.DataFrame
+            General model parameters.
+    
+    Returns
+    -------
+        pd.DataFrame
+            Dataframe with fatality ratio per health region
+            by age-group.
+    """
+
     # Get stratified pop data
     pop = (
         pd.read_csv(

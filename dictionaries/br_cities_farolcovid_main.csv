@@ -13,7 +13,7 @@ daily_cases_growth, Tendência do número de casos por dia ("crescendo" | "decre
 daily_cases_growth_ndays, Há quantos dias na tendência do indicador
 daily_cases_mavg_100k, Média móvel de 7 dias para casos diários por 100 mil habitantes
 dday_icu_beds, Dias até ocupação total de leitos de UTI
-deaths, Número de mortes confirmados do último dia disponível igual ou anterior à data
+deaths, Número de mortes acumuladas do último dia disponível igual ou anterior à data
 health_region_id, Código da região de saúde
 health_region_name, Nome da região de saúde
 last_updated_cases, Data da atualização dos dados de número de casos

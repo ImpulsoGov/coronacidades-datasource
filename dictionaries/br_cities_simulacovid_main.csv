@@ -11,7 +11,7 @@ country_iso, Código ISO para os nomes de países e dependências
 country_name, Nome do País
 daily_cases, Número de novos casos confirmados desde o último dia
 data_last_refreshed, Data da última atualização do dado na API
-deaths, Número de mortes confirmados do último dia disponível igual ou anterior à data
+deaths, Número de mortes acumuladas do último dia disponível igual ou anterior à data
 epidemiological_week, Número de mortes do último dia disponível igual ou anterior à data
 health_region_id, Código da região de saúde
 health_region_name, Nome da região de saúde

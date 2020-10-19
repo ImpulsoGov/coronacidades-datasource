@@ -1,9 +1,9 @@
-coluna, descricao
-state_id, Código da unidade federativa
-cnae, Código da atividade econômica
-n_employee, número de empregados no setor formal
-security_index, Índice de segurança da atividade
-total_wage_bill, Massa salarial
-ln_total_wage_bill, Logarítimo neperiano da massa salarial
-sector, Setor econômico
 cd_id_xx, "Índice de ordenamento setorial considerando os pesos xx para saúde e (1 - xx) para economia (Cobb-Douglas)"
+cnae, Código da atividade econômica
+last_updated, Data referente o cálculo do ritmo de contágio
+n_employee, Número de empregados no setor formal
+sector, Setor econômico
+security_index, Índice de segurança da atividade
+state_num_id, Código numérico do estado (IBGE)
+total_wage_bill, Massa salarial
+data_last_refreshed, Data da última atualização do dado na API

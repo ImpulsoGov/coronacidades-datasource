@@ -1,0 +1,8 @@
+city_id, Código IBGE* (renomeado de city_ibge_code)
+fatality_ratio, Porcentagem teórica de infectados que vêm ao óbito
+health_region_id, Código da região de saúde
+hospitalized_by_age_perc, Dicionário com porcentagem teórica de hospitalizados por faixa etária.
+i1_percentage, Porcentagem teórica de infectados que desenvolvem quadros leves
+i2_percentage, Porcentagem teórica de infectados que desenvolvem quadros severos
+i3_percentage, Porcentagem teórica de infectados que desenvolvem quadros graves
+data_last_refreshed, Data da última atualização do dado na API

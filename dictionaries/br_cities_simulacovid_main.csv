@@ -1,30 +1,34 @@
-coluna,descricao
-country_iso, Código ISO para os nomes de países e dependências
-country_name, Nome do País
-state_id, Sigla da unidade federativa
-state_name, Nome do estado
+active_cases, Casos ativos estimados no dia
+author_number_beds, Fonte dos dados de leitos (clínicos + cirúrgicos + hospital-dia - DataSus)
+author_number_icu_beds, Fonte dos dados de leitos UTI (DataSus)
+author_number_ventilators, Fonte dos dados de ventiladores(DataSus)
 city_id, Código IBGE do município
 city_name, Nome do municipio
-population, População estimada pelo IBGE em 2019
-health_system_region, Região SUS a qual o muncípio pertence
-last_updated_number_ventilators, Data de atualização do número de ventiladores
-author_number_ventilators, Fonte dos dados de ventiladores(DataSus)
-number_ventilators, Número de ventiladores registrados no municipio pelo DataSus
-last_updated_number_beds, Data de atualização do número de leitos (clínicos + cirúrgicos + hospital-dia)
-author_number_beds, Fonte dos dados de leitos (clínicos + cirúrgicos + hospital-dia - DataSus)
-number_beds, Número de leitos (clínicos + cirúrgicos + hospital-dia) registrados no municipio pelo DataSus
-last_updated_number_icu_beds, Data de atualização do número de leitos UTI
-author_number_icu_beds, Fonte dos dados de leitos UTI (DataSus)
-number_icu_beds, Número de leitos UTI registrados no municipio pelo DataSus
-last_updated,	Data da atualização dos dados
-epidemiological_week, Número de mortes do último dia disponível igual ou anterior à data
+city_notification_place_type, Nível de cálculo de taxa de notificação (estado | município | regional)
+city_notification_rate, Taxa de notificação do município
 confirmed_cases, Número de casos confirmados do último dia disponível igual ou anterior à data
-deaths, Número de mortes confirmados do último dia disponível igual ou anterior à data
-order_for_place, Número que identifica a ordem do registro para este local (ver br_cities_cases_full)
-state, Sigla da unidade federativa
+country_iso, Código ISO para os nomes de países e dependências
+country_name, Nome do País
 daily_cases, Número de novos casos confirmados desde o último dia
-infectious_period_cases, Número de novos casos no período de progressão da doença (até 14 dias antes da data da linha)
-state_notification_rate,Taxa de notificação de casos estimada no estado
-notification_rate, Taxa de notificação de casos estimada no município (é utilizada a do estado quando ainda não há mortes por Covid-19)
-active_cases, Casos ativos estimados no dia
 data_last_refreshed, Data da última atualização do dado na API
+deaths, Número de mortes confirmados do último dia disponível igual ou anterior à data
+epidemiological_week, Número de mortes do último dia disponível igual ou anterior à data
+health_region_id, Código da região de saúde
+health_region_name, Nome da região de saúde
+health_region_notification_place_type, Nível de cálculo da notificação para regional de saúde (estado ou regional)
+health_region_notification_rate, Taxa de notificação da região de saúde
+infectious_period_cases, Número de novos casos no período de progressão da doença (até 14 dias antes da data da linha)
+last_updated, Data da atualização dos dados
+last_updated_number_beds, Data de atualização do número de leitos (clínicos + cirúrgicos + hospital-dia)
+last_updated_number_icu_beds, Data de atualização do número de leitos UTI
+last_updated_number_ventilators, Data de atualização do número de ventiladores
+notification_rate, Taxa de notificação de casos estimada no município (é utilizada a do estado quando ainda não há mortes por Covid-19)
+number_beds, Número de leitos (clínicos + cirúrgicos + hospital-dia) registrados no municipio pelo DataSus
+number_icu_beds, Número de leitos UTI registrados no municipio pelo DataSus
+number_ventilators, Número de ventiladores registrados no municipio pelo DataSus
+order_for_place, Número que identifica a ordem do registro para este local (ver br_cities_cases_full)
+population, População estimada pelo IBGE em 2019
+state_id, Código da unidade federativa
+state_name, Nome do estado
+state_notification_rate, Taxa de notificação de casos estimada no estado
+state_num_id, Código numérico do estado (IBGE)

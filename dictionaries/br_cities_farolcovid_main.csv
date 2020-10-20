@@ -1,15 +1,15 @@
 active_cases, Casos ativos estimados no dia
 author_number_beds, Fonte dos dados de leitos (clínicos + cirúrgicos + hospital-dia - DataSus)
 author_number_icu_beds, Fonte dos dados de leitos UTI (DataSus)
-capacity_classification, Índice da classificação da capacidade do sistema de saúde (0: novo normal | 1: moderado | 2: alto | 4: altíssimo)
+capacity_classification, Nível de alerta da capacidade do sistema de saúde (0: novo normal | 1: moderado | 2: alto | 4: altíssimo)
 city_id, Código IBGE* (renomeado de city_ibge_code)
 city_name, Nome do município*
 confirmed_cases, Número de casos confirmados do último dia disponível igual ou anterior à data
-control_classification, Grau de controle da doença (0: novo normal | 1: moderado | 2: alto | 4: altíssimo)
+control_classification, Nível de alerta de controle da doença (0: novo normal | 1: moderado | 2: alto | 4: altíssimo)
 country_iso, Código ISO para os nomes de países e dependências
 country_name, Nome do País
 daily_cases, Número de novos casos confirmados desde o último dia
-daily_cases_growth, Tendência do número de casos por dia ("crescendo" | "decrescendo" | "estabilizando")
+daily_cases_growth, Tendência do número de casos por dia (crescendo | decrescendo | estabilizando)
 daily_cases_growth_ndays, Há quantos dias na tendência do indicador
 daily_cases_mavg_100k, Média móvel de 7 dias para casos diários por 100 mil habitantes
 dday_icu_beds, Dias até ocupação total de leitos de UTI
@@ -22,22 +22,22 @@ last_updated_number_icu_beds, Data de atualização do número de leitos UTI
 last_updated_rt, Data da atualização dos dados de ritmo de contágio
 last_updated_subnotification, Data da atualização dos dados de subnotificação
 new_deaths, Número de novos óbitos desde o último dia*
-new_deaths_growth, Tendência de número de óbitos por dia ("crescendo" | "decrescendo" | "estabilizando")
+new_deaths_growth, Tendência de número de óbitos por dia (crescendo | decrescendo | estabilizando)
 new_deaths_mavg_100k, Média móvel de 7 dias de novos óbitos por 100 mil habitantes 
 notification_rate, Taxa de notificação de casos estimada no município (é utilizada a do estado quando ainda não há mortes por Covid-19)
 number_beds, Número de leitos (clínicos + cirúrgicos + hospital-dia) registrados no municipio pelo DataSus
 number_icu_beds, Número de leitos UTI registrados no municipio pelo DataSus
-overall_alert, Nivel de risco
+overall_alert, Nivel de alerta geral do local
 population, População residente estimada do DataSUS (CNES)
 rt_high_95, Intervalo de confiança superior para a estimação (IC-95%)
 rt_low_95, Intervalo de confiança inferior para a estimação (IC-95%)
 rt_most_likely, Ritmo de contágio mais provável estimado para a data
-rt_most_likely_growth, Tendência do Rt mais provável ("crescendo" | "decrescendo" | "estabilizando")
-rt_place_type, Nível de cálculo do RT (estado | município | regional)
-situation_classification, Índice da situação da região (0: novo normal | 1: moderado | 2: alto | 4: altíssimo)
+rt_most_likely_growth, Tendência do Rt mais provável (crescendo | decrescendo | estabilizando)
+rt_place_type, Nível de cálculo do Rt (estado | município | regional)
+situation_classification, Nível de alerta de situação da doença (0: novo normal | 1: moderado | 2: alto | 4: altíssimo)
 state_id, Sigla da unidade federativa
 state_name, Nome do estado
 state_num_id, Código numérico do estado (IBGE)
-subnotification_rate, Taxa de subnotificação de casos estimada
-trust_classification, Índice da classificação de confiança nos dados (0: novo normal | 1: moderado | 2: alto | 4: altíssimo)
+subnotification_rate, Taxa de subnotificação de casos estimada no dia
+trust_classification, Nível de alerta de confiança nos dados (0: novo normal | 1: moderado | 2: alto | 4: altíssimo)
 data_last_refreshed, Data da última atualização do dado na API 

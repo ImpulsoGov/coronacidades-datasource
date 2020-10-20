@@ -36,5 +36,3 @@ state_name, Nome do estado
 state_num_id, Código numérico do estado (IBGE)
 total_estimated_cases,  Casos acumulados estimados no local até a data
 data_last_refreshed, Data da última atualização do dado na API
-
-* Colunas originais ou renomeadas do Brasil.IO

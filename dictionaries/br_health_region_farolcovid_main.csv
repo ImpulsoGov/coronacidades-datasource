@@ -7,7 +7,7 @@ control_classification,  Grau de controle da doença (0: novo normal | 1: modera
 country_iso, Código ISO para os nomes de países e dependências
 country_name, Nome do País
 daily_cases, Número de novos casos confirmados desde o último dia (renomeado de new_confirmed)*
-daily_cases_growth, Tendência do número de casos por dia ("crescendo" | "decrescendo" | "estabilizando")
+daily_cases_growth, Tendência do número de casos por dia (crescendo | decrescendo | estabilizando)
 daily_cases_growth_ndays, Há quantos dias na tendência do indicador
 daily_cases_mavg_100k, Média móvel de 7 dias para casos diários por 100 mil habitantes
 dday_icu_beds, Dias até ocupação total de leitos de UTI
@@ -20,7 +20,7 @@ last_updated_number_icu_beds, Data de atualização do número de leitos UTI
 last_updated_rt, Data da atualização dos dados de ritmo de contágio
 last_updated_subnotification, Data da atualização dos dados de subnotificação
 new_deaths, Número de novos óbitos desde o último dia*
-new_deaths_growth, Tendência de número de óbitos por dia ("crescendo" | "decrescendo" | "estabilizando")
+new_deaths_growth, Tendência de número de óbitos por dia (crescendo | decrescendo | estabilizando)
 new_deaths_mavg_100k, Média móvel de 7 dias de novos óbitos por 100 mil habitantes 
 notification_rate, Taxa de notificação de casos estimada no município
 number_beds, Número de leitos (clínicos + cirúrgicos + hospital-dia) registrados no municipio pelo DataSus
@@ -30,7 +30,7 @@ population, População residente estimada do DataSUS (CNES)
 rt_high_95, Intervalo de confiança superior para a estimação (IC-95%)
 rt_low_95, Intervalo de confiança inferior para a estimação (IC-95%)
 rt_most_likely, Ritmo de contágio mais provável estimado para a data
-rt_most_likely_growth, Tendência do Rt mais provável ("crescendo" | "decrescendo" | "estabilizando")
+rt_most_likely_growth, Tendência do Rt mais provável (crescendo | decrescendo | estabilizando)
 situation_classification, Índice da situação da região (0: novo normal | 1: moderado | 2: alto | 4: altíssimo)
 state_id, Código da unidade federativa
 state_name, Nome do estado

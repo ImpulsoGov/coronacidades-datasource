@@ -34,7 +34,7 @@ number_beds, Número de leitos
 number_covid_icu_beds, Número de leitos UTI registrados no municipio pelo DataSus
 number_icu_beds, Número de leitos de UTI
 number_ventilators, Número de ventiladores no municipio
-population, Número de habitantes
+population, População residente estimada do DataSUS (CNES)
 state_id, Código do estado
 state_name, Nome do estado
 state_num_id, Código da unidade federativa

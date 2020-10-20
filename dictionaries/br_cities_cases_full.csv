@@ -4,7 +4,7 @@ city_id, Código IBGE* (renomeado de city_ibge_code)
 city_name, Nome do município
 confirmed_cases, Número de casos confirmados do último dia disponível igual ou anterior à data* (renomeado de last_available_confirmed)
 daily_cases, Número de novos casos confirmados desde o último dia (renomeado de new_confirmed)*
-daily_cases_growth, Tendência do número de casos por dia ("crescendo" | "decrescendo" | "estabilizando")
+daily_cases_growth, Tendência do número de casos por dia (crescendo | decrescendo | estabilizando)
 daily_cases_mavg, Média móvel de 7 dias para casos diários
 daily_cases_mavg_100k, Média móvel de 7 dias para casos diários por 100 mil habitantes
 deaths, Número de mortes acumuladas do último dia disponível igual ou anterior à data (renomeado de last_available_deaths)*
@@ -24,7 +24,7 @@ last_available_date, Data da qual o dado se refere*
 last_available_death_rate, Taxa de mortalidade (mortes / confirmados) do último dia disponível igual ou anterior à data*
 last_updated, Data da atualização dos dados* (renomeado de date)
 new_deaths, Número de novos óbitos desde o último dia*
-new_deaths_growth, Tendência de número de óbitos por dia ("crescendo" | "decrescendo" | "estabilizando")
+new_deaths_growth, Tendência de número de óbitos por dia (crescendo | decrescendo | estabilizando)
 new_deaths_mavg, Média móvel de 7 dias de novos óbitos 
 new_deaths_mavg_100k, Média móvel de 7 dias de novos óbitos por 100 mil habitantes 
 notification_rate, Taxa de notificação de casos estimada no município

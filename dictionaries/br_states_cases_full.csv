@@ -1,0 +1,24 @@
+active_cases, active_cases, Casos ativos estimados no dia
+cases_mavg (não utilizado), Média móvel de 7 dias de casos
+confirmed_cases, Número de casos confirmados do último dia disponível igual ou anterior à data
+daily_cases, Número de novos casos confirmados desde o último dia
+daily_cases_growth, Tendência do número de casos por dia (crescendo | decrescendo | estabilizando)
+daily_cases_mavg (não utilizado), Média móvel de 7 dias para casos diários
+daily_cases_mavg_100k, Média móvel de 7 dias para casos diários por 100 mil habitantes
+deaths, Número de mortes acumuladas do último dia disponível igual ou anterior à data
+deaths_mavg (não utilizado), Média móvel de 7 dias de mortes acumuladas
+estimated_cases, Casos novos diários estimados no local
+expected_mortality, Porcentagem teórica de infectados que chegam a óbito
+infectious_period_cases, Número de novos casos no período de progressão da doença (até 14 dias antes da data da linha)
+last_updated, Data da atualização dos dados* (renomeado de date)
+new_deaths, Número de novos óbitos desde o último dia*
+new_deaths_growth, Tendência de número de óbitos por dia (crescendo | decrescendo | estabilizando)
+new_deaths_mavg (não utilizado), Média móvel de 7 dias de novos óbitos 
+new_deaths_mavg_100k, Média móvel de 7 dias de novos óbitos por 100 mil habitantes 
+notification_rate, Taxa de notificação de casos estimada no município
+population, População estimada pelo IBGE em 2019
+state_id, Sigla da unidade federativa
+state_name, Nome do estado
+state_num_id, Código numérico do estado (IBGE)
+total_estimated_cases, Casos acumulados estimados no local até a data
+data_last_refreshed, Data da última atualização do dado na API

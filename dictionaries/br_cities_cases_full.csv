@@ -10,8 +10,8 @@ daily_cases_mavg_100k, Média móvel de 7 dias para casos diários por 100 mil h
 deaths, Número de mortes acumuladas do último dia disponível igual ou anterior à data (renomeado de last_available_deaths)*
 deaths_mavg (não utilizado), Média móvel de 7 dias de mortes acumuladas
 epidemiological_week, Número da semana epidemiológica*
-estimated_cases,  Casos novos diários estimados no local
-estimated_population (não utilizado), Dado de população  estimada do IBGE (via Brasil.io)
+estimated_cases, Casos novos diários estimados no local
+estimated_population (não utilizado), Dado de população estimada do IBGE (via Brasil.io)
 expected_mortality, Porcentagem teórica de infectados que chegam a óbito
 health_region_id, Código da região de saúde
 health_region_name, Nome da região de saúde
@@ -34,5 +34,5 @@ population, População residente estimada do DataSUS (CNES)
 state_id, Código da unidade federativa
 state_name, Nome do estado
 state_num_id, Código numérico do estado (IBGE)
-total_estimated_cases,  Casos acumulados estimados no local até a data
+total_estimated_cases, Casos acumulados estimados no local até a data
 data_last_refreshed, Data da última atualização do dado na API

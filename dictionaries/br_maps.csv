@@ -1,0 +1,4 @@
+hashes, Hash do mapa
+map_id, Identificador do mapa
+place_id, Identificador do local
+data_last_refreshed, Data da última atualização do dado na API

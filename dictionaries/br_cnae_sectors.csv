@@ -1,0 +1,5 @@
+activity, Atividade econômica
+cnae, Código da atividade econômica
+essential, Indica se o serviço é essencial ou não (booleano)
+last_updated, Data referente o cálculo do ritmo de contágio
+data_last_refreshed, Data da última atualização do dado na API

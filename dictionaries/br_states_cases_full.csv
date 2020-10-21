@@ -1,4 +1,4 @@
-active_cases, active_cases, Casos ativos estimados no dia
+active_cases, Casos ativos estimados no dia
 cases_mavg (não utilizado), Média móvel de 7 dias de casos
 confirmed_cases, Número de casos confirmados do último dia disponível igual ou anterior à data
 daily_cases, Número de novos casos confirmados desde o último dia

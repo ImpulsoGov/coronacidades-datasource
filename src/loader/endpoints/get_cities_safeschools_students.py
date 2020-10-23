@@ -19,7 +19,7 @@ def now(config):
     return download_from_drive(
         "https://docs.google.com/spreadsheets/d/1aa0WJ2lF3mKn_Tf6n-Te7NWp2KQN8gFLJiYXwRz6xNM"
     ).merge(
-        get_cities_farolcovid_main.now()[["state_id", "city_name", "city_id"]],
+        get_cities_farolcovid_main.now(config)[["state_id", "city_name", "city_id"]],
         on=["city_id"],
     )
 

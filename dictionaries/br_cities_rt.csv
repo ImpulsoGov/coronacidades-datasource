@@ -1,7 +1,8 @@
-coluna,descricao
-city_id,Código IBGE do município
-last_updated,Data referente o cálculo do ritmo de contágio
-Rt_most_likely, Ritmo de contágio mais provável estimado para a data
-Rt_low_95, Intervalo de confiança inferior para a estimação (IC-95%)
 Rt_high_95, Intervalo de confiança superior para a estimação (IC-95%)
-data_last_refreshed,Data da última atualização do dado na API
+Rt_low_95, Intervalo de confiança inferior para a estimação (IC-95%)
+Rt_most_likely, Ritmo de contágio mais provável estimado para a data
+Rt_most_likely_growth, Tendência do Rt mais provável (crescendo | decrescendo | estabilizando)
+Rt_most_likely_mavg, Média móvel de 7 dias de Rt mais provável estimado 
+city_id, Código IBGE do município
+last_updated, Data referente o cálculo do ritmo de contágio
+data_last_refreshed, Data da última atualização do dado na API

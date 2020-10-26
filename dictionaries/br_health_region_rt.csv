@@ -3,6 +3,7 @@ Rt_low_95, Intervalo de confiança inferior para a estimação (IC-95%)
 Rt_most_likely, Ritmo de contágio mais provável estimado para a data
 Rt_most_likely_growth, Tendência do Rt mais provável (crescendo | decrescendo | estabilizando)
 Rt_most_likely_mavg, Média móvel de 7 dias de Rt mais provável estimado 
-last_updated, Data referente o cálculo do ritmo de contágio
-state_num_id, Código numérico do estado (IBGE)
+new_deaths_mavg_100k, Média móvel de 7 dias de novos óbitos por 100 mil habitantes 
+health_region_id, Código da região de saúde
+last_updated, Data da atualização dos dados* (renomeado de date)
 data_last_refreshed, Data da última atualização do dado na API

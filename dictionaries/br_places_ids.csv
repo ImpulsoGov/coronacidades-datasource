@@ -1,0 +1,8 @@
+city_id, Código IBGE* (renomeado de city_ibge_code)
+city_name, Nome do municipio
+health_region_id, Código da região de saúde
+health_region_name, Nome da região de saúde
+state_id, Código da unidade federativa
+state_name, Nome do estado
+state_num_id, Código numérico do estado (IBGE)
+data_last_refreshed, Data da última atualização do dado na API

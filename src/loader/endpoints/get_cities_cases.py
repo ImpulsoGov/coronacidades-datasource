@@ -42,7 +42,7 @@ def _get_growth(group):
 
 def get_mavg_indicators(df, col, place_id, weighted=True):
 
-    df = df.sort_values([place_id, "last_updated"])
+    df = df.sort_values([place_id, "last_updated"]).reset_index(drop=True)
 
     if weighted:
         divide = df["population"] / 10 ** 5
@@ -171,21 +171,19 @@ def now(config, country="br"):
             city_id=lambda df: df["city_id"].astype(int)
         )
 
-        df = (
-            df.merge(
-                places_ids[
-                    [
-                        "city_id",
-                        "city_name",
-                        "health_region_name",
-                        "health_region_id",
-                        "state_name",
-                        "state_num_id",
-                        "population",
-                    ]
-                ],
-                on="city_id",
-            )
+        df = df.merge(
+            places_ids[
+                [
+                    "city_id",
+                    "city_name",
+                    "health_region_name",
+                    "health_region_id",
+                    "state_name",
+                    "state_num_id",
+                    "population",
+                ]
+            ],
+            on="city_id",
         )
 
         # Correct negative values, get infectious period cases and get median of new cases

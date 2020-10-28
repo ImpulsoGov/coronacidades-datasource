@@ -30,13 +30,12 @@ def now(config, country="br"):
         # Get data & clean table
         df = (
             download_brasilio_table(config["br"]["cases"]["url"])
-            .query("place_type == 'city'")
-            .dropna(subset=["city_ibge_code"])
+            .query("place_type == 'state'")
             .fillna(0)
             .rename(columns=config["br"]["cases"]["rename"])
             .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
-            .sort_values(["city_id", "state_id", "last_updated"])
-            .groupby("city_id")
+            .sort_values(["state_id", "last_updated"])
+            .groupby("state_id")
             .apply(lambda group: get_until_last(group))
             .reset_index(drop=True)
             .drop(columns="estimated_population_2019")
@@ -52,20 +51,19 @@ def now(config, country="br"):
             on="state_id",
         )
 
-        # Group cases by states
-        df = (
-            df.groupby(["state_num_id", "state_id", "state_name", "last_updated",])
-            .agg(
-                confirmed_cases=("confirmed_cases", sum),
-                deaths=("deaths", sum),
-                daily_cases=("daily_cases", sum),
-                new_deaths=("new_deaths", sum),
-            )
-            .reset_index()
-        )
+        cols = [
+            "state_num_id",
+            "state_id",
+            "state_name",
+            "last_updated",
+            "confirmed_cases",
+            "deaths",
+            "daily_cases",
+            "new_deaths",
+        ]
 
         # Add population data from CNES
-        df = df.merge(
+        df = df[cols].merge(
             get_health.now(config)
             .assign(state_num_id=lambda df: df["state_num_id"].astype(int),)
             .groupby("state_num_id")["population"]

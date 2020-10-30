@@ -17,28 +17,49 @@ def now(config):
     """
 
     # TODO: update on config!
-    return download_from_drive(
-        "https://docs.google.com/spreadsheets/d/1sNxh1VOWyOPXG4lfpkRJGnLbbhdBgKQnWdk3PRVhvMM"
-    ).merge(
-        pd.concat(
-            [
-                get_states_farolcovid_main.now(config)[
-                    ["state_num_id", "overall_alert", "last_updated_cases"]
-                ].assign(city_id=lambda df: "Todos"),
-                get_cities_farolcovid_main.now(config)[
-                    ["state_num_id", "city_id", "overall_alert", "last_updated_cases"]
-                ].assign(city_id=lambda df: df["city_id"].astype(str)),
-            ]
-        ),
-        on=["city_id", "state_num_id"],
-        how="left",
+    df = (
+        download_from_drive(
+            "https://docs.google.com/spreadsheets/d/1sNxh1VOWyOPXG4lfpkRJGnLbbhdBgKQnWdk3PRVhvMM"
+        )
+        .assign(
+            city_id=lambda df: df["city_id"].astype(str),
+            state_num_id=lambda df: df["state_num_id"].astype(int),
+        )
+        .merge(
+            pd.concat(
+                [
+                    get_states_farolcovid_main.now(config)[
+                        [
+                            "state_num_id",
+                            "state_id",
+                            "overall_alert",
+                            "last_updated_cases",
+                        ]
+                    ].assign(city_id=lambda df: "Todos", city_name=lambda df: "Todos"),
+                    get_cities_farolcovid_main.now(config)[
+                        [
+                            "state_num_id",
+                            "state_id",
+                            "city_id",
+                            "city_name",
+                            "overall_alert",
+                            "last_updated_cases",
+                        ]
+                    ].assign(city_id=lambda df: df["city_id"].astype(str)),
+                ]
+            ),
+            on=["city_id", "state_num_id"],
+            how="left",
+        )
     )
+
+    return df
 
 
 # Output dataframe tests to check data integrity. This is also going to be called
 # by main.py
 TESTS = {
-    "more than 5570 cities": lambda df: len(df["city_id"].unique()) != 5570,  # Ahg
+    "more than 5570 cities": lambda df: len(df["city_id"].unique()) != 5571,
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "dataframe has null data": lambda df: all(
         df.drop(columns=["overall_alert", "last_updated_cases"]).isnull().any() == False

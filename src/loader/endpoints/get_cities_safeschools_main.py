@@ -16,10 +16,10 @@ def now(config):
     config : dict
     """
 
-    # TODO: update on config!
+    # TODO: update link on config!
     df = (
         download_from_drive(
-            "https://docs.google.com/spreadsheets/d/1sNxh1VOWyOPXG4lfpkRJGnLbbhdBgKQnWdk3PRVhvMM"
+            "https://docs.google.com/spreadsheets/d/1Gw34BlCHNf92vVn-vmzpb_6mIBcg5esN4HQxkF-bews"
         )
         .assign(
             city_id=lambda df: df["city_id"].astype(str),
@@ -59,7 +59,7 @@ def now(config):
 # Output dataframe tests to check data integrity. This is also going to be called
 # by main.py
 TESTS = {
-    "more than 5570 cities": lambda df: len(df["city_id"].unique()) != 5571,
+    "more than 5571 cities (5570 + all)": lambda df: len(df["city_id"].unique()) >= 5571,
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "dataframe has null data": lambda df: all(
         df.drop(columns=["overall_alert", "last_updated_cases"]).isnull().any() == False
@@ -134,19 +134,20 @@ TESTS = {
 #         3: "Docente/Monitor"
 #     },
 #     "TP_ETAPA_ENSINO": {
-#         14: "Fundamental - Anos iniciais",
-#         15: "Fundamental - Anos iniciais",
-#         16: "Fundamental - Anos iniciais",
-#         17: "Fundamental - Anos iniciais",
-#         18: "Fundamental - Anos iniciais",
-#         19: "Fundamental - Anos finais",
-#         20: "Fundamental - Anos finais",
-#         21: "Fundamental - Anos finais",
-#         41: "Fundamental - Anos finais",
+#         14: "Fundamental I",
+#         15: "Fundamental I",
+#         16: "Fundamental I",
+#         17: "Fundamental I",
+#         18: "Fundamental I",
+#         19: "Fundamental II",
+#         20: "Fundamental II",
+#         21: "Fundamental II",
+#         41: "Fundamental II",
 #         25: "Ensino Médio",
 #         26: "Ensino Médio",
 #         27: "Ensino Médio",
 #         28: "Ensino Médio",
+#         29: "Ensino Médio",
 #     }, # 56: "Fundamental - Anos iniciais", multi-etapa?
 #     "TP_DEPENDENCIA": {
 #         2: "Estadual",
@@ -199,7 +200,7 @@ TESTS = {
 #     if value == "QT_SALAS_UTILIZADAS":
 #         to_melt = {"IN_COMUM_FUND_AI": "Fundamental - Anos iniciais",
 #                    "IN_COMUM_FUND_AF": "Fundamental - Anos finais",
-#                    "IN_COMUM_MEDIO_NORMAL": "Ensino Médio"}
+#                    "IN_COMUM_MEDIO_MEDIO": "Ensino Médio"}
 
 #         new_col="TP_ETAPA_ENSINO"
 

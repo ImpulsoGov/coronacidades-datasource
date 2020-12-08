@@ -32,6 +32,7 @@ def now(config):
                         [
                             "state_num_id",
                             "state_id",
+                            "state_name",
                             "overall_alert",
                             "last_updated_cases",
                         ]
@@ -40,6 +41,7 @@ def now(config):
                         [
                             "state_num_id",
                             "state_id",
+                            "state_name",
                             "city_id",
                             "city_name",
                             "overall_alert",
@@ -59,7 +61,8 @@ def now(config):
 # Output dataframe tests to check data integrity. This is also going to be called
 # by main.py
 TESTS = {
-    "more than 5571 cities (5570 + all)": lambda df: len(df["city_id"].unique()) >= 5571,
+    "more than 5571 cities (5570 + all)": lambda df: len(df["city_id"].unique())
+    >= 5571,
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "dataframe has null data": lambda df: all(
         df.drop(columns=["overall_alert", "last_updated_cases"]).isnull().any() == False

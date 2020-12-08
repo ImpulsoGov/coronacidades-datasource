@@ -17,5 +17,8 @@ python-dotenv
 fuzzyset
 datawrapper
 plotly
+bs4
+numpy
+selenium
 cufflinks
 # rpy2==3.2.2

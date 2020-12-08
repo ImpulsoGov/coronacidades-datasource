@@ -192,7 +192,7 @@ def now():
     i = i+1
 
   df_cnes = df_leitos.merge(df_leitos_comp, how='left',on=['city_id', 'city_name'])
-  df_cnes = df_cnes.merge(df_respiradores, how='left',on=['city_id','city_name'])
+  df_cnes = df_cnes.merge(df_respiradores, how='left',on=['city_name'])
   df_cnes["city_id"] = df_cnes["city_id"].astype(str).astype(int)
   df_cnes = datamunicipios.merge(df_cnes, how='left',on=['city_id'], suffixes=['','_y'])
   df_cnes = df_cnes.replace({'-': 0}, regex=True)

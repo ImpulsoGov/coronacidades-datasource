@@ -75,13 +75,6 @@ def now(config):
         classify="trust_classification",
     )
 
-     # TODO: remover ao passar para branch no farol
-    config["br"]["farolcovid"]["rules"]["capacity_classification"] = {
-        "column_name": "number_icu_beds_100k",
-        "cuts": [0, 10, 20, 30, 1000000],
-        "categories": [3, 2, 1, 0],
-    }
-
     df = get_capacity_indicators(
         df,
         place_id="city_id",

@@ -223,15 +223,15 @@ def _prepare_simulation(row, place_id, config, place_specific_params, rt_upper=N
 
 def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
 
-    if place_id == "health_region_id":
-        rt_upper = get_states_rt.now(config)
-        place_specific_params = get_health_region_parameters.now(config).set_index(
-            place_id
-        )
+    # if place_id == "health_region_id":
+    #     rt_upper = get_states_rt.now(config)
+    #     place_specific_params = get_health_region_parameters.now(config).set_index(
+    #         place_id
+    #     )
 
-    if place_id == "state_num_id":
-        rt_upper = None
-        place_specific_params = get_states_parameters.now(config).set_index(place_id)
+    # if place_id == "state_num_id":
+    #     rt_upper = None
+    #     place_specific_params = get_states_parameters.now(config).set_index(place_id)
 
     # Pega valores calculados para regional e soma total de leitos
     if place_id == "city_id":
@@ -240,7 +240,7 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
             .merge(
                 data[
                     [
-                        "dday_icu_beds",
+                        # "dday_icu_beds",
                         "number_beds",
                         "number_icu_beds",
                         "health_region_id",
@@ -252,21 +252,21 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
             .set_index("city_id")
         )
 
-        df[classify] = _get_levels(df, rules[classify])
-        return df.drop(columns=[col for col in df if "_drop" in col])
+        df = df.drop(columns=[col for col in df if "_drop" in col])
 
-    else:
-        df["dday_icu_beds"] = df.apply(
-            lambda row: _prepare_simulation(
-                row, place_id, config, place_specific_params, rt_upper
-            ),
-            axis=1,
-        )
+    # else:
+    #     df["dday_icu_beds"] = df.apply(
+    #         lambda row: _prepare_simulation(
+    #             row, place_id, config, place_specific_params, rt_upper
+    #         ),
+    #         axis=1,
+    #     )
 
-    df["dday_icu_beds"] = df["dday_icu_beds"].replace(-1, 91)
+    # df["dday_icu_beds"] = df["dday_icu_beds"].replace(-1, 91)
 
-    rules[classify]
-    # Classificação: numero de dias para acabar a capacidade
+    # Classificação: numero de dias para acabar a capacidade - MUDANÇA: leitos UTI por 100k
+    df["number_icu_beds_100k"] = (10 ** 5) * (df["number_icu_beds"] / df["population"])
+
     df[classify] = _get_levels(df, rules[classify])
 
     return df
@@ -327,7 +327,6 @@ def now(config):
         .set_index("health_region_id")
     )
 
-    # TODO: get_cases => get_states_cases / mudar indicadores de situacao + add trust (notification_rate)!
     df = get_situation_indicators(
         df,
         data=get_health_region_cases.now(config),
@@ -351,6 +350,13 @@ def now(config):
         rules=config["br"]["farolcovid"]["rules"],
         classify="trust_classification",
     )
+
+    # TODO: remover ao passar para branch no farol
+    config["br"]["farolcovid"]["rules"]["capacity_classification"] = {
+        "column_name": "number_icu_beds_100k",
+        "cuts": [0, 10, 20, 30, 1000000],
+        "categories": [3, 2, 1, 0],
+    }
 
     df = get_capacity_indicators(
         df,

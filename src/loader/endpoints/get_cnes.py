@@ -11,6 +11,7 @@ import os
 from endpoints.helpers import allow_local
 from endpoints import get_places_id
 from utils import download_from_drive
+from logger import logger
 
 
 def get_citycode(row):
@@ -22,12 +23,12 @@ def get_citycode(row):
 def get_cityname(row):
     x = row["city_name"]
     x = x[6:]
-    return x
+    return x.strip("\n")
 
 
 def get_leitos(driver, url):
     driver.get(url)
-    sleep(5)
+    sleep(15)
     element = driver.find_elements_by_xpath("//option[@value='Município']")
     element[0].click()
     element = driver.find_elements_by_xpath("//option[@value='Especialidade']")
@@ -67,15 +68,15 @@ def get_leitos(driver, url):
 
 def get_respiradores(driver, url):
     driver.get(url)
-    sleep(5)
+    sleep(15)
     element = driver.find_elements_by_xpath("//option[@value='Município']")
     element[0].click()
     element = driver.find_elements_by_xpath("//option[@value='Equipamento']")
     element[1].click()
     element = driver.find_elements_by_class_name("mostra")
-    sleep(5)
+    sleep(15)
     element[0].click()
-    sleep(5)
+    sleep(15)
     tableRows = driver.find_elements_by_class_name("tabdados")
     html = tableRows[0].get_attribute("innerHTML")
     soup = BeautifulSoup(html, "html.parser")
@@ -121,7 +122,7 @@ def get_urlleitoscomp(driver, url):
         i = i + 1
     element = driver.find_elements_by_class_name("botao_opcao")
     element[4].click()
-    sleep(5)
+    sleep(15)
     element = driver.find_elements_by_xpath("//option[@value='Quantidade_existente']")
     element[0].click()
     element = driver.find_elements_by_xpath("//option[@value='Quantidade_SUS']")
@@ -148,7 +149,7 @@ def get_urlleitoscomp(driver, url):
         i = i + 1
     element = driver.find_elements_by_class_name("botao_opcao")
     element[4].click()
-    sleep(5)
+    sleep(15)
     element = driver.find_elements_by_xpath("//option[@value='Quantidade_SUS']")
     element[0].click()
     element = driver.find_elements_by_xpath("//option[@value='Quantidade_Não_SUS']")
@@ -191,64 +192,61 @@ def now(config):
     chrome_options.add_argument("--window-size=1420,1080")
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
+
     driver = webdriver.Chrome(
         chrome_options=chrome_options
     )  # chromedriver é instalado via dockerfile
+
     # Pega dados de Leitos pela especialidade de todos os municipios #
+    logger.info("Baixando dados de leitos")
     urlleitos = "http://tabnet.datasus.gov.br/cgi/deftohtm.exe?cnes/cnv/leiintbr.def"
     df_leitos = get_leitos(driver, urlleitos)
+    print(df_leitos.nunique())
+
     # Pega dados de Leitos complementares de todos os municipios #
+    logger.info("Baixando dados de leitos UTI")
     urlleitoscomp = (
         "http://tabnet.datasus.gov.br/cgi/deftohtm.exe?cnes/cnv/leiutibr.def"
     )
     df_leitos_comp = get_urlleitoscomp(driver, urlleitoscomp)
+    print(df_leitos_comp.nunique())
+
     # Pega dados de Respiradores dos Municipios #
+    logger.info("Baixando dados de respiradores")
     urlresp = "http://tabnet.datasus.gov.br/cgi/deftohtm.exe?cnes/cnv/equipobr.def"
     df_respiradores = get_respiradores(driver, urlresp)
+    print(df_respiradores.nunique())
+
     # Une os diferentes dataframes #
     df_cnes = df_leitos.merge(df_leitos_comp, how="left", on=["city_id", "city_name"])
-    df_cnes = df_cnes.merge(df_respiradores, how="left", on=["city_name"])
-    df_cnes["city_id"] = df_cnes["city_id"].astype(str).astype(int)
-    datamunicipios = get_places_id.now(config)
-    df_cnes = datamunicipios.merge(
-        df_cnes, how="left", on=["city_id"], suffixes=["", "_y"]
-    )
+    # df_cnes = df_cnes.merge(df_respiradores, how="left", on=["city_name"])
+    logger.info("Une dados de leitos, leitos UTI e respiradores")
+    print(df_cnes.nunique())
+
+    df_cnes["city_id"] = df_cnes["city_id"].astype(int)
+
     df_cnes = df_cnes.replace({"-": 0}, regex=True)
     df_cnes = df_cnes.replace(np.nan, 0, regex=True)
-    df_cnes["cirurgico_tot_ago"] = (
-        df_cnes["cirurgico_tot_ago"].astype(str).astype(float).astype(int)
-    )
-    df_cnes["clinico_tot_ago"] = (
-        df_cnes["clinico_tot_ago"].astype(str).astype(float).astype(int)
-    )
-    df_cnes["hospital_dia_tot_ago"] = (
-        df_cnes["hospital_dia_tot_ago"].astype(str).astype(float).astype(int)
-    )
-    df_cnes["UTI_adulto_I_tot_ago"] = (
-        df_cnes["UTI_adulto_I_tot_ago"].astype(str).astype(float).astype(int)
-    )
-    df_cnes["UTI_adulto_II_tot_ago"] = (
-        df_cnes["UTI_adulto_II_tot_ago"].astype(str).astype(float).astype(int)
-    )
-    df_cnes["UTI_adulto_III_tot_ago"] = (
-        df_cnes["UTI_adulto_III_tot_ago"].astype(str).astype(float).astype(int)
-    )
-    df_cnes["UTI_adulto_II_COVID_SUS_ago"] = (
-        df_cnes["UTI_adulto_II_COVID_SUS_ago"].astype(str).astype(float).astype(int)
-    )
-    df_cnes["UTI_adulto_II_COVID_nao_SUS_ago"] = (
-        df_cnes["UTI_adulto_II_COVID_nao_SUS_ago"].astype(str).astype(float).astype(int)
-    )
-    df_cnes["UTI_pediatrica_II_COVID_SUS_ago"] = (
-        df_cnes["UTI_pediatrica_II_COVID_SUS_ago"].astype(str).astype(float).astype(int)
-    )
-    df_cnes["UTI_pediatrica_II_COVID_nao_SUS_ago"] = (
-        df_cnes["UTI_pediatrica_II_COVID_nao_SUS_ago"]
-        .astype(str)
-        .astype(float)
-        .astype(int)
-    )
-    df_cnes["number_ventilators"] = df_cnes["Respiradores_ago"]
+
+    columns = [
+        "cirurgico_tot_ago",
+        "hospital_dia_tot_ago",
+        "hospital_dia_tot_ago",
+        "UTI_adulto_I_tot_ago",
+        "UTI_adulto_II_tot_ago",
+        "UTI_adulto_III_tot_ago",
+        "UTI_adulto_II_COVID_SUS_ago",
+        "UTI_adulto_II_COVID_nao_SUS_ago",
+        "UTI_pediatrica_II_COVID_SUS_ago",
+        "UTI_adulto_II_COVID_nao_SUS_ago",
+        # "Respiradores_ago",
+    ]
+
+    for col in columns:
+        df_cnes[col] = df_cnes[col].astype(str).astype(float).astype(int)
+
+    # df_cnes = df_cnes.rename(columns={"Respiradores_ago": "number_ventilators"})
+
     df_cnes["number_beds"] = (
         df_cnes["cirurgico_tot_ago"]
         + df_cnes["clinico_tot_ago"]
@@ -265,14 +263,36 @@ def now(config):
         + df_cnes["UTI_pediatrica_II_COVID_SUS_ago"]
         + df_cnes["UTI_pediatrica_II_COVID_nao_SUS_ago"]
     )
-    # Da merge com os dados de populacao #
-    dfs = download_from_drive(config["br"]["drive_paths"]["cities_population"])
-    df_cnes = pd.merge(df_cnes, dfs, on="city_id", how="left", suffixes=("", "_y"))
+
+    # Da merge com os dados de populacao
+    places_ids = get_places_id.now(config)
+
+    # Cria coluna de IBGE 6 dígitos para match
+    places_ids["city_id_7d"] = places_ids["city_id"]
+    places_ids["city_id"] = places_ids["city_id"].str.apply(lambda x: x[:-1])
+
+    df_cnes = places_ids.merge(df_cnes, how="left", on=["city_id"], suffixes=["", "_y"])
+
+    df_cnes["city_id"] = df_cnes["city_id_7d"]
+    df_cnes = df_cnes.drop(columns="city_id_7d")
+
+    df_pop = download_from_drive(config["br"]["drive_paths"]["cities_population"])[
+        [
+            "country_iso",
+            "country_name",
+            "state_id",
+            "state_name",
+            "city_id",
+            "city_name",
+            "population",
+        ]
+    ]
+
+    df_cnes = pd.merge(df_cnes, df_pop, on="city_id", how="left", suffixes=("", "_y"))
     df_cnes = df_cnes.drop(
         [
             "state_name_y",
             "UTI_pediatrica_II_COVID_nao_SUS_ago",
-            "Respiradores_ago",
             "city_name_y",
             "pediatrico_tot_ago",
             "UTI_adulto_II_COVID_SUS_ago",
@@ -316,4 +336,6 @@ TESTS = {
         df.query("number_beds < 0 | number_icu_beds < 0")
     )
     == 0,
+    "all zero beds": lambda df: len(df.query("number_beds == 0")) != len(df),
+    "all zero icu beds": lambda df: len(df.query("number_icu_beds == 0")) != len(df),
 }

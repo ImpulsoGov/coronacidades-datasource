@@ -223,6 +223,7 @@ def _prepare_simulation(row, place_id, config, place_specific_params, rt_upper=N
 
 def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
 
+    # TODO -> VOLTAR PROJECAO DE LEITOS
     # if place_id == "health_region_id":
     #     rt_upper = get_states_rt.now(config)
     #     place_specific_params = get_health_region_parameters.now(config).set_index(
@@ -244,6 +245,7 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
                         "number_beds",
                         "number_icu_beds",
                         "health_region_id",
+                        "population",
                     ]
                 ],
                 on="health_region_id",
@@ -252,8 +254,6 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
             .set_index("city_id")
         )
 
-        df = df.drop(columns=[col for col in df if "_drop" in col])
-
     # else:
     #     df["dday_icu_beds"] = df.apply(
     #         lambda row: _prepare_simulation(
@@ -261,11 +261,17 @@ def get_capacity_indicators(df, place_id, config, rules, classify, data=None):
     #         ),
     #         axis=1,
     #     )
-
     # df["dday_icu_beds"] = df["dday_icu_beds"].replace(-1, 91)
 
     # Classificação: numero de dias para acabar a capacidade - MUDANÇA: leitos UTI por 100k
     df["number_icu_beds_100k"] = (10 ** 5) * (df["number_icu_beds"] / df["population"])
+
+    # Remove populacao da regional usada
+    if place_id == "city_id":
+        df = df.rename(
+            columns={"population": "population_drop", "population_drop": "population"}
+        )
+        df = df.drop(columns=[col for col in df if "_drop" in col])
 
     df[classify] = _get_levels(df, rules[classify])
 

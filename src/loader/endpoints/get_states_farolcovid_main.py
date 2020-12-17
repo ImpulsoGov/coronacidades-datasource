@@ -7,7 +7,7 @@ from math import ceil
 from endpoints import (
     get_states_cases,
     get_states_rt,
-    get_health,
+    get_cnes,
     get_health_region_farolcovid_main,
 )
 from endpoints.get_cities_farolcovid_main import (
@@ -61,7 +61,7 @@ def now(config):
 
     # Get resource data
     df = (
-        get_health.now(config, "br")
+        get_cnes.now(config)
         .groupby(
             [
                 "country_iso",
@@ -122,7 +122,7 @@ def now(config):
 
     df["overall_alert"] = df.apply(
         lambda row: get_overall_alert(row[cols]), axis=1
-    ) # .replace(config["br"]["farolcovid"]["categories"])
+    )  # .replace(config["br"]["farolcovid"]["categories"])
 
     return df.reset_index()
 

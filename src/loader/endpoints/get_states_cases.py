@@ -13,7 +13,7 @@ from endpoints.get_cities_cases import (
     download_brasilio_table,
     get_until_last,
 )
-from endpoints import get_health, get_places_id
+from endpoints import get_cnes, get_places_id
 from endpoints.scripts import get_notification_rate
 from endpoints.helpers import allow_local
 
@@ -64,7 +64,7 @@ def now(config, country="br"):
 
         # Add population data from CNES
         df = df[cols].merge(
-            get_health.now(config)
+            get_cnes.now(config)
             .assign(state_num_id=lambda df: df["state_num_id"].astype(int),)
             .groupby("state_num_id")["population"]
             .sum()

@@ -9,7 +9,7 @@ import io
 from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
-from endpoints import get_health
+from endpoints import get_cnes
 from endpoints.scripts import get_notification_rate
 from utils import download_from_drive
 
@@ -167,7 +167,7 @@ def now(config, country="br"):
         )
 
         # Fix places name & ID + Get total population
-        places_ids = get_health.now(config).assign(
+        places_ids = get_cnes.now(config).assign(
             city_id=lambda df: df["city_id"].astype(int)
         )
 

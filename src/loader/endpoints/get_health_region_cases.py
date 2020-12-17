@@ -9,7 +9,7 @@ import io
 from urllib.request import Request, urlopen
 
 from endpoints.helpers import allow_local
-from endpoints import get_health, get_places_id
+from endpoints import get_cnes, get_places_id
 from endpoints.scripts import get_notification_rate
 from utils import download_from_drive
 
@@ -91,7 +91,7 @@ def now(config, country="br"):
 
         # Add population data from CNES
         df = df.merge(
-            get_health.now(config)
+            get_cnes.now(config)
             .assign(health_region_id=lambda df: df["health_region_id"].astype(int),)
             .groupby("health_region_id")["population"]
             .sum()

@@ -13,6 +13,12 @@ from endpoints import get_places_id
 from utils import download_from_drive
 from logger import logger
 
+def get_date(updatedate):
+    ano = updatedate[4:]
+    meses = {'Jan':1, 'Fev':2, 'Mar':3, 'Abr':4, 'Mai':5, 'Jun':6, 'Jul':7, 'Ago':8, 'Set':9, 'Out':10, 'Nov':11, 'Dez':12}
+    mes = str(meses[updatedate[:3]])
+    x = ano+'-'+mes+'-'+'01'
+    return x
 
 def get_citycode(row):
     x = row["city_name"].split(" ")
@@ -22,7 +28,7 @@ def get_citycode(row):
 
 def get_cityname(row):
     x = row["city_name"]
-    x = x[6:]
+    x = x[6:-1]
     return x.strip("\n")
 
 
@@ -33,6 +39,8 @@ def get_leitos(driver, url):
     element[0].click()
     element = driver.find_elements_by_xpath("//option[@value='Especialidade']")
     element[1].click()
+    updatedate = driver.find_element_by_id("A")
+    updatedate = updatedate.text[0:8]
     element = driver.find_elements_by_class_name("mostra")
     element[0].click()
     df_leitos = pd.DataFrame(
@@ -63,7 +71,7 @@ def get_leitos(driver, url):
         i = i + 1
     df_leitos["city_id"] = df_leitos.apply(get_citycode, axis=1)
     df_leitos["city_name"] = df_leitos.apply(get_cityname, axis=1)
-    return df_leitos
+    return df_leitos, updatedate
 
 
 def get_respiradores(driver, url):
@@ -196,7 +204,8 @@ def now(config):
     # Pega dados de Leitos pela especialidade de todos os municipios #
     logger.info("Baixando dados de leitos")
     urlleitos = "http://tabnet.datasus.gov.br/cgi/deftohtm.exe?cnes/cnv/leiintbr.def"
-    df_leitos = get_leitos(driver, urlleitos)
+    df_leitos, updatedate = get_leitos(driver, urlleitos)
+    updatedate = get_date(updatedate)
     print(df_leitos.nunique())
 
     # Pega dados de Leitos complementares de todos os municipios #

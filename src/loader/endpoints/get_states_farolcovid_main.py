@@ -122,7 +122,7 @@ def now(config):
 
     df["overall_alert"] = df.apply(
         lambda row: get_overall_alert(row[cols]), axis=1
-    ) # .replace(config["br"]["farolcovid"]["categories"])
+    )  # .replace(config["br"]["farolcovid"]["categories"])
 
     return df.reset_index()
 

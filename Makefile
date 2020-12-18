@@ -66,7 +66,19 @@ server-run-shell: server-remove
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 
+server-run-dev: server-remove
+	docker run -d --restart=unless-stopped \
+		--net=my-network \
+		--name datasource-server \
+		-p 7000:7000 \
+		-v "datasource:/output" \
+		$(SERVER_IMAGE_TAG)
+
+create-network:
+	docker network create -d bridge my-network
+
 # Groups
+server-dev: create-network server-build server-run-dev
 server-build-run: server-build server-run
 server-shell: server-build server-run-shell
 

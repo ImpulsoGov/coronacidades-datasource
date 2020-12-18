@@ -80,7 +80,7 @@ def get_respiradores(driver, url):
     tableRows = driver.find_elements_by_class_name("tabdados")
     html = tableRows[0].get_attribute("innerHTML")
     soup = BeautifulSoup(html, "html.parser")
-    df_respiradores = pd.DataFrame(columns=["city_name", "Respiradores"])
+    df_respiradores = pd.DataFrame(columns=["city_name", "number_ventilators"])
     x = soup.select("td")
     y = soup.select("tr")
     i = 0

@@ -2,7 +2,7 @@ FROM tiangolo/uwsgi-nginx-flask:python3.7
 # TODO use another image without flask optimizations
 
 ENV OUTPUT_DIR="/output" \
-    CONFIG_URL="https://raw.githubusercontent.com/ImpulsoGov/farolcovid/stable/src/configs/config.yaml" \
+    CONFIG_URL="https://raw.githubusercontent.com/ImpulsoGov/farolcovid/capacity-update/src/configs/config.yaml" \
     IS_PROD="False" \
     SLACK_WEBHOOK="" \
     INLOCO_CITIES_KEY="" \

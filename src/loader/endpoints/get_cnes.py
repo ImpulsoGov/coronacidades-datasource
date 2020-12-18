@@ -38,10 +38,10 @@ def get_leitos(driver, url):
     df_leitos = pd.DataFrame(
         columns=[
             "city_name",
-            "cirurgico_tot_ago",
-            "clinico_tot_ago",
-            "pediatrico_tot_ago",
-            "hospital_dia_tot_ago",
+            "cirurgico_tot",
+            "clinico_tot",
+            "pediatrico_tot",
+            "hospital_dia_tot",
         ]
     )
     tableRows = driver.find_elements_by_class_name("tabdados")
@@ -80,7 +80,7 @@ def get_respiradores(driver, url):
     tableRows = driver.find_elements_by_class_name("tabdados")
     html = tableRows[0].get_attribute("innerHTML")
     soup = BeautifulSoup(html, "html.parser")
-    df_respiradores = pd.DataFrame(columns=["city_name", "Respiradores_ago"])
+    df_respiradores = pd.DataFrame(columns=["city_name", "Respiradores"])
     x = soup.select("td")
     y = soup.select("tr")
     i = 0
@@ -107,9 +107,9 @@ def get_urlleitoscomp(driver, url):
     df_leitos_comp = pd.DataFrame(
         columns=[
             "city_name",
-            "UTI_adulto_I_tot_ago",
-            "UTI_adulto_II_tot_ago",
-            "UTI_adulto_III_tot_ago",
+            "UTI_adulto_I_tot",
+            "UTI_adulto_II_tot",
+            "UTI_adulto_III_tot",
         ]
     )
     x = soup.select("td")
@@ -133,11 +133,7 @@ def get_urlleitoscomp(driver, url):
     html = tableRows[0].get_attribute("innerHTML")
     soup = BeautifulSoup(html, "html.parser")
     df_Leitos_compl_SUS_ago = pd.DataFrame(
-        columns=[
-            "city_name",
-            "UTI_adulto_II_COVID_SUS_ago",
-            "UTI_pediatrica_II_COVID_SUS_ago",
-        ]
+        columns=["city_name", "UTI_adulto_II_COVID_SUS", "UTI_pediatrica_II_COVID_SUS",]
     )
     x = soup.select("td")
     y = soup.select("tr")
@@ -162,8 +158,8 @@ def get_urlleitoscomp(driver, url):
     df_Leitos_compl_nao_SUS_ago = pd.DataFrame(
         columns=[
             "city_name",
-            "UTI_adulto_II_COVID_nao_SUS_ago",
-            "UTI_pediatrica_II_COVID_nao_SUS_ago",
+            "UTI_adulto_II_COVID_nao_SUS",
+            "UTI_pediatrica_II_COVID_nao_SUS",
         ]
     )
     x = soup.select("td")
@@ -219,49 +215,51 @@ def now(config):
 
     # Une os diferentes dataframes #
     df_cnes = df_leitos.merge(df_leitos_comp, how="left", on=["city_id", "city_name"])
-    # df_cnes = df_cnes.merge(df_respiradores, how="left", on=["city_name"])
+    df_cnes = df_cnes.merge(df_respiradores, how="left", on=["city_name"])
     logger.info("Une dados de leitos, leitos UTI e respiradores")
     print(df_cnes.nunique())
 
-    df_cnes["city_id"] = df_cnes["city_id"].astype(int)
+    # df_cnes["city_id"] = df_cnes["city_id"].astype(str)
 
     df_cnes = df_cnes.replace({"-": 0}, regex=True)
     df_cnes = df_cnes.replace(np.nan, 0, regex=True)
 
+    # Conserta tipos de colunas
     columns = [
-        "cirurgico_tot_ago",
-        "hospital_dia_tot_ago",
-        "hospital_dia_tot_ago",
-        "UTI_adulto_I_tot_ago",
-        "UTI_adulto_II_tot_ago",
-        "UTI_adulto_III_tot_ago",
-        "UTI_adulto_II_COVID_SUS_ago",
-        "UTI_adulto_II_COVID_nao_SUS_ago",
-        "UTI_pediatrica_II_COVID_SUS_ago",
-        "UTI_adulto_II_COVID_nao_SUS_ago",
-        # "Respiradores_ago",
+        "cirurgico_tot",
+        "clinico_tot",
+        "hospital_dia_tot",
+        "UTI_adulto_I_tot",
+        "UTI_adulto_II_tot",
+        "UTI_adulto_III_tot",
+        "UTI_adulto_II_COVID_SUS",
+        "UTI_adulto_II_COVID_nao_SUS",
+        "UTI_pediatrica_II_COVID_SUS",
+        "UTI_pediatrica_II_COVID_nao_SUS",
+        "number_ventilators",
     ]
 
     for col in columns:
         df_cnes[col] = df_cnes[col].astype(str).astype(float).astype(int)
 
-    # df_cnes = df_cnes.rename(columns={"Respiradores_ago": "number_ventilators"})
-
+    # Agrupa total de leitos enfermaria
     df_cnes["number_beds"] = (
-        df_cnes["cirurgico_tot_ago"]
-        + df_cnes["clinico_tot_ago"]
-        + df_cnes["hospital_dia_tot_ago"]
+        df_cnes["cirurgico_tot"] + df_cnes["clinico_tot"] + df_cnes["hospital_dia_tot"]
     )
+
+    # Agrupa total de leitos UTI
     df_cnes["number_icu_beds"] = (
-        df_cnes["UTI_adulto_I_tot_ago"]
-        + df_cnes["UTI_adulto_II_tot_ago"]
-        + df_cnes["UTI_adulto_III_tot_ago"]
+        df_cnes["UTI_adulto_I_tot"]
+        + df_cnes["UTI_adulto_II_tot"]
+        + df_cnes["UTI_adulto_III_tot"]
     )
+
+    # Agrupa total de leitos UTI Covid
     df_cnes["number_covid_icu_beds"] = (
-        df_cnes["UTI_adulto_II_COVID_SUS_ago"]
-        + df_cnes["UTI_adulto_II_COVID_nao_SUS_ago"]
-        + df_cnes["UTI_pediatrica_II_COVID_SUS_ago"]
-        + df_cnes["UTI_pediatrica_II_COVID_nao_SUS_ago"]
+        df_cnes["UTI_adulto_II_COVID_SUS"]
+        + df_cnes["UTI_adulto_II_COVID_nao_SUS"]
+        + df_cnes["UTI_pediatrica_II_COVID_SUS"]
+        + df_cnes["UTI_pediatrica_II_COVID_nao_SUS"]
     )
 
     # Da merge com os dados de populacao
@@ -269,7 +267,9 @@ def now(config):
 
     # Cria coluna de IBGE 6 dígitos para match
     places_ids["city_id_7d"] = places_ids["city_id"]
-    places_ids["city_id"] = places_ids["city_id"].str.apply(lambda x: x[:-1])
+    places_ids["city_id"] = (
+        places_ids["city_id"].astype(str).str.apply(lambda x: x[:-1])
+    )
 
     df_cnes = places_ids.merge(df_cnes, how="left", on=["city_id"], suffixes=["", "_y"])
 
@@ -292,19 +292,19 @@ def now(config):
     df_cnes = df_cnes.drop(
         [
             "state_name_y",
-            "UTI_pediatrica_II_COVID_nao_SUS_ago",
+            "UTI_pediatrica_II_COVID_nao_SUS",
             "city_name_y",
-            "pediatrico_tot_ago",
-            "UTI_adulto_II_COVID_SUS_ago",
-            "UTI_pediatrica_II_COVID_SUS_ago",
-            "UTI_adulto_II_COVID_nao_SUS_ago",
+            "pediatrico_tot",
+            "UTI_adulto_II_COVID_SUS",
+            "UTI_pediatrica_II_COVID_SUS",
+            "UTI_adulto_II_COVID_nao_SUS",
             "state_id_y",
-            "cirurgico_tot_ago",
-            "clinico_tot_ago",
-            "hospital_dia_tot_ago",
-            "UTI_adulto_I_tot_ago",
-            "UTI_adulto_II_tot_ago",
-            "UTI_adulto_III_tot_ago",
+            "cirurgico_tot",
+            "clinico_tot",
+            "hospital_dia_tot",
+            "UTI_adulto_I_tot",
+            "UTI_adulto_II_tot",
+            "UTI_adulto_III_tot",
         ],
         axis=1,
     )

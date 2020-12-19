@@ -31,7 +31,7 @@
   skip: False
 
 - endpoint: br/cities/cases/full
-  python_file: get_cities_cases
+  python_file: new_get_cities_cases
   skip: False
 
 - endpoint: br/health_region/cases/full

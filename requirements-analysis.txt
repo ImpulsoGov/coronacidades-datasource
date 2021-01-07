@@ -9,4 +9,5 @@ cufflinks
 matplotlib
 scipy
 pygam
-sklearn
+memory_profiler
+# sklearn

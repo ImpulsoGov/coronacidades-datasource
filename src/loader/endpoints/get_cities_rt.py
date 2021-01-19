@@ -6,10 +6,11 @@ import pandas as pd
 import datetime as dt
 from scipy import stats as sps
 from joblib import Parallel, delayed
+from loguru import logger
 
 # from utils import get_cases_series
 from endpoints import get_cities_cases
-from loguru import logger
+from endpoints.get_cities_cases import get_rolling_indicators
 
 from endpoints.helpers import allow_local
 
@@ -241,14 +242,18 @@ def get_rt(df, place_id, config):
     # subs cidades com 0 casos -> 0.1 caso no periodo
     df = df.replace(0, 0.1)
 
-    # Run in parallel + get growth
-    df = get_cities_cases.get_mavg_indicators(
-        sequential_run(df, config, place_id),
-        "Rt_most_likely",
-        place_id,
-        weighted=False,
-    )
+    # Run in parallel
+    df = sequential_run(df, config, place_id)
+    logger.info("FINISH SEQUENTIAL RT CALCULATION")
 
+    # Get rolling avgs
+    groups = df.groupby(place_id, as_index=False)
+    df = groups.apply(
+        lambda x: get_rolling_indicators(x, config, cols=["Rt_most_likely"], weighted=False)
+    )
+    df = df.reset_index(drop=True)
+    logger.info("FINISH DATA GROW CALCULATION")
+    
     # Filter more than 14 days of calculated Rt
     v = df[place_id].value_counts()
     return df[df[place_id].isin(v[v > 14].index)]

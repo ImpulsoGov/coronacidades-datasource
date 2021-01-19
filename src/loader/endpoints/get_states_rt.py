@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from endpoints.helpers import allow_local
-from endpoints import get_states_cases, get_cities_cases
+from endpoints import get_states_cases
 from endpoints.get_cities_rt import get_rt
 
 

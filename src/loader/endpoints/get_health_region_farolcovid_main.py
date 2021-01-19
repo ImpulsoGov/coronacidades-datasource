@@ -8,7 +8,7 @@ from endpoints import (
     get_health_region_cases,
     get_health_region_rt,
     get_states_rt,
-    get_health,
+    get_cnes,
     get_health_region_parameters,
     get_states_parameters,
 )
@@ -311,7 +311,7 @@ def now(config):
 
     # Get resource data
     df = (
-        get_health.now(config, "br")
+        get_cnes.now(config)
         .groupby(
             [
                 "country_iso",

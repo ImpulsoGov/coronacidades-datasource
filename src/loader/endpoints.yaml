@@ -15,7 +15,7 @@
   skip: False
 
 - endpoint: br/cities/cnes
-  python_file: get_health
+  python_file: get_cnes
   skip: False
 
 - endpoint: br/cnae/sectors

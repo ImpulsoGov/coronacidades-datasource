@@ -52,29 +52,17 @@ def bin_neg_simulation(k, p, n=10000, odd=99):
     )
 
 
-def get_rolling(df, col):
-    return df.rolling(
-        agg_params["mavg_window"],
-        min_periods=agg_params["mavg_window"],
-        on="last_updated",
-    )[col].mean()
-
-
 def get_population(place_id):
-    pop = (
-        pd.read_csv(
-            Path(
-                "endpoints/scripts/br_health_region_tabnet_age_dist_2019_treated.csv"
-            ).resolve()
-        )
-        .assign(
-            state_num_id=lambda df: df["health_region_id"].apply(
-                lambda x: int(str(x)[:2])
-            )
-        )
-        .groupby(place_id)
-        .sum()
+    pop = pd.read_csv(
+        Path(
+            "endpoints/scripts/br_health_region_tabnet_age_dist_2019_treated.csv"
+        ).resolve()
+    ).assign(
+        state_num_id=lambda df: df["health_region_id"].apply(lambda x: int(str(x)[:2]))
     )
+
+    pop = pop.groupby(place_id).sum()
+    pop.index = pop.index.astype(str)
     return pop.drop(
         columns=[col for col in pop.columns if "_id" in col]
     )  # drop other place level
@@ -101,10 +89,9 @@ def now(df, place_id="health_region_id", is_acum=False):
         .drop(columns=["total"])
         .dot(pd.Series(ifr_by_age))
     )
-
     weighted_ifr_by_age.name = "expected_mortality"
 
-    # Choose cases & deaths cols
+    # Choose cases & deaths cols to use
     if not is_acum:
         cases = "daily_cases"
         deaths = "new_deaths"
@@ -112,32 +99,40 @@ def now(df, place_id="health_region_id", is_acum=False):
         cases = "confirmed_cases"
         deaths = "deaths"
 
-    # Agg place data, get deaths mavg & add infected date col
+    # Agg cases and deaths mavg
     df = (
         df.groupby([place_id, "last_updated"])
-        .agg({cases: "sum", deaths: "sum"})
-        .reset_index(level=1)
-        .assign(deaths_mavg=lambda df: get_rolling(df, deaths))
-        .assign(cases_mavg=lambda df: get_rolling(df, cases))
-        .dropna()
-        .join(weighted_ifr_by_age)
+        .agg(
+            {cases: "sum", deaths: "sum"}
+        )  # sum for all cities in the same health_region
         .reset_index()
-        .assign(
-            last_updated=lambda df: pd.to_datetime(
-                df["last_updated"], format="%Y-%m-%d"
-            )
-        )
-        .assign(
-            date_infected=lambda df: df["last_updated"]
-            - datetime.timedelta(days=agg_params["delay_days"])
-        )
     )
 
+    df = (
+        df.groupby(place_id)
+        .rolling(
+            agg_params["mavg_window"],
+            min_periods=agg_params["mavg_window"],
+            on="last_updated",
+        )
+        .mean()
+        .reset_index(1, drop=True)
+        .drop(columns=[place_id])  # it repets with index for some reason
+        .reset_index()
+    )
+
+    # Join weighted ifr by age
+    df[place_id] = df[place_id].astype(str)
+    df = df.set_index(place_id).dropna().join(weighted_ifr_by_age).reset_index()
+
+    # Add probable infected date col
+    df["date_infected"] = df["last_updated"] - datetime.timedelta(
+        days=agg_params["delay_days"]
+    )
     # Estimate cases on delayed date
-    df_estimation = df[[place_id, "date_infected", "deaths_mavg", "expected_mortality"]]
+    df_estimation = df[[place_id, "date_infected", deaths, "expected_mortality"]]
     df_estimation["estimated_cases"] = df_estimation.apply(
-        lambda row: bin_neg_simulation(row["deaths_mavg"], row["expected_mortality"]),
-        axis=1,
+        lambda row: bin_neg_simulation(row[deaths], row["expected_mortality"]), axis=1,
     )
 
     # Join notification rate on delayed date
@@ -148,23 +143,17 @@ def now(df, place_id="health_region_id", is_acum=False):
         on=[place_id, "last_updated"],
     )
 
-    # If using new_deaths, need to sum estimated cases
+    # Set category type to optimize calculation
+    df[place_id] = df[place_id].astype("category")
+
+    # If using new_deaths, need to cumulative sum estimated cases
     if not is_acum:
-        df = df.assign(
-            total_estimated_cases=lambda df: df.groupby(place_id)[
-                "estimated_cases"
-            ].cumsum()
-        )
+        df["total_estimated_cases"] = df.groupby([place_id])["estimated_cases"].cumsum()
 
     # Get notification rate & fill zero with last value
-    df = df.assign(
-        notification_rate=lambda df: (df["cases_mavg"] / df["estimated_cases"]).clip(
-            0, 1
-        )
-    ).assign(
-        notification_rate=lambda df: df["notification_rate"].replace(
-            to_replace=0, method="ffill"
-        )
+    df["notification_rate"] = (df[cases] / df["estimated_cases"]).clip(0, 1)
+    df["notification_rate"] = df["notification_rate"].replace(
+        to_replace=0, method="ffill"
     )
 
     return df.drop(columns=[deaths, cases])

@@ -50,7 +50,7 @@ server-build: server-remove
 		-f server.dockerfile \
 		-t $(SERVER_IMAGE_TAG) .
 
-# Run for production environment
+# PROD: Run for production environment
 server-run: server-remove
 	docker run -d --restart=unless-stopped \
 		--name datasource-server \
@@ -58,7 +58,7 @@ server-run: server-remove
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 
-# DEBUGGING Run for dev environment
+# DEBUGGING: Run for dev environment
 server-run-shell: server-remove
 	docker run --rm -it \
 		--entrypoint "/bin/bash" \
@@ -66,7 +66,8 @@ server-run-shell: server-remove
 		-v "datasource:/output" \
 		$(SERVER_IMAGE_TAG)
 
-server-run-dev: server-remove
+# LOCAL: Running in a common network with the apps
+server-run-local: server-remove
 	docker run -d --restart=unless-stopped \
 		--net=my-network \
 		--name datasource-server \
@@ -75,10 +76,10 @@ server-run-dev: server-remove
 		$(SERVER_IMAGE_TAG)
 
 create-network:
-	docker network create -d bridge my-network
+	docker network create -d bridge my-network || true
 
 # Groups
-server-dev: create-network server-build server-run-dev
+server-build-local: create-network server-build server-run-local
 server-build-run: server-build server-run
 server-shell: server-build server-run-shell
 

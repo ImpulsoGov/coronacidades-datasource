@@ -7,7 +7,7 @@ from endpoints import (
     get_cities_cases,
     get_cities_rt,
     get_health_region_rt,
-    get_health,
+    get_cnes,
     get_health_region_farolcovid_main,
 )
 
@@ -27,7 +27,7 @@ def now(config):
 
     # Get resource data
     df = (
-        get_health.now(config, "br")[
+        get_cnes.now(config)[
             [
                 "country_iso",
                 "country_name",

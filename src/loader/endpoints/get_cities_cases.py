@@ -84,12 +84,9 @@ def get_default_ids(df, config, place_type="city"):
             places_ids.groupby(ids)[["population"]]
             .sum()
             .reset_index())
-
-        # for col in ids:
-        #     places_ids[col] = places_ids[col].cat.remove_unused_categories()
         
         merge_col = ["state_id"]
-        # print("PLACE ID GROUPED:", places_ids.info())
+        df = df.drop(columns=["city_name", "city_id"])
 
     if place_type == "health_region":
         ids = ["health_region_id"]
@@ -105,13 +102,8 @@ def get_default_ids(df, config, place_type="city"):
 
     # Merge da tabela de casos com dados de população
     df[merge_col] = df[merge_col].astype(str)
-    # print("DF BEFORE:", places_ids.info())
     places_ids[merge_col] = places_ids[merge_col].astype(str)
     df = df.merge(places_ids, on=merge_col)
-    # print("DF AFTER:", places_ids.info())
-
-    # Converte id em categoria para otimizacao
-    # df[merge_col] = df[merge_col].astype("category")
     
     return df
 

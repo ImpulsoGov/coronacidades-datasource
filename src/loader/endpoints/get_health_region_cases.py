@@ -53,7 +53,6 @@ def now(config):
     )
     df = df.reset_index(drop=True)
     logger.info("FINISH DATA GROW CALCULATION")
-    # print("growth:", df.info())
 
     # Calcula casos ativos
     df["active_cases"] = np.nan
@@ -61,7 +60,6 @@ def now(config):
         df["infectious_period_cases"] / df["notification_rate"], 0
     )
 
-    print("final:", df.info())
     return df
 
 TESTS = {

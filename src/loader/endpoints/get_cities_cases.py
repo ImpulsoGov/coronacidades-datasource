@@ -8,7 +8,7 @@ import numpy as np
 from logger import logger
 
 from endpoints.scripts import get_notification_rate, brasilio
-from endpoints import get_health
+from endpoints import get_cnes
 from endpoints.helpers import allow_local
 
 
@@ -31,15 +31,8 @@ def treat_df(df, config, place_type="city", place_id="city_ibge_code"):
     # Filtra por nivel geografico
     df = df[df["place_type"] == place_type]
 
-    # Conserta categorias
-    # cats = df.select_dtypes(include=["category"]).columns
-    # for col in cats:
-    #     df[col] = df[col].cat.remove_unused_categories()
-
     # Remove colunas não utilizadas
     df = df.drop(columns=["last_available_date", "last_available_death_rate", "place_type"])
-    # if place_type == "state":
-    #     df = df.drop(columns=["city_id", "city_name"])
 
     # Downcast dos tipos
     ints = df.select_dtypes(include=["int64", "int32", "int16"]).columns
@@ -81,7 +74,7 @@ def get_default_ids(df, config, place_type="city"):
         "population": "int",
     }
     # Puxa dados de população CNES + ids e nomes padrão
-    places_ids = get_health.now(config)[cols]
+    places_ids = get_cnes.now(config)[cols]
     places_ids = places_ids.astype(cols)
     
     # Agrega população de estados

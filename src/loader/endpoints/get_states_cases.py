@@ -42,11 +42,9 @@ def now(config):
 
     # Trata dados
     df = treat_df(df, config, place_type="state", place_id="state")
-    # print("treat:", df.info())
     # Padroniza ids e nomes
     df = get_default_ids(df, config, place_type="state")
     logger.info("FINISH DATA TREATMENT")
-    # print("ids:", df.info())
 
     # Gera métricas de média móvel e tendência
     groups = df.groupby("state_num_id", as_index=False)
@@ -55,7 +53,6 @@ def now(config):
     )
     df = df.reset_index(drop=True)
     logger.info("FINISH DATA GROW CALCULATION")
-    # print("notification:", df.info())
 
     # Gera dados de taxa de notificacao e casos ativos
     df = _get_notification_rate(df, place_id="state_num_id")
@@ -67,12 +64,6 @@ def now(config):
         df["infectious_period_cases"] / df["notification_rate"], 0
     )
 
-    # Converte categoria para str
-    # cats = df.select_dtypes(include=["category"]).columns
-    # for col in cats:
-    #     df[col] = df[col].astype(str)
-
-    print("final:",  print(df.info()))
     return df
 
 

@@ -1,152 +1,86 @@
 import pandas as pd
-import datetime
 import numpy as np
-import json
-import time
+from logger import logger
 
-import gzip
-import io
-from urllib.request import Request, urlopen
+from endpoints import get_cities_cases
+from endpoints.get_cities_cases import get_rolling_indicators, get_default_ids
 
 from endpoints.helpers import allow_local
-from endpoints import get_health, get_places_id
-from endpoints.scripts import get_notification_rate
-from utils import download_from_drive
-
-from endpoints.get_cities_cases import (
-    download_brasilio_table,
-    correct_negatives,
-    get_infectious_period_cases,
-    get_mavg_indicators,
-    get_until_last,
-)
-
 
 @allow_local
-def now(config, country="br"):
+def now(config):
+    cols = [
+        "health_region_id",
+        "health_region_name",
+        "state_num_id",
+        "state_id",
+        "state_name",
+        "last_updated",
+    ]
 
-    if country == "br":
+    # Pega casos já tratados para cidades (+ taxa de notificação da regional)
+    df = get_cities_cases.now(config)
+    logger.info("FINISH LOAD DATA")
 
-        infectious_period = (
-            config["br"]["seir_parameters"]["severe_duration"]
-            + config["br"]["seir_parameters"]["critical_duration"]
-        )
+    # Agrega colunas calculadas em cidades para regionais de saúde
+    grouped = df.groupby(cols, sort=False)
+    df = grouped.agg(
+        {
+            "confirmed_cases": "sum",
+            "daily_cases": "sum",
+            "deaths": "sum",
+            "new_deaths": "sum",
+            "is_last": "max", # todas as cidades são atualizadas numa mesma tabela diária no Brasil.io
+            "estimated_cases": "mean", # mesmo valor para todas cidades
+            "expected_mortality": "mean",
+            "notification_rate": "mean",
+            "total_estimated_cases": "mean",
+        }
+    ).reset_index()
+    
+    # Converte data e ordena tabela
+    df["last_updated"] = pd.to_datetime(df["last_updated"])
+    df = df.sort_values(by=["health_region_id", "last_updated"])
 
-        # Get data & clean table
-        df = (
-            download_brasilio_table(config["br"]["cases"]["url"])
-            .query("place_type == 'city'")
-            .dropna(subset=["city_ibge_code"])
-            .fillna(0)
-            .rename(columns=config["br"]["cases"]["rename"])
-            .assign(last_updated=lambda x: pd.to_datetime(x["last_updated"]))
-            .sort_values(["city_id", "state_id", "last_updated"])
-            .groupby("city_id")
-            .apply(lambda group: get_until_last(group))
-            .reset_index(drop=True)
-            .drop(["city_name", "state_id", "estimated_population_2019"], 1)
-            .assign(city_id=lambda df: df["city_id"].astype(int))
-        )
+    # Padroniza ids e nomes + populacao
+    df = get_default_ids(df, config, place_type="health_region")
+    logger.info("FINISH DATA TREATMENT")
 
-        # Fix places_ids by city_id => Get health_region_id
-        places_ids = get_places_id.now(config).assign(
-            city_id=lambda df: df["city_id"].astype(int),
-            health_region_id=lambda df: df["health_region_id"].astype(int),
-        )
+    # Gera métricas de média móvel e tendência
+    groups = df.groupby("health_region_id", as_index=False)
+    df = groups.apply(
+        lambda x: get_rolling_indicators(x, config, cols=["daily_cases", "new_deaths"])
+    )
+    df = df.reset_index(drop=True)
+    logger.info("FINISH DATA GROW CALCULATION")
+    # print("growth:", df.info())
 
-        df = df.merge(
-            places_ids[
-                [
-                    "city_id",
-                    "health_region_name",
-                    "health_region_id",
-                    "state_name",
-                    "state_id",
-                    "state_num_id",
-                ]
-            ].drop_duplicates(),
-            on="city_id",
-        )
+    # Calcula casos ativos
+    df["active_cases"] = np.nan
+    df.loc[~df["notification_rate"].isnull(), "active_cases"] = round(
+        df["infectious_period_cases"] / df["notification_rate"], 0
+    )
 
-        # Group cases by health region
-        df = (
-            df.groupby(
-                [
-                    "state_num_id",
-                    "state_id",
-                    "state_name",
-                    "health_region_name",
-                    "health_region_id",
-                    "last_updated",
-                ]
-            )
-            .agg(
-                confirmed_cases=("confirmed_cases", sum),
-                deaths=("deaths", sum),
-                daily_cases=("daily_cases", sum),
-                new_deaths=("new_deaths", sum),
-            )
-            .reset_index()
-        )
-
-        # Add population data from CNES
-        df = df.merge(
-            get_health.now(config)
-            .assign(health_region_id=lambda df: df["health_region_id"].astype(int),)
-            .groupby("health_region_id")["population"]
-            .sum()
-            .reset_index(),
-            on="health_region_id",
-        )
-
-        # Transform cases data
-        df = (
-            df.groupby(
-                [
-                    "state_num_id",
-                    "state_id",
-                    "state_name",
-                    "health_region_name",
-                    "health_region_id",
-                ]
-            )
-            .apply(correct_negatives)  # correct negative values
-            .pipe(
-                get_infectious_period_cases,
-                infectious_period,
-                config["br"]["cases"],
-                "health_region_id",
-            )  # get infectious period cases
-            .rename(columns=config["br"]["cases"]["rename"])
-        )
-
-        # Get indicators of mavg & growth
-        df = get_mavg_indicators(df, "daily_cases", place_id="health_region_id")
-        df = get_mavg_indicators(df, "new_deaths", place_id="health_region_id")
-
-        # Get notification rates & active cases on date
-        df = df.merge(
-            get_notification_rate.now(df, "health_region_id"),
-            on=["health_region_id", "last_updated"],
-            how="left",
-        ).assign(
-            active_cases=lambda x: np.where(
-                x["notification_rate"].isnull(),
-                np.nan,  # round(x["infectious_period_cases"], 0),
-                round(x["infectious_period_cases"] / x["notification_rate"], 0),
-            )
-        )
-
+    print("final:", df.info())
     return df
 
-
 TESTS = {
-    "more than 5570 cities": lambda df: len(df["health_region_id"].unique()) <= 450,
+    "more than 450 regions": lambda df: len(df["health_region_id"].unique()) <= 450,
     "df is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),
     "population not fixed by region": lambda df: len(
         df[["population", "health_region_id"]].drop_duplicates()
     )
-    == len(df["health_region_id"].drop_duplicates())
+    == len(df["health_region_id"].drop_duplicates()),
+    "last date is repeated": lambda df: all(
+        df.loc[df.groupby("health_region_id")["last_updated"].idxmax()][
+            ["last_updated", "health_region_id"]
+        ]
+        == df[df["is_last"] == True][["last_updated", "health_region_id"]],
+    ),
+    "negative values on cumulative deaths or cases": lambda df: len(
+        df[(df["confirmed_cases"] < 0) | (df["deaths"] < 0)]
+    )
+    == 0,
     # TODO: corrigir teste! => ultima taxa calculada 14 dias antes
     # "notification_rate == NaN": lambda df: len(
     #     df[(df["notification_rate"].isnull() == True) & (df["is_last"] == True)].values

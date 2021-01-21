@@ -12,20 +12,12 @@ import yaml
 def _load_data(entry, query_parameters):
     path = "/".join([os.getenv("OUTPUT_DIR"), entry.replace("/", "-")]) + ".csv"
     data = pd.read_csv(path)
-    if entry=="br/states/cases/full":
-        state_id = query_parameters.get('state_id')
-        if state_id:
-            data = data[data["state_id"]==state_id]
-    if entry=="br/cities/cases/full":
-        state_id = query_parameters.get('state_id')
-        city_id = query_parameters.get('city_id')
-        city_name = query_parameters.get('city_name')
-        if state_id:
-            data = data[data["state_id"]==state_id]
-        if city_id:
-            data = data[data["state_id"]==state_id]
-        if city_name:
-            data = data[data["state_id"]==state_id]
+    if query_parameters.get('state_id'):
+        data = data[data["state_id"]==query_parameters.get('state_id')]
+    if query_parameters.get('city_id'):
+        data = data[data["city_id"]==query_parameters.get('city_id')]
+    if query_parameters.get('city_name'):
+        data = data[data["city_name"]==query_parameters.get('city_name')]
     return data.to_csv(index=False)
 
 

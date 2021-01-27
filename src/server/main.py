@@ -35,7 +35,7 @@ def index(entry):
                 for d in os.listdir(os.getenv("OUTPUT_DIR"))
                 if "inloco" not in d
             ]
-            return render_template("not-found.html", endpoints=endpoints)
+            return render_template("not-found.html", endpoints=endpoints, query_parameters=request.args)
 
 
 if __name__ == "__main__":

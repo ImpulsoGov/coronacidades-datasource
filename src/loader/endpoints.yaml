@@ -87,7 +87,7 @@
 
 - endpoint: br/maps
   python_file: get_maps
-  skip: False
+  skip: True
 
 - endpoint: br/cities/safeschools/main
   python_file: get_cities_safeschools_main

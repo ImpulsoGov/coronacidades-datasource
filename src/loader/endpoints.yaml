@@ -85,8 +85,13 @@
   python_file: get_states_farolcovid_main
   skip: False
 
+
 - endpoint: br/cities/safeschools/main
   python_file: get_cities_safeschools_main
+  skip: True
+
+- endpoint: br/maps
+  python_file: get_maps
   skip: False
 
 - endpoint: br/maps

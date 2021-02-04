@@ -223,8 +223,7 @@ def now(config):
     else:
         map_folder_id = 38060  # "maps-coronacidades"
         
-    dw = Datawrapper(access_token="q90ztm8IzbSpa6YfwN190rxQnQROdmRI2cg76QHLEFONF39QteI4mjTxWgL8xuza")
-#     dw = Datawrapper(access_token=ACCESS_TOKEN)
+    dw = Datawrapper(access_token=ACCESS_TOKEN)
 
     if IS_DEV:
         # Create states map

@@ -13,7 +13,7 @@ import plotly
 import plotly.graph_objs as go
 import cufflinks as cf
 
-plotly.offline.init_notebook_mode(connected=True)
+# plotly.offline.init_notebook_mode(connected=True)
 # Getting helping data
 from endpoints import get_states_farolcovid_main, get_cities_farolcovid_main
 import utils

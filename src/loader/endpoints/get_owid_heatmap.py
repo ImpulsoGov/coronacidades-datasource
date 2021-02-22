@@ -33,8 +33,6 @@ def now(config=None):
     ).apply(lambda x: _get_rolling_amount(x, 5, "date", "new_deaths"))
 
     return df
-    print(df.describe())
-
 
 TESTS = {
     "data is not pd.DataFrame": lambda df: isinstance(df, pd.DataFrame),

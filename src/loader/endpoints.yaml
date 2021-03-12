@@ -16,7 +16,7 @@
 
 - endpoint: br/cities/cnes
   python_file: get_cnes
-  skip: True
+  skip: False
 
 - endpoint: br/cnae/sectors
   python_file: get_sectors_cnae

@@ -28,18 +28,17 @@ def now(config):
     df = df.reset_index()
     df['estabelecimento_codigo_ibge_municipio'] = df['estabelecimento_codigo_ibge_municipio'].astype(int)
     df['numero_dose'] = df['numero_dose'].astype(int)
-    df_pop_city = pd.read_csv("BR_cities_population_city_pop.csv")
-    # df_pop_city = download_from_drive(config["br"]["drive_paths"]["cities_population"])[
-    #     [
-    #         "country_iso",
-    #         "country_name",
-    #         "state_id",
-    #         "state_name",
-    #         "city_id",
-    #         "city_name",
-    #         "population",
-    #     ]
-    # ]
+    df_pop_city = download_from_drive(config["br"]["drive_paths"]["cities_population"])[
+        [
+            "country_iso",
+            "country_name",
+            "state_id",
+            "state_name",
+            "city_id",
+            "city_name",
+            "population",
+        ]
+    ]
     places_id = pd.read_csv("http://datasource.coronacidades.org/br/places/ids")
     df_places = df.merge(places_id, right_on="city_id", left_on="estabelecimento_codigo_ibge_municipio")
     df_group_city = df_places.merge(df_pop_city[{"city_id", "population"}], on="city_id")

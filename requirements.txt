@@ -21,4 +21,6 @@ bs4
 numpy
 selenium
 cufflinks
+lxml
+html5lib
 # rpy2==3.2.2

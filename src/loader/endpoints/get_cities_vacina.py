@@ -48,6 +48,7 @@ def now(config):
     # CIDADES
     df_grouped_city = df_group_city.groupby(['city_id', 'city_name','health_region_id', 'health_region_name', 'state_id', 'state_name','state_num_id', 'population']).agg({"vacinados":"max","imunizados":"max"})
     df_grouped_city = df_grouped_city.reset_index()
+    df_grouped_city['population'] = df_grouped_city['population']/2
     df_grouped_city['perc_imunizados'] = round(df_grouped_city['imunizados']/df_grouped_city['population']*100, 2).fillna(0)
     df_grouped_city['perc_vacinados'] = round(df_grouped_city['vacinados']/df_grouped_city['population']*100, 2).fillna(0)
     df_grouped_city['nao_vacinados'] = (df_grouped_city['population']-df_grouped_city['vacinados']).astype(int)

@@ -92,3 +92,15 @@
 - endpoint: br/maps
   python_file: get_maps
   skip: True
+
+- endpoint: br/cities/vacina
+  python_file: get_cities_vacina
+  skip: False
+
+- endpoint: br/health_region/vacina
+  python_file: get_region_vacina
+  skip: False
+
+- endpoint: br/states/vacina
+  python_file: get_states_vacina
+  skip: False

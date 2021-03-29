@@ -1,12 +1,10 @@
 import pandas as pd
-from datetime import datetime
 import numpy as np
-import time
+import re
+from io import StringIO
 from selenium import webdriver
 from time import sleep
 from bs4 import BeautifulSoup
-from pathlib import Path
-import os
 
 from endpoints.helpers import allow_local
 from endpoints import get_places_id
@@ -35,9 +33,25 @@ def get_date(updatedate):
     return x
 
 
+def get_city_name(raw_name):
+    """Get city name from a string with city id and name separated by a space.
+    """
+    match_obj = re.search(r"(?<=[0-9]{6} )(?P<city_name>.*)$", raw_name)
+    if match_obj:
+        return match_obj.group("city_name")
+
+
+def get_city_id(raw_name):
+    """Get city id from a string with city id and name separated by a space.
+    """
+    match_obj = re.search(r"^(?P<city_id>[0-9]{6})(?= )", raw_name)
+    if match_obj:
+        return match_obj.group("city_id")
+
+
 def treat_city_name(df):
-    df["city_id"] = df["city_name"].split(" ", 1)[0]
-    df["city_name"] = df["city_name"].split(" ", 1)[1].strip("\n")
+    df["city_id"] = df["city_name"].apply(get_city_id)
+    df["city_name"] = df["city_name"].apply(get_city_name)
     return df
 
 
@@ -79,7 +93,8 @@ def get_leitos(driver, url):
         k = k + 8
         i = i + 1
 
-    df_leitos = df_leitos.apply(treat_city_name, axis=1)
+    df_leitos = treat_city_name(df_leitos)
+
     return df_leitos, updatedate
 
 
@@ -90,59 +105,65 @@ def get_respiradores(driver, url):
     element[0].click()
     element = driver.find_elements_by_xpath("//option[@value='Equipamento']")
     element[1].click()
-    element = driver.find_elements_by_class_name("mostra")
-    sleep(15)
+    element = driver.find_elements_by_xpath("//input[@value='prn']")
     element[0].click()
-    sleep(15)
-    tableRows = driver.find_elements_by_class_name("tabdados")
-    html = tableRows[0].get_attribute("innerHTML")
-    soup = BeautifulSoup(html, "html.parser")
-    df_respiradores = pd.DataFrame(columns=["city_name", "number_ventilators"])
-    x = soup.select("td")
-    y = soup.select("tr")
-    i = 0
-    k = 85
-    for j in range(4, len(y)):
-        df_respiradores.loc[i] = [x[k].text, x[k + 54].text]
-        k = k + 83
-        i = i + 1
+    element = driver.find_elements_by_class_name("mostra")
+    element[0].click()
+    table = StringIO(driver.find_elements_by_tag_name("pre")[0].text)
+    df_respiradores = pd.read_csv(
+        table,
+        sep=";",
+        usecols=["Município", ".. RESPIRADOR/VENTILADOR"],
+        na_values=["-"],
+    ).rename(columns={
+        "Município": "city_name",
+        ".. RESPIRADOR/VENTILADOR": "number_ventilators",
+    })
+    table.close()
 
-    df_respiradores = df_respiradores.apply(treat_city_name, axis=1)
+    df_respiradores = treat_city_name(df_respiradores)
+    df_respiradores = df_respiradores.dropna(
+        subset=["city_id", "city_name"]
+    ).fillna(0).convert_dtypes()
+
     return df_respiradores
 
 
 def get_urlleitoscomp(driver, url):
+
+    # Total de leitos de UTI Adulto
     driver.get(url)
+    sleep(10)
     element = driver.find_elements_by_xpath("//option[@value='Município']")
     element[0].click()
     element = driver.find_elements_by_xpath("//option[@value='Leitos_complementares']")
     element[1].click()
     element = driver.find_elements_by_class_name("mostra")
     element[0].click()
-    tableRows = driver.find_elements_by_class_name("tabdados")
-    html = tableRows[0].get_attribute("innerHTML")
-    soup = BeautifulSoup(html, "html.parser")
-    df_leitos_comp = pd.DataFrame(
-        columns=[
-            "city_name",
-            "UTI_adulto_I_tot",
-            "UTI_adulto_II_tot",
-            "UTI_adulto_III_tot",
-        ]
+    sleep(8)
+    df_leitos_comp = (
+        pd.read_html(
+            driver.page_source,
+            attrs={"class": "tabdados"},
+            skiprows=[0, 2],
+            header=0,
+            na_values=["-"],
+        )[0].iloc[:, [0, 5, 6, 7]]
+        .rename(
+            columns={
+                "Município": "city_name",
+                "UTI adulto I": "UTI_adulto_I_tot",
+                "UTI adulto II": "UTI_adulto_II_tot",
+                "UTI adulto III": "UTI_adulto_III_tot",
+            }
+        )
     )
+    df_leitos_comp = treat_city_name(df_leitos_comp)
+    df_leitos_comp = df_leitos_comp.dropna(
+        subset=["city_id", "city_name"]
+    ).fillna(0).convert_dtypes()
 
-    x = soup.select("td")
-    y = soup.select("tr")
-    i = 0
-    k = 24
-    for j in range(4, len(y)):
-        df_leitos_comp.loc[i] = [x[k].text, x[k + 5].text, x[k + 6].text, x[k + 7].text]
-        k = k + 22
-        i = i + 1
-
-    # Separa id e nome da cidade
-    df_leitos_comp = df_leitos_comp.apply(treat_city_name, axis=1)
-
+    # Leitos COVID-19 SUS
     element = driver.find_elements_by_class_name("botao_opcao")
     element[4].click()
     sleep(15)
@@ -152,25 +173,27 @@ def get_urlleitoscomp(driver, url):
     element[0].click()
     element = driver.find_elements_by_class_name("mostra")
     element[0].click()
-    tableRows = driver.find_elements_by_class_name("tabdados")
-    html = tableRows[0].get_attribute("innerHTML")
-    soup = BeautifulSoup(html, "html.parser")
-    df_Leitos_compl_SUS = pd.DataFrame(
-        columns=["city_name", "UTI_adulto_II_COVID_SUS", "UTI_pediatrica_II_COVID_SUS",]
+    sleep(8)
+    df_Leitos_compl_SUS = (
+        pd.read_html(
+            driver.page_source,
+            attrs={"class": "tabdados"},
+            skiprows=[0, 2],
+            header=0,
+            na_values=["-"],
+        )[0].iloc[:, [0, 1, 2]]
+        .rename(columns={
+            "Município": "city_name",
+            "UTI adulto II COVID-19": "UTI_adulto_II_COVID_SUS",
+            "UTI pediátrica II COVID-19": "UTI_pediatrica_II_COVID_SUS",
+        })
     )
+    df_Leitos_compl_SUS = treat_city_name(df_Leitos_compl_SUS)
+    df_Leitos_compl_SUS = df_Leitos_compl_SUS.dropna(
+        subset=["city_id", "city_name"]
+    ).fillna(0).convert_dtypes()
 
-    x = soup.select("td")
-    y = soup.select("tr")
-    i = 0
-    k = 24
-    for j in range(4, len(y)):
-        df_Leitos_compl_SUS.loc[i] = [x[k].text, x[k + 1].text, x[k + 2].text]
-        k = k + 22
-        i = i + 1
-
-    # Separa id e nome da cidade
-    df_Leitos_compl_SUS = df_Leitos_compl_SUS.apply(treat_city_name, axis=1)
-
+    # Leitos COVID-19 particulares
     element = driver.find_elements_by_class_name("botao_opcao")
     element[4].click()
     sleep(15)
@@ -180,29 +203,26 @@ def get_urlleitoscomp(driver, url):
     element[0].click()
     element = driver.find_elements_by_class_name("mostra")
     element[0].click()
-    tableRows = driver.find_elements_by_class_name("tabdados")
-    html = tableRows[0].get_attribute("innerHTML")
-    soup = BeautifulSoup(html, "html.parser")
-    df_Leitos_compl_nao_SUS = pd.DataFrame(
-        columns=[
-            "city_name",
-            "UTI_adulto_II_COVID_nao_SUS",
-            "UTI_pediatrica_II_COVID_nao_SUS",
-        ]
+    df_Leitos_compl_nao_SUS = (
+        pd.read_html(
+            driver.page_source,
+            attrs={"class": "tabdados"},
+            skiprows=[0, 2],
+            header=0,
+            na_values=["-"],
+        )[0].iloc[:, [0, 1, 2]]
+        .rename(columns={
+            "Município": "city_name",
+            "UTI adulto II COVID-19": "UTI_adulto_II_COVID_nao_SUS",
+            "UTI pediátrica II COVID-19": "UTI_pediatrica_II_COVID_nao_SUS",
+        })
     )
+    df_Leitos_compl_nao_SUS = treat_city_name(df_Leitos_compl_nao_SUS)
+    df_Leitos_compl_nao_SUS = df_Leitos_compl_nao_SUS.dropna(
+        subset=["city_id", "city_name"]
+    ).fillna(0).convert_dtypes()
 
-    x = soup.select("td")
-    y = soup.select("tr")
-    i = 0
-    k = 24
-    for j in range(4, len(y)):
-        df_Leitos_compl_nao_SUS.loc[i] = [x[k].text, x[k + 1].text, x[k + 2].text]
-        k = k + 22
-        i = i + 1
-
-    # Separa id e nome da cidade
-    df_Leitos_compl_nao_SUS = df_Leitos_compl_nao_SUS.apply(treat_city_name, axis=1)
-
+    # Juntar datasets
     df_leitos_comp = df_leitos_comp.merge(
         df_Leitos_compl_SUS, how="left", on=["city_id", "city_name"]
     )

@@ -53,6 +53,7 @@ def now(config):
     df_grouped_city['perc_vacinados'] = round(df_grouped_city['vacinados']/df_grouped_city['population']*100, 2).fillna(0)
     df_grouped_city['nao_vacinados'] = (df_grouped_city['population']-df_grouped_city['vacinados']).astype(int)
     df_grouped_city['last_updated'] = pd.to_datetime('now').strftime("%d/%m/%Y")
+    df_grouped_city.to_csv('vacinas.csv')
     return df_grouped_city
 
 TESTS = {

@@ -69,7 +69,6 @@ def now(config):
     # ESTADOS
     df_group_state = df_group_city.groupby(['state_id', 'state_name','state_num_id']).agg({"population":"sum","imunizados":"sum","vacinados":"sum"})
     df_group_state = df_group_state.reset_index()
-    df_group_state['population'] = df_group_state['population']/2
     df_group_state['perc_imunizados'] = round(df_group_state['imunizados']/df_group_state['population']*100, 2).fillna(0)
     df_group_state['perc_vacinados'] = round(df_group_state['vacinados']/df_group_state['population']*100, 2).fillna(0)
     df_group_state['nao_vacinados'] = (df_group_state['population']-df_group_state['vacinados']).astype(int)

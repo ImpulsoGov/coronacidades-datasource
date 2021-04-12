@@ -22,12 +22,16 @@ def now(config):
     cols = {
         "estabelecimento_codigo_ibge_municipio": "int",
         "paciente_uuid": "str",
-        "numero_dose": "str"
+        "numero_dose": "categorical"
     }
-    df = pd.read_csv(download_brasilio_table(),usecols=cols.keys()).groupby(["estabelecimento_codigo_ibge_municipio", "numero_dose"]).agg({"paciente_uuid": 'count'})
-    df = df.reset_index()
+    chunks = pd.read_csv(download_brasilio_table(),usecols=cols.keys(), chunksize=100000)
+    df = pd.DataFrame()
+    for chunk in chunks:
+        pacient_count = chunk.groupby(["estabelecimento_codigo_ibge_municipio", "numero_dose"]).agg({"paciente_uuid": 'count'}).reset_index()
+        df = pd.concat([df, pacient_count], ignore_index=True)
     df['estabelecimento_codigo_ibge_municipio'] = df['estabelecimento_codigo_ibge_municipio'].astype(int)
     df['numero_dose'] = df['numero_dose'].astype(int)
+    df = df.groupby(["estabelecimento_codigo_ibge_municipio", "numero_dose"]).agg({"paciente_uuid": 'sum'}).reset_index()
     df_pop_city = download_from_drive(config["br"]["drive_paths"]["cities_population"])[
         [
             "country_iso",

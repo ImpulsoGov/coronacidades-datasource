@@ -73,6 +73,10 @@
   python_file: get_cities_rt
   skip: False
 
+- endpoint: br/states/beds_occupation
+  python_file: get_states_beds_occupation
+  skip: False
+
 - endpoint: br/health_region/farolcovid/main
   python_file: get_health_region_farolcovid_main
   skip: False

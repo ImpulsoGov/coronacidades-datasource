@@ -1,24 +1,7 @@
 import pandas as pd
-import numpy as np
-import datetime as dt
-import yaml
 
-from endpoints import (
-    get_cities_cases,
-    get_cities_rt,
-    get_health_region_rt,
-    get_cnes,
-    get_health_region_farolcovid_main,
-)
-
-from endpoints.get_health_region_farolcovid_main import (
-    get_situation_indicators,
-    get_control_indicators,
-    get_capacity_indicators,
-    get_trust_indicators,
-    get_overall_alert,
-)
-
+from endpoints import get_cities_cases, get_cities_rt, get_health_region_rt
+from endpoints.get_indicators import get_place_indicators
 from endpoints.helpers import allow_local
 
 
@@ -26,70 +9,17 @@ from endpoints.helpers import allow_local
 def now(config):
 
     # Get resource data
-    df = (
-        get_cnes.now(config)[
-            [
-                "country_iso",
-                "country_name",
-                "state_num_id",
-                "state_id",
-                "state_name",
-                "health_region_id",
-                "health_region_name",
-                "city_name",
-                "city_id",
-                "last_updated_number_beds",
-                "author_number_beds",
-                "last_updated_number_icu_beds",
-                "author_number_icu_beds",
-                "population",
-            ]
-        ]
-        .sort_values("city_id")
-        .set_index("city_id")
-    )
+    data_cases = get_cities_cases.now(config)
+    data_rt = get_cities_rt.now(config)
+    data_rt_region = get_health_region_rt.now(config)
 
-    df = get_situation_indicators(
-        df,
-        data=get_cities_cases.now(config),
+    return get_place_indicators(
         place_id="city_id",
-        rules=config["br"]["farolcovid"]["rules"],
-        classify="situation_classification",
-    )
-
-    df = get_control_indicators(
-        df,
-        data=get_cities_rt.now(config),
-        place_id="city_id",
-        rules=config["br"]["farolcovid"]["rules"],
-        classify="control_classification",
+        data_cases=data_cases,
+        data_rt=data_rt,
+        data_rt_region=data_rt_region,
         config=config,
-        region_data=get_health_region_farolcovid_main.now(config),
     )
-
-    df = get_trust_indicators(
-        df,
-        data=get_cities_cases.now(config),
-        place_id="city_id",
-        rules=config["br"]["farolcovid"]["rules"],
-        classify="trust_classification",
-    )
-
-    df = get_capacity_indicators(
-        df,
-        place_id="city_id",
-        config=config,
-        rules=config["br"]["farolcovid"]["rules"],
-        classify="capacity_classification",
-        data=get_health_region_farolcovid_main.now(config),
-    )
-
-    cols = [col for col in df.columns if "classification" in col]
-    df["overall_alert"] = df.apply(
-        lambda row: get_overall_alert(row[cols]), axis=1
-    )  # .replace(config["br"]["farolcovid"]["categories"])
-
-    return df.reset_index()
 
 
 TESTS = {
@@ -122,7 +52,6 @@ TESTS = {
         ]
         .isnull()
         .apply(lambda x: any(x), axis=1)
-        == True
     ),
     "city without classification got an alert": lambda df: all(
         df[
@@ -137,6 +66,5 @@ TESTS = {
             .isnull()
             .any(axis=1)
         ]["overall_alert"].isnull()
-        == True
     ),
 }

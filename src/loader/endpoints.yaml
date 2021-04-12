@@ -1,97 +1,97 @@
 - endpoint: br/places/ids
   python_file: get_places_id
-  skip: False
+  skip: True
 
 - endpoint: br/health_region/parameters
   python_file: get_health_region_parameters
-  skip: False
+  skip: True
 
 - endpoint: br/cities/parameters
   python_file: get_cities_parameters
-  skip: False
+  skip: True
 
 - endpoint: br/states/parameters
   python_file: get_states_parameters
-  skip: False
+  skip: True
 
 - endpoint: br/cities/cnes
   python_file: get_cnes
-  skip: False
+  skip: True
 
 - endpoint: br/cnae/sectors
   python_file: get_sectors_cnae
-  skip: False
+  skip: True
 
 - endpoint: br/states/safereopen/main
   python_file: get_states_safereopen_main
-  skip: False
+  skip: True
 
 - endpoint: br/health_region/safereopen/main
   python_file: get_health_region_safereopen_main
-  skip: False
+  skip: True
 
 - endpoint: br/cities/cases/full
   python_file: get_cities_cases
-  skip: False
+  skip: True
 
 - endpoint: br/health_region/cases/full
   python_file: get_health_region_cases
-  skip: False
+  skip: True
 
 - endpoint: br/states/cases/full
   python_file: get_states_cases
-  skip: False
+  skip: True
 
 - endpoint: world/owid/heatmap
   python_file: get_owid_heatmap
-  skip: False
+  skip: True
 
 - endpoint: INLOCO_STATES_ROUTE
   secret_path: [inloco, states]
   python_file: get_inloco_states
-  skip: False
+  skip: True
 
 - endpoint: INLOCO_CITIES_ROUTE
   secret_path: [inloco, cities]
   python_file: get_inloco_cities
-  skip: False
+  skip: True
   
 - endpoint: INLOCO_RS_CITIES_ROUTE
   secret_path: [inloco, rs_cities]
   python_file: get_inloco_rs_cities
-  skip: False
+  skip: True
 
 - endpoint: br/states/rt
   python_file: get_states_rt
-  skip: False
+  skip: True
 
 - endpoint: br/health_region/rt
   python_file: get_health_region_rt
-  skip: False
+  skip: True
 
 - endpoint: br/cities/rt
   python_file: get_cities_rt
-  skip: False
+  skip: True
 
 - endpoint: br/health_region/farolcovid/main
   python_file: get_health_region_farolcovid_main
-  skip: False
+  skip: True
 
 - endpoint: br/cities/farolcovid/main
   python_file: get_cities_farolcovid_main
-  skip: False
+  skip: True
 
 - endpoint: br/states/farolcovid/main
   python_file: get_states_farolcovid_main
-  skip: False
+  skip: True
 
 - endpoint: br/cities/safeschools/main
   python_file: get_cities_safeschools_main
-  skip: False
+  skip: True
 
 - endpoint: br/maps
   python_file: get_maps
-  skip: False
+  skip: True
 
 - endpoint: br/cities/vacina
   python_file: get_cities_vacina

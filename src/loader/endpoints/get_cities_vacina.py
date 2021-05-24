@@ -7,6 +7,7 @@ from urllib.request import Request, urlopen
 import pandas as pd
 from endpoints.helpers import allow_local
 from utils import download_from_drive
+import numpy as np
 
 def download_brasilio_table(dataset="covid19", table_name="microdados_vacinacao"):
     """
@@ -54,7 +55,7 @@ def now(config):
     df_grouped_city = df_grouped_city.reset_index()
     df_grouped_city['perc_imunizados'] = round(df_grouped_city['imunizados']/df_grouped_city['population']*100, 2).fillna(0)
     df_grouped_city['perc_vacinados'] = round(df_grouped_city['vacinados']/df_grouped_city['population']*100, 2).fillna(0)
-    df_grouped_city['nao_vacinados'] = (df_grouped_city['population']-df_grouped_city['vacinados']).astype(int)
+    df_grouped_city['nao_vacinados'] = (df_grouped_city['population']-df_grouped_city['vacinados']).replace(np.nan, 0).astype(int)
     df_grouped_city['last_updated'] = pd.to_datetime('now').strftime("%d/%m/%Y")
     df_grouped_city.to_csv('vacinas.csv')
     return df_grouped_city

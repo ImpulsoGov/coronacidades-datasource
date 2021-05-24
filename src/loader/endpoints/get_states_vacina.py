@@ -7,6 +7,7 @@ from urllib.request import Request, urlopen
 import pandas as pd
 from endpoints.helpers import allow_local
 from utils import download_from_drive
+import numpy as np
 
 def download_brasilio_table(dataset="covid19", table_name="microdados_vacinacao"):
     """
@@ -71,7 +72,7 @@ def now(config):
     df_group_state = df_group_state.reset_index()
     df_group_state['perc_imunizados'] = round(df_group_state['imunizados']/df_group_state['population']*100, 2).fillna(0)
     df_group_state['perc_vacinados'] = round(df_group_state['vacinados']/df_group_state['population']*100, 2).fillna(0)
-    df_group_state['nao_vacinados'] = (df_group_state['population']-df_group_state['vacinados']).astype(int)
+    df_group_state['nao_vacinados'] = (df_group_state['population']-df_group_state['vacinados']).replace(np.nan, 0).astype(int)
     df_group_state['last_updated'] = pd.to_datetime('now').strftime("%d/%m/%Y")
     return df_group_state
 
